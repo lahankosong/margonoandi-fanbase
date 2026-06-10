@@ -309,7 +309,7 @@
             <div class="kamu-stat-label">Catatan</div>
         </div>
         <div class="kamu-stat">
-            <div class="kamu-stat-num">{{ $user->created_at->format('Y') }}</div>
+            <div class="kamu-stat-num">{{ $user->created_at?->format('Y') ?? date('Y') }}</div>
             <div class="kamu-stat-label">Bergabung</div>
         </div>
     </div>
@@ -373,7 +373,7 @@
             <div class="note-card-title">{{ $note->title }}</div>
             @endif
             <div class="note-card-body">{{ Str::limit($note->body, 150) }}</div>
-            <div class="note-card-date">{{ $note->created_at->format('d M Y · H:i') }}</div>
+            <div class="note-card-date">{{ $note->created_at?->format('d M Y · H:i') ?? '-' }}</div>
         </div>
         @endforeach
     </div>
@@ -404,7 +404,7 @@
             <div class="kamu-post-body" id="kamuPostBody{{ $post->id }}">{{ $post->body }}</div>
             <textarea class="kamu-post-body-edit" id="kamuPostEdit{{ $post->id }}">{{ $post->body }}</textarea>
             <div class="kamu-post-meta">
-                <span>&#128197; {{ $post->created_at->format('d M Y H:i') }}</span>
+                <span>&#128197; {{ $post->created_at?->format('d M Y H:i') ?? '-' }}</span>
                 <span>&#9825; {{ $post->likes_count }}</span>
                 <span>&#128172; {{ $post->comments_count }}</span>
                 @if($post->location)

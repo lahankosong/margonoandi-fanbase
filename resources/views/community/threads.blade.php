@@ -4,20 +4,20 @@
 <style>
     .community-nav {
         display: flex; gap: 4px; margin-bottom: 1.5rem;
-        border-bottom: 1px solid #111; padding-bottom: 0;
+        border-bottom: 1px solid var(--border-2); padding-bottom: 0;
         overflow-x: auto; -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
     }
     .community-nav::-webkit-scrollbar { display: none; }
     .community-nav-btn {
-        padding: 8px 16px; font-size: 12px; color: #444;
+        padding: 8px 16px; font-size: 12px; color: var(--text-4);
         background: transparent; border: none; cursor: pointer;
         border-bottom: 2px solid transparent; transition: 0.15s;
         margin-bottom: -1px; text-decoration: none;
         display: inline-block; white-space: nowrap;
     }
-    .community-nav-btn:hover { color: #888; }
-    .community-nav-btn.active { color: #fff; border-bottom-color: #fff; }
+    .community-nav-btn:hover { color: var(--text-2); }
+    .community-nav-btn.active { color: var(--text); border-bottom-color: var(--text); }
 
     .threads-header {
         display: flex; align-items: center; justify-content: space-between;
@@ -26,11 +26,11 @@
     .threads-header h2 { font-size: 1rem; font-weight: 500; }
     .btn-new-thread {
         padding: 7px 16px; border-radius: 8px; font-size: 12px;
-        font-weight: 500; background: #fff; color: #000;
+        font-weight: 500; background: var(--text); color: var(--bg);
         text-decoration: none; transition: 0.2s; border: none;
         white-space: nowrap;
     }
-    .btn-new-thread:hover { background: #ddd; }
+    .btn-new-thread:hover { opacity: 0.85; }
 
     .category-filter {
         display: flex; gap: 6px; flex-wrap: nowrap;
@@ -41,27 +41,27 @@
     .category-filter::-webkit-scrollbar { display: none; }
     .cat-btn {
         padding: 5px 14px; border-radius: 20px; font-size: 11px;
-        border: 1px solid #1a1a1a; color: #555; background: transparent;
+        border: 1px solid var(--border); color: var(--text-3); background: transparent;
         cursor: pointer; text-decoration: none; transition: 0.15s;
         display: inline-block; white-space: nowrap; flex-shrink: 0;
     }
-    .cat-btn:hover { border-color: #333; color: #aaa; }
-    .cat-btn.active { background: #fff; color: #000; border-color: #fff; }
+    .cat-btn:hover { border-color: var(--border); color: var(--text-2); }
+    .cat-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
 
     .thread-list { display: flex; flex-direction: column; gap: 4px; }
     .thread-item {
-        background: #0a0a0a; border: 1px solid #141414;
+        background: var(--bg); border: 1px solid var(--border-2);
         border-radius: 10px; padding: 1rem;
         display: flex; gap: 10px; align-items: flex-start;
         transition: 0.15s;
     }
-    .thread-item:hover { border-color: #1e1e1e; }
-    .thread-item.pinned { border-color: #2a2a1a; background: #0a0a08; }
+    .thread-item:hover { border-color: var(--border); }
+    .thread-item.pinned { border-color: rgba(161,98,7,0.2); background: var(--bg); }
     .thread-item.locked { opacity: 0.7; }
 
     .thread-avatar {
         width: 34px; height: 34px; border-radius: 50%;
-        object-fit: cover; background: #111; flex-shrink: 0;
+        object-fit: cover; background: var(--bg-2); flex-shrink: 0;
     }
     .thread-content { flex: 1; min-width: 0; }
     .thread-title-row {
@@ -69,59 +69,58 @@
         margin-bottom: 4px; flex-wrap: wrap;
     }
     .thread-title {
-        font-size: 13px; font-weight: 500; color: #ccc;
+        font-size: 13px; font-weight: 500; color: var(--text);
         text-decoration: none; transition: 0.15s; line-height: 1.4;
         flex: 1; min-width: 0;
     }
-    .thread-title:hover { color: #fff; }
+    .thread-title:hover { color: var(--text); opacity: 0.85; }
     .thread-badge {
         font-size: 10px; padding: 2px 7px; border-radius: 10px;
         font-weight: 500; flex-shrink: 0;
     }
-    .badge-pinned { background: #1c1400; color: #a16207; border: 1px solid #2a1f00; }
-    .badge-locked { background: #1a1a1a; color: #555; border: 1px solid #2a2a2a; }
-    .badge-cat { background: #0a0a1a; color: #4a6fa5; border: 1px solid #1a1a3a; text-transform: capitalize; }
+    .badge-pinned { background: rgba(161,98,7,0.1); color: #a16207; border: 1px solid rgba(161,98,7,0.25); }
+    .badge-locked { background: var(--bg-2); color: var(--text-3); border: 1px solid var(--border); }
+    .badge-cat { background: var(--accent-glow); color: var(--accent); border: 1px solid var(--accent-dim); text-transform: capitalize; }
 
     .thread-excerpt {
-        font-size: 12px; color: #3a3a3a; line-height: 1.5;
+        font-size: 12px; color: var(--text-4); line-height: 1.5;
         margin-top: 3px; overflow: hidden;
         display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     }
     .thread-meta {
-        font-size: 11px; color: #2a2a2a; margin-top: 5px;
+        font-size: 11px; color: var(--text-4); margin-top: 5px;
         display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
     }
     .thread-stats-inline {
         display: flex; gap: 10px; margin-left: auto;
     }
-    .thread-stat-inline { font-size: 11px; color: #333; }
-    .thread-stat-inline strong { color: #555; }
+    .thread-stat-inline { font-size: 11px; color: var(--text-4); }
+    .thread-stat-inline strong { color: var(--text-3); }
 
-    /* Hide right column stats on mobile, show inline */
     .thread-stats-col {
         display: flex; flex-direction: column; align-items: flex-end;
         gap: 4px; flex-shrink: 0; min-width: 72px;
     }
-    .thread-stat { font-size: 11px; color: #333; text-align: right; }
-    .thread-stat strong { color: #555; }
-    .thread-last-reply { font-size: 10px; color: #2a2a2a; text-align: right; }
+    .thread-stat { font-size: 11px; color: var(--text-4); text-align: right; }
+    .thread-stat strong { color: var(--text-3); }
+    .thread-last-reply { font-size: 10px; color: var(--text-4); text-align: right; }
 
     .empty-threads {
         text-align: center; padding: 3rem 1rem;
-        color: #333; font-size: 13px;
+        color: var(--text-4); font-size: 13px;
     }
     .pagination-wrap {
         display: flex; justify-content: center; gap: 8px; margin-top: 1.5rem;
     }
     .page-btn {
         padding: 6px 14px; border-radius: 8px; font-size: 12px;
-        border: 1px solid #1a1a1a; color: #555; text-decoration: none;
+        border: 1px solid var(--border); color: var(--text-3); text-decoration: none;
         transition: 0.15s; background: transparent;
     }
-    .page-btn:hover { border-color: #333; color: #aaa; }
-    .page-btn.active { background: #fff; color: #000; border-color: #fff; }
+    .page-btn:hover { border-color: var(--border); color: var(--text-2); }
+    .page-btn.active { background: var(--text); color: var(--bg); border-color: var(--text); }
     .alert-success {
-        background: #0d2e1a; color: #4ade80; border: 1px solid #166534;
+        background: rgba(74,222,128,0.08); color: #4ade80; border: 1px solid #166534;
         padding: 10px 16px; border-radius: 8px; margin-bottom: 1rem; font-size: 13px;
     }
 
@@ -173,7 +172,7 @@
     @foreach($threads as $thread)
     <div class="thread-item {{ $thread->is_pinned ? 'pinned' : '' }} {{ $thread->is_locked ? 'locked' : '' }}">
 
-        <img src="{{ $thread->user->avatar ?? 'https://www.google.com/favicon.ico' }}"
+        <img src="{{ $thread->user->avatar ?? asset('images/default-avatar.png') }}"
              class="thread-avatar" alt="{{ $thread->user->name }}">
 
         <div class="thread-content">
@@ -233,7 +232,8 @@
     <p style="font-size:24px;margin-bottom:0.75rem;">&#128172;</p>
     <p>Belum ada diskusi. Mulai thread pertama!</p>
     @auth
-    <a href="{{ route('community.thread.create') }}" style="display:inline-block;margin-top:1rem;padding:8px 20px;border-radius:8px;background:#fff;color:#000;text-decoration:none;font-size:13px;">
+    <a href="{{ route('community.thread.create') }}"
+       style="display:inline-block;margin-top:1rem;padding:8px 20px;border-radius:8px;background:var(--text);color:var(--bg);text-decoration:none;font-size:13px;">
         + Buat Thread
     </a>
     @endauth

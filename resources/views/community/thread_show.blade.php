@@ -10,19 +10,19 @@
     .thread-sidebar { position: sticky; top: 80px; }
 
     .thread-header-card {
-        background: #0a0a0a; border: 1px solid #141414;
+        background: var(--bg); border: 1px solid var(--border-2);
         border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem;
     }
     .thread-breadcrumb {
-        font-size: 11px; color: #333; margin-bottom: 1rem;
+        font-size: 11px; color: var(--text-4); margin-bottom: 1rem;
         display: flex; align-items: center; gap: 6px;
         overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
     }
-    .thread-breadcrumb a { color: #333; text-decoration: none; transition: 0.15s; }
-    .thread-breadcrumb a:hover { color: #888; }
+    .thread-breadcrumb a { color: var(--text-4); text-decoration: none; transition: 0.15s; }
+    .thread-breadcrumb a:hover { color: var(--text-2); }
     .thread-category-badge {
         display: inline-block; font-size: 10px; letter-spacing: 0.15em;
-        color: #4a6fa5; background: #0a0a1a; border: 1px solid #1a1a3a;
+        color: var(--accent); background: var(--accent-glow); border: 1px solid var(--accent-dim);
         padding: 3px 10px; border-radius: 20px; margin-bottom: 0.75rem;
         text-transform: capitalize;
     }
@@ -31,34 +31,34 @@
         line-height: 1.4;
     }
     .thread-body-text {
-        font-size: 14px; color: #777; line-height: 1.9;
+        font-size: 14px; color: var(--text-2); line-height: 1.9;
         white-space: pre-wrap; word-break: break-word;
     }
     .thread-meta-row {
         display: flex; align-items: center; gap: 8px;
         padding-top: 1rem; margin-top: 1rem;
-        border-top: 1px solid #0d0d0d; flex-wrap: wrap;
+        border-top: 1px solid var(--border-2); flex-wrap: wrap;
     }
     .thread-author-avatar {
         width: 26px; height: 26px; border-radius: 50%;
-        object-fit: cover; background: #111;
+        object-fit: cover; background: var(--bg-2);
     }
-    .thread-author-name { font-size: 12px; color: #555; }
-    .thread-date { font-size: 11px; color: #2a2a2a; }
-    .thread-views { font-size: 11px; color: #2a2a2a; margin-left: auto; }
+    .thread-author-name { font-size: 12px; color: var(--text-3); }
+    .thread-date { font-size: 11px; color: var(--text-4); }
+    .thread-views { font-size: 11px; color: var(--text-4); margin-left: auto; }
 
     .locked-notice {
-        background: #111; border: 1px solid #2a2a2a;
+        background: var(--bg-2); border: 1px solid var(--border);
         border-radius: 8px; padding: 10px 14px; margin-bottom: 1.25rem;
-        font-size: 12px; color: #555; display: flex; align-items: center; gap: 8px;
+        font-size: 12px; color: var(--text-3); display: flex; align-items: center; gap: 8px;
     }
     .replies-header {
-        font-size: 11px; color: #444; letter-spacing: 0.2em;
+        font-size: 11px; color: var(--text-4); letter-spacing: 0.2em;
         text-transform: uppercase; margin-bottom: 1rem;
-        padding-bottom: 0.5rem; border-bottom: 1px solid #111;
+        padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-2);
     }
     .reply-card {
-        background: #0a0a0a; border: 1px solid #141414;
+        background: var(--bg); border: 1px solid var(--border-2);
         border-radius: 10px; padding: 1rem; margin-bottom: 0.75rem;
     }
     .reply-header {
@@ -66,80 +66,79 @@
     }
     .reply-avatar {
         width: 30px; height: 30px; border-radius: 50%;
-        object-fit: cover; background: #111; flex-shrink: 0;
+        object-fit: cover; background: var(--bg-2); flex-shrink: 0;
     }
-    .reply-name { font-size: 12px; font-weight: 500; color: #ccc; }
-    .reply-time { font-size: 11px; color: #2a2a2a; margin-left: 4px; }
+    .reply-name { font-size: 12px; font-weight: 500; color: var(--text); }
+    .reply-time { font-size: 11px; color: var(--text-4); margin-left: 4px; }
     .reply-body {
-        font-size: 14px; color: #777; line-height: 1.8;
+        font-size: 14px; color: var(--text-2); line-height: 1.8;
         white-space: pre-wrap; word-break: break-word;
     }
     .reply-form-card {
-        background: #0a0a0a; border: 1px solid #141414;
+        background: var(--bg); border: 1px solid var(--border-2);
         border-radius: 12px; padding: 1.25rem; margin-top: 1.25rem;
     }
     .reply-form-title {
-        font-size: 11px; color: #444; letter-spacing: 0.15em;
+        font-size: 11px; color: var(--text-4); letter-spacing: 0.15em;
         text-transform: uppercase; margin-bottom: 0.875rem;
     }
     .reply-textarea {
-        width: 100%; background: #111; border: 1px solid #1a1a1a;
-        border-radius: 8px; color: #ccc; font-size: 14px;
+        width: 100%; background: var(--bg-2); border: 1px solid var(--border);
+        border-radius: 8px; color: var(--text); font-size: 14px;
         padding: 10px 12px; outline: none; resize: vertical;
         min-height: 100px; line-height: 1.7; font-family: inherit; transition: 0.15s;
     }
-    .reply-textarea:focus { border-color: #333; }
-    .reply-textarea::placeholder { color: #2a2a2a; }
+    .reply-textarea:focus { border-color: var(--accent); }
+    .reply-textarea::placeholder { color: var(--text-4); }
     .reply-submit {
         margin-top: 10px; padding: 9px 24px; border-radius: 8px;
-        font-size: 13px; font-weight: 500; background: #fff; color: #000;
+        font-size: 13px; font-weight: 500; background: var(--text); color: var(--bg);
         border: none; cursor: pointer; transition: 0.2s;
     }
-    .reply-submit:hover { background: #ddd; }
+    .reply-submit:hover { opacity: 0.85; }
     .login-to-reply {
-        background: #0a0a0a; border: 1px solid #141414;
+        background: var(--bg); border: 1px solid var(--border-2);
         border-radius: 10px; padding: 1.25rem; text-align: center; margin-top: 1.25rem;
     }
-    .login-to-reply p { font-size: 13px; color: #555; margin-bottom: 1rem; }
+    .login-to-reply p { font-size: 13px; color: var(--text-3); margin-bottom: 1rem; }
     .btn-login-reply {
         display: inline-flex; align-items: center; gap: 8px;
         padding: 8px 20px; border-radius: 50px;
-        background: #fff; color: #000; font-size: 13px;
+        background: var(--text); color: var(--bg); font-size: 13px;
         font-weight: 500; text-decoration: none;
     }
     .sidebar-info {
-        background: #0a0a0a; border: 1px solid #141414;
+        background: var(--bg); border: 1px solid var(--border-2);
         border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;
     }
     .sidebar-title {
-        font-size: 11px; color: #444; letter-spacing: 0.15em;
+        font-size: 11px; color: var(--text-4); letter-spacing: 0.15em;
         text-transform: uppercase; margin-bottom: 0.875rem;
-        padding-bottom: 0.5rem; border-bottom: 1px solid #111;
+        padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-2);
     }
     .sidebar-stat { display: flex; justify-content: space-between; margin-bottom: 8px; }
-    .sidebar-stat-label { font-size: 12px; color: #444; }
-    .sidebar-stat-value { font-size: 12px; color: #888; font-weight: 500; }
+    .sidebar-stat-label { font-size: 12px; color: var(--text-4); }
+    .sidebar-stat-value { font-size: 12px; color: var(--text-2); font-weight: 500; }
 
     .alert-success {
-        background: #0d2e1a; color: #4ade80; border: 1px solid #166534;
+        background: rgba(74,222,128,0.08); color: #4ade80; border: 1px solid #166534;
         padding: 10px 16px; border-radius: 8px; margin-bottom: 1rem; font-size: 13px;
     }
     .alert-error {
-        background: #2e0d0d; color: #f87171; border: 1px solid #991b1b;
+        background: rgba(239,68,68,0.07); color: #f87171; border: 1px solid rgba(239,68,68,0.18);
         padding: 10px 16px; border-radius: 8px; margin-bottom: 1rem; font-size: 13px;
     }
     .empty-replies {
-        text-align: center; padding: 2rem; color: #333; font-size: 13px;
+        text-align: center; padding: 2rem; color: var(--text-4); font-size: 13px;
     }
 
-    /* Mobile meta bar - fixed bottom above bottom nav */
     .thread-mobile-meta {
         display: none;
         position: fixed; bottom: 60px; left: 0; right: 0;
-        background: rgba(8,8,8,0.97); border-top: 1px solid #111;
+        background: var(--bottom-bg); border-top: 1px solid var(--border-2);
         padding: 8px 1rem; z-index: 100;
         flex-direction: row; align-items: center; gap: 10px;
-        font-size: 11px; color: #444;
+        font-size: 11px; color: var(--text-4);
     }
 
     @media (max-width: 768px) {
@@ -172,7 +171,7 @@
                 <span>›</span>
                 <a href="{{ route('community.threads') }}">Diskusi</a>
                 <span>›</span>
-                <span style="color:#555;">{{ Str::limit($thread->title, 30) }}</span>
+                <span style="color:var(--text-3);">{{ Str::limit($thread->title, 30) }}</span>
             </div>
 
             <span class="thread-category-badge">{{ $thread->category }}</span>
@@ -185,7 +184,7 @@
             <div class="thread-body-text">{{ $thread->body }}</div>
 
             <div class="thread-meta-row">
-                <img src="{{ $thread->user->avatar ?? 'https://www.google.com/favicon.ico' }}"
+                <img src="{{ $thread->user->avatar ?? asset('images/default-avatar.png') }}"
                      class="thread-author-avatar" alt="">
                 <span class="thread-author-name">{{ $thread->user->name }}</span>
                 <span class="thread-date">{{ $thread->created_at->diffForHumans() }}</span>
@@ -196,9 +195,9 @@
                       onsubmit="return confirm('Hapus thread ini?')" style="margin-left:auto;">
                     @csrf @method('DELETE')
                     <button type="submit"
-                        style="font-size:11px;color:#2a2a2a;background:transparent;border:none;cursor:pointer;"
+                        style="font-size:11px;color:var(--text-4);background:transparent;border:none;cursor:pointer;"
                         onmouseover="this.style.color='#ef4444'"
-                        onmouseout="this.style.color='#2a2a2a'">Hapus</button>
+                        onmouseout="this.style.color='var(--text-4)'">Hapus</button>
                 </form>
                 @endif
                 @endauth
@@ -214,7 +213,7 @@
         @foreach($thread->replies as $reply)
         <div class="reply-card">
             <div class="reply-header">
-                <img src="{{ $reply->user->avatar ?? 'https://www.google.com/favicon.ico' }}"
+                <img src="{{ $reply->user->avatar ?? asset('images/default-avatar.png') }}"
                      class="reply-avatar" alt="">
                 <div>
                     <span class="reply-name">{{ $reply->user->name }}</span>
@@ -277,12 +276,12 @@
             <p class="sidebar-title">Navigasi</p>
             <div style="display:flex;flex-direction:column;gap:6px;">
                 <a href="{{ route('community.threads') }}"
-                   style="font-size:12px;color:#888;text-decoration:none;padding:7px;border-radius:6px;background:#111;display:block;">
+                   style="font-size:12px;color:var(--text-2);text-decoration:none;padding:7px;border-radius:6px;background:var(--bg-2);display:block;">
                     ← Semua diskusi
                 </a>
                 @auth
                 <a href="{{ route('community.thread.create') }}"
-                   style="font-size:12px;color:#555;text-decoration:none;padding:7px;border-radius:6px;background:#0d0d0d;display:block;">
+                   style="font-size:12px;color:var(--text-3);text-decoration:none;padding:7px;border-radius:6px;background:var(--bg-2);display:block;">
                     + Buat thread baru
                 </a>
                 @endauth
@@ -294,10 +293,10 @@
 
 {{-- Mobile meta bar --}}
 <div class="thread-mobile-meta">
-    <a href="{{ route('community.threads') }}" style="color:#555;text-decoration:none;">← Diskusi</a>
+    <a href="{{ route('community.threads') }}" style="color:var(--text-3);text-decoration:none;">← Diskusi</a>
     <span>&#128172; {{ $thread->replies_count }}</span>
     <span>&#128065; {{ $thread->views_count }}</span>
-    <span style="text-transform:capitalize;color:#4a6fa5;">{{ $thread->category }}</span>
+    <span style="text-transform:capitalize;color:var(--accent);">{{ $thread->category }}</span>
 </div>
 
 @endsection

@@ -8,7 +8,7 @@
         display: flex; flex-direction: column; justify-content: flex-end;
         padding: 0 0 3rem; overflow: hidden;
     }
-    .song-hero-bg { position: absolute; inset: 0; z-index: 0; background: #080808; }
+    .song-hero-bg { position: absolute; inset: 0; z-index: 0; background: var(--bg); }
     .song-hero-thumb {
         position: absolute; inset: 0; z-index: 0;
         width: 100%; height: 100%; object-fit: cover;
@@ -16,38 +16,38 @@
     }
     .song-hero-overlay {
         position: absolute; inset: 0; z-index: 1;
-        background: linear-gradient(to top, #080808 30%, transparent 100%);
+        background: linear-gradient(to top, var(--bg) 30%, transparent 100%);
     }
     .song-hero-content { position: relative; z-index: 2; }
     .song-breadcrumb {
-        font-size: 11px; color: #444; margin-bottom: 1rem;
+        font-size: 11px; color: var(--text-4); margin-bottom: 1rem;
         display: flex; align-items: center; gap: 8px;
     }
-    .song-breadcrumb a { color: #444; text-decoration: none; transition: 0.15s; }
-    .song-breadcrumb a:hover { color: #888; }
+    .song-breadcrumb a { color: var(--text-4); text-decoration: none; transition: 0.15s; }
+    .song-breadcrumb a:hover { color: var(--text-2); }
     .song-era-badge {
         display: inline-block; font-size: 10px; letter-spacing: 0.2em;
-        color: #444; text-transform: uppercase; border: 1px solid #1a1a1a;
+        color: var(--text-3); text-transform: uppercase; border: 1px solid var(--border);
         padding: 3px 10px; border-radius: 20px; margin-bottom: 1rem;
     }
     .song-hero-title {
         font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 300;
-        letter-spacing: 0.1em; margin-bottom: 0.75rem; color: #fff;
+        letter-spacing: 0.1em; margin-bottom: 0.75rem; color: var(--text);
     }
     .song-hero-hook {
-        font-size: 14px; color: #555; font-style: italic;
+        font-size: 14px; color: var(--text-2); font-style: italic;
         max-width: 560px; line-height: 1.7; margin-bottom: 2rem;
     }
     .song-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .hero-btn {
         padding: 9px 20px; border-radius: 50px; font-size: 12px;
-        font-weight: 500; text-decoration: none; border: 1px solid #2a2a2a;
+        font-weight: 500; text-decoration: none; border: 1px solid var(--border);
         transition: 0.15s; display: inline-flex; align-items: center; gap: 6px;
-        cursor: pointer; background: transparent;
+        cursor: pointer; background: transparent; color: var(--text-2);
     }
-    .hero-btn.primary { background: #fff; color: #000; border-color: #fff; }
-    .hero-btn.primary:hover { background: #e0e0e0; }
-    .hero-btn:hover { border-color: #555; color: #fff; }
+    .hero-btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .hero-btn.primary:hover { opacity: 0.85; }
+    .hero-btn:hover { border-color: var(--border); color: var(--text); }
     .hero-btn-spotify { color: #1DB954; }
     .hero-btn-youtube { color: #FF0000; }
     .hero-btn-apple   { color: #fc3c44; }
@@ -63,119 +63,119 @@
     /* SECTION */
     .song-section { margin-bottom: 3rem; }
     .song-section-title {
-        font-size: 10px; letter-spacing: 0.25em; color: #3a3a3a;
+        font-size: 10px; letter-spacing: 0.25em; color: var(--text-4);
         text-transform: uppercase; margin-bottom: 1.5rem;
-        padding-bottom: 0.75rem; border-bottom: 1px solid #111;
+        padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-2);
     }
 
-    /* PLAYER — hanya di main, tidak di sidebar */
+    /* PLAYER */
     .player-wrap {
-        background: #0d0d0d; border-radius: 12px; overflow: hidden;
+        background: var(--bg-2); border-radius: 12px; overflow: hidden;
         margin-bottom: 3rem;
     }
     .player-wrap iframe { width: 100%; height: 360px; display: block; border: none; }
 
     /* STORY */
-    .story-body { font-size: 15px; color: #777; line-height: 2; }
+    .story-body { font-size: 15px; color: var(--text-2); line-height: 2; }
     .story-body p { margin-bottom: 1.25rem; }
-    .story-body strong { color: #bbb; font-weight: 500; }
-    .story-body em { color: #999; font-style: italic; }
+    .story-body strong { color: var(--text); font-weight: 500; }
+    .story-body em { color: var(--text-2); font-style: italic; }
 
     /* CHORD */
     .chord-transpose {
         display: flex; align-items: center; gap: 10px;
         margin-bottom: 1rem; padding: 10px 14px;
-        background: #0d0d0d; border-radius: 8px; border: 1px solid #1a1a1a;
+        background: var(--bg-2); border-radius: 8px; border: 1px solid var(--border);
     }
-    .chord-transpose span { font-size: 12px; color: #555; }
+    .chord-transpose span { font-size: 12px; color: var(--text-3); }
     .transpose-btn {
         width: 28px; height: 28px; border-radius: 50%;
-        background: #1a1a1a; border: 1px solid #2a2a2a;
-        color: #888; font-size: 14px; cursor: pointer;
+        background: var(--bg-3); border: 1px solid var(--border);
+        color: var(--text-2); font-size: 14px; cursor: pointer;
         display: flex; align-items: center; justify-content: center;
         transition: 0.15s; padding: 0;
     }
-    .transpose-btn:hover { background: #2a2a2a; color: #fff; }
-    .current-key { font-size: 14px; font-weight: 500; color: #60a5fa; min-width: 30px; text-align: center; }
+    .transpose-btn:hover { background: var(--bg-4); color: var(--text); }
+    .current-key { font-size: 14px; font-weight: 500; color: var(--accent); min-width: 30px; text-align: center; }
     .chord-body-inline {
         font-family: 'Courier New', monospace; font-size: 13px;
-        line-height: 2.4; color: #aaa; white-space: pre-wrap;
+        line-height: 2.4; color: var(--text-2); white-space: pre-wrap;
     }
-    .chord-mark   { color: #4a9eff; font-weight: 700; }
-    .section-mark { color: #555; font-size: 11px; }
+    .chord-mark   { color: var(--accent); font-weight: 700; }
+    .section-mark { color: var(--text-3); font-size: 11px; }
 
     /* SHARE */
     .share-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
     .share-btn {
         padding: 8px 18px; border-radius: 50px; font-size: 12px;
-        font-weight: 500; text-decoration: none; border: 1px solid #1a1a1a;
+        font-weight: 500; text-decoration: none; border: 1px solid var(--border);
         transition: 0.15s; display: inline-flex; align-items: center; gap: 8px;
         cursor: pointer; background: transparent;
     }
-    .share-btn:hover { border-color: #444; }
+    .share-btn:hover { border-color: var(--border); opacity: 0.85; }
     .share-wa   { color: #25D366; }
-    .share-x    { color: #aaa; }
-    .share-copy { color: #888; }
+    .share-x    { color: var(--text-2); }
+    .share-copy { color: var(--text-2); }
     .share-copy.copied { color: #4ade80; border-color: #166534; }
 
     /* COMMENTS */
     .comment-item {
         display: flex; gap: 12px; padding: 1rem 0;
-        border-bottom: 1px solid #0d0d0d;
+        border-bottom: 1px solid var(--border-2);
     }
     .comment-avatar {
         width: 36px; height: 36px; border-radius: 50%;
-        object-fit: cover; background: #111; flex-shrink: 0;
+        object-fit: cover; background: var(--bg-2); flex-shrink: 0;
     }
-    .comment-name { font-size: 13px; font-weight: 500; color: #ccc; }
-    .comment-date { font-size: 11px; color: #333; margin-left: 8px; }
-    .comment-body { font-size: 13px; color: #666; line-height: 1.7; margin-top: 4px; }
-    .no-comments { font-size: 13px; color: #333; padding: 2rem 0; text-align: center; font-style: italic; }
+    .comment-name { font-size: 13px; font-weight: 500; color: var(--text); }
+    .comment-date { font-size: 11px; color: var(--text-4); margin-left: 8px; }
+    .comment-body { font-size: 13px; color: var(--text-2); line-height: 1.7; margin-top: 4px; }
+    .no-comments { font-size: 13px; color: var(--text-4); padding: 2rem 0; text-align: center; font-style: italic; }
     .comment-form textarea {
-        width: 100%; background: #0d0d0d; border: 1px solid #1a1a1a;
-        border-radius: 10px; color: #ccc; font-size: 13px;
+        width: 100%; background: var(--bg-2); border: 1px solid var(--border);
+        border-radius: 10px; color: var(--text); font-size: 13px;
         padding: 12px 14px; outline: none; resize: vertical;
         min-height: 100px; line-height: 1.7; font-family: inherit; transition: 0.15s;
     }
-    .comment-form textarea:focus { border-color: #333; }
-    .comment-form textarea::placeholder { color: #2a2a2a; }
+    .comment-form textarea:focus { border-color: var(--accent); }
+    .comment-form textarea::placeholder { color: var(--text-4); }
     .comment-submit {
         margin-top: 10px; padding: 9px 24px; border-radius: 8px;
-        font-size: 13px; font-weight: 500; background: #fff; color: #000;
+        font-size: 13px; font-weight: 500; background: var(--text); color: var(--bg);
         border: none; cursor: pointer; transition: 0.2s;
     }
-    .comment-submit:hover { background: #ddd; }
+    .comment-submit:hover { opacity: 0.85; }
     .login-to-comment {
-        background: #0a0a0a; border: 1px solid #141414;
+        background: var(--bg); border: 1px solid var(--border-2);
         border-radius: 10px; padding: 1.5rem; text-align: center; margin-top: 1.5rem;
     }
-    .login-to-comment p { font-size: 13px; color: #555; margin-bottom: 1rem; }
+    .login-to-comment p { font-size: 13px; color: var(--text-3); margin-bottom: 1rem; }
     .btn-login-comment {
         display: inline-flex; align-items: center; gap: 8px;
         padding: 8px 20px; border-radius: 50px;
-        background: #fff; color: #000; font-size: 13px;
+        background: var(--text); color: var(--bg); font-size: 13px;
         font-weight: 500; text-decoration: none;
     }
 
     /* SIDEBAR */
     .sidebar-info {
-        background: #0a0a0a; border: 1px solid #141414;
+        background: var(--bg); border: 1px solid var(--border-2);
         border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;
     }
     .sidebar-thumb {
         width: 100%; aspect-ratio: 16/9; object-fit: cover;
-        border-radius: 8px; background: #111; display: block; margin-bottom: 1rem;
+        border-radius: 8px; background: var(--bg-2); display: block; margin-bottom: 1rem;
         opacity: 0.8;
     }
-    .sidebar-title { font-size: 14px; font-weight: 500; color: #fff; margin-bottom: 4px; }
-    .sidebar-era   { font-size: 11px; color: #444; margin-bottom: 1rem; }
+    .sidebar-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+    .sidebar-era   { font-size: 11px; color: var(--text-4); margin-bottom: 1rem; }
     .sidebar-links { display: flex; flex-direction: column; gap: 6px; }
     .sidebar-link {
         font-size: 12px; padding: 8px 14px; border-radius: 8px;
-        text-decoration: none; border: 1px solid #1a1a1a;
+        text-decoration: none; border: 1px solid var(--border);
         transition: 0.15s; display: flex; align-items: center; gap: 8px;
     }
-    .sidebar-link:hover { border-color: #333; }
+    .sidebar-link:hover { border-color: var(--border); opacity: 0.85; }
     .sidebar-link-spotify { color: #1DB954; }
     .sidebar-link-youtube { color: #FF0000; }
     .sidebar-link-apple   { color: #fc3c44; }
@@ -183,17 +183,17 @@
     /* SONG NAV */
     .song-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 1rem; }
     .song-nav-btn {
-        background: #0a0a0a; border: 1px solid #141414;
+        background: var(--bg); border: 1px solid var(--border-2);
         border-radius: 10px; padding: 0.875rem 1rem;
         text-decoration: none; transition: 0.15s; display: block;
     }
-    .song-nav-btn:hover { border-color: #2a2a2a; }
-    .song-nav-label { font-size: 10px; color: #333; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px; }
-    .song-nav-title { font-size: 12px; color: #777; font-weight: 500; }
+    .song-nav-btn:hover { border-color: var(--border); }
+    .song-nav-label { font-size: 10px; color: var(--text-4); text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 4px; }
+    .song-nav-title { font-size: 12px; color: var(--text-2); font-weight: 500; }
     .song-nav-btn.next { text-align: right; }
 
     .alert-success {
-        background: #0d2e1a; color: #4ade80; border: 1px solid #166534;
+        background: rgba(74,222,128,0.08); color: #4ade80; border: 1px solid #166534;
         padding: 10px 16px; border-radius: 8px; margin-bottom: 1.5rem; font-size: 13px;
     }
 
@@ -219,7 +219,7 @@
             <span>›</span>
             <span>{{ $song->era ?? 'Lagu' }}</span>
             <span>›</span>
-            <span style="color:#666;">{{ $song->title }}</span>
+            <span style="color:var(--text-3);">{{ $song->title }}</span>
         </div>
         @if($song->era)
         <span class="song-era-badge">{{ $song->era }}</span>
@@ -253,7 +253,7 @@
         <div class="alert-success">{{ session('success') }}</div>
         @endif
 
-        {{-- PLAYER — hanya satu di sini --}}
+        {{-- PLAYER --}}
         <div id="playerSection" class="player-wrap">
             <iframe
                 src="https://www.youtube.com/embed/{{ $song->youtube_id }}?rel=0"
@@ -283,7 +283,7 @@
                 <span class="current-key" id="currentKey">{{ $song->key_signature }}</span>
                 <button class="transpose-btn" onclick="transposeChord(1)">&#43;</button>
                 @if($song->tempo)
-                <span style="font-size:11px;color:#333;margin-left:auto;">&#9834; {{ $song->tempo }} bpm</span>
+                <span style="font-size:11px;color:var(--text-4);margin-left:auto;">&#9834; {{ $song->tempo }} bpm</span>
                 @endif
             </div>
             @endif
@@ -311,7 +311,7 @@
             <div style="margin-bottom:1.5rem;">
                 @foreach($comments as $comment)
                 <div class="comment-item">
-                    <img src="{{ $comment->user->avatar ?? 'https://www.google.com/favicon.ico' }}"
+                    <img src="{{ $comment->user->avatar ?? asset('images/default-avatar.png') }}"
                          class="comment-avatar" alt="{{ $comment->user->name }}">
                     <div style="flex:1;min-width:0;">
                         <span class="comment-name">{{ $comment->user->name }}</span>
@@ -348,7 +348,7 @@
 
     </div>
 
-    {{-- SIDEBAR — info saja, tanpa iframe --}}
+    {{-- SIDEBAR --}}
     <div class="song-sidebar">
         <div class="sidebar-info">
             <img src="https://img.youtube.com/vi/{{ $song->youtube_id }}/mqdefault.jpg"
@@ -442,10 +442,10 @@ function transposeChord(dir) {
 function copyLink() {
     navigator.clipboard.writeText(window.location.href).then(function() {
         var btn = document.getElementById('copyBtn');
-        btn.textContent = '&#10003; Tersalin!';
+        btn.textContent = '✓ Tersalin!';
         btn.classList.add('copied');
         setTimeout(function() {
-            btn.innerHTML = '&#128279; Salin link';
+            btn.innerHTML = '🔗 Salin link';
             btn.classList.remove('copied');
         }, 2000);
     });

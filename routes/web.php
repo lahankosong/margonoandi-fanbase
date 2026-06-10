@@ -93,6 +93,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dia/group/{id}', [DiaController::class, 'group'])->name('dia.group');
     Route::post('/dia/group/create', [DiaController::class, 'createGroup'])->name('dia.group.create');
     Route::post('/dia/group/{id}/send', [DiaController::class, 'sendGroup'])->name('dia.group.send');
+    Route::get('/dia/conversation/{id}/poll', [DiaController::class, 'pollMessages'])->name('dia.poll');
+    Route::get('/dia/group/{id}/poll', [DiaController::class, 'pollGroupMessages'])->name('dia.group.poll');
 
     // Catatan kamu (private notes)
     Route::post('/kamu/note', [KamuNoteController::class, 'store'])->name('kamu.note.store');

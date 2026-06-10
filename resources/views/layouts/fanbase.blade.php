@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Margonoandi — @yield('title', 'Fanbase')</title>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
     <style>
@@ -117,6 +118,50 @@
             transition:0.2s;
         }
         .fb-notif-btn:hover { background:rgba(255,255,255,0.22); }
+        .fb-notif-wrap { position:relative; }
+        .fb-notif-badge {
+            position:absolute; top:-3px; right:-3px;
+            min-width:16px; height:16px; border-radius:8px;
+            background:#f43f5e; color:#fff; font-size:9px; font-weight:700;
+            display:flex; align-items:center; justify-content:center; padding:0 3px;
+            border:2px solid rgba(30,127,168,0.9);
+            line-height:1; pointer-events:none;
+        }
+        .fb-notif-dropdown {
+            display:none; position:absolute; top:calc(100% + 10px); right:0;
+            width:320px; max-height:420px; overflow-y:auto;
+            background:#fff; border:1px solid var(--border);
+            border-radius:var(--radius); box-shadow:var(--shadow-lg);
+            z-index:1000;
+        }
+        .fb-notif-dropdown.open { display:flex; flex-direction:column; }
+        .fb-notif-header {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:12px 16px 10px; border-bottom:1px solid var(--border-lt);
+            font-family:'Sora',sans-serif; font-size:12px; font-weight:600; color:var(--text-1);
+            position:sticky; top:0; background:#fff; z-index:1;
+        }
+        .fb-notif-readall {
+            font-size:10px; color:var(--sky-dk); cursor:pointer; background:none; border:none;
+            font-family:inherit; padding:0; font-weight:500;
+        }
+        .fb-notif-readall:hover { text-decoration:underline; }
+        .fb-notif-item {
+            display:flex; gap:10px; padding:10px 16px;
+            border-bottom:1px solid var(--border-lt); cursor:pointer; transition:0.15s;
+        }
+        .fb-notif-item:hover { background:var(--sky-lt); }
+        .fb-notif-item.unread { background:rgba(56,168,204,0.05); }
+        .fb-notif-item.unread:hover { background:var(--sky-lt); }
+        .fb-notif-avatar { width:34px; height:34px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+        .fb-notif-body { flex:1; min-width:0; }
+        .fb-notif-title { font-size:12px; font-weight:600; color:var(--text-1); margin-bottom:2px; line-height:1.3; }
+        .fb-notif-msg { font-size:11px; color:var(--text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .fb-notif-time { font-size:10px; color:var(--text-4); margin-top:3px; }
+        .fb-notif-empty { text-align:center; padding:2rem 1rem; font-size:12px; color:var(--text-4); }
+        @media(max-width:480px){
+            .fb-notif-dropdown { width:290px; right:-40px; }
+        }
         .fb-avatar {
             width:32px; height:32px; border-radius:50%;
             object-fit:cover;
@@ -554,10 +599,22 @@
 <div class="fb-topbar">
     <a href="{{ route('aku') }}" class="fb-brand">MARGONOANDI <span>· fanbase</span></a>
     <div class="fb-topbar-right">
-        <button class="fb-notif-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-        </button>
-        <img src="{{ Auth::user()->avatar }}" class="fb-avatar" alt="">
+        <div class="fb-notif-wrap">
+            <button class="fb-notif-btn" id="fbNotifBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                <span class="fb-notif-badge" id="fbNotifBadge" style="display:none;"></span>
+            </button>
+            <div class="fb-notif-dropdown" id="fbNotifDropdown">
+                <div class="fb-notif-header">
+                    <span>Notifikasi</span>
+                    <button class="fb-notif-readall" onclick="fbMarkAllRead()">Baca semua</button>
+                </div>
+                <div id="fbNotifList">
+                    <div class="fb-notif-empty">Memuat...</div>
+                </div>
+            </div>
+        </div>
+        <img src="{{ Auth::user()->avatar ?? asset('images/default-avatar.png') }}" class="fb-avatar" alt="">
         <a href="{{ route('logout') }}" class="fb-logout">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
             <span class="fb-logout-text">Keluar</span>
@@ -570,7 +627,7 @@
     {{-- LEFT SIDEBAR --}}
     <aside class="fb-sidebar-left">
         <div class="fb-profile-card">
-            <img src="{{ Auth::user()->avatar }}" class="fb-profile-avatar" alt="">
+            <img src="{{ Auth::user()->avatar ?? asset('images/default-avatar.png') }}" class="fb-profile-avatar" alt="">
             <div class="fb-profile-name">{{ Auth::user()->name }}</div>
             <div class="fb-profile-sub">&#10022; Member Margonoandi</div>
         </div>
@@ -661,7 +718,7 @@
             @forelse($onlineUsers as $u)
             <div class="fb-online-item" onclick="window.location.href='{{ route('dia') }}'">
                 <div class="fb-online-avatar">
-                    <img src="{{ $u->avatar ?? 'https://www.google.com/favicon.ico' }}" alt="">
+                    <img src="{{ $u->avatar ?? asset('images/default-avatar.png') }}" alt="">
                     <div class="fb-online-dot"></div>
                 </div>
                 <span class="fb-online-name">{{ explode(' ',$u->name)[0] }}</span>
@@ -859,6 +916,101 @@ function fbClosePlaylist(){
     document.body.style.overflow='';
 }
 function escHtml(t){var d=document.createElement('div');d.appendChild(document.createTextNode(t));return d.innerHTML;}
+
+// ===== NOTIFICATION BELL =====
+var fbNotifOpen = false;
+var fbNotifLoaded = false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('fbNotifBtn');
+    if (!btn) return;
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        fbNotifOpen ? fbCloseNotif() : fbOpenNotif();
+    });
+    document.addEventListener('click', function(e) {
+        var dd = document.getElementById('fbNotifDropdown');
+        if (dd && !dd.contains(e.target) && e.target !== btn) fbCloseNotif();
+    });
+    fbPollNotifCount();
+    setInterval(fbPollNotifCount, 30000);
+});
+
+function fbOpenNotif() {
+    var dd = document.getElementById('fbNotifDropdown');
+    if (!dd) return;
+    dd.classList.add('open');
+    fbNotifOpen = true;
+    fbLoadNotifs();
+}
+function fbCloseNotif() {
+    var dd = document.getElementById('fbNotifDropdown');
+    if (dd) dd.classList.remove('open');
+    fbNotifOpen = false;
+}
+
+function fbPollNotifCount() {
+    fetch('/notifications/unread-count', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(d) {
+        if (!d) return;
+        var badge = document.getElementById('fbNotifBadge');
+        if (!badge) return;
+        if (d.count > 0) {
+            badge.textContent = d.count > 99 ? '99+' : d.count;
+            badge.style.display = 'flex';
+        } else {
+            badge.style.display = 'none';
+        }
+    }).catch(function(){});
+}
+
+function fbLoadNotifs() {
+    var list = document.getElementById('fbNotifList');
+    if (!list) return;
+    fetch('/notifications', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(d) {
+        if (!d) return;
+        if (!d.notifications || d.notifications.length === 0) {
+            list.innerHTML = '<div class="fb-notif-empty">Belum ada notifikasi.</div>';
+            return;
+        }
+        var defaultAvatar = '{{ asset("images/default-avatar.png") }}';
+        list.innerHTML = d.notifications.map(function(n) {
+            var avatar = (n.from_user && n.from_user.avatar) ? n.from_user.avatar : defaultAvatar;
+            var unread  = !n.read_at ? ' unread' : '';
+            return '<div class="fb-notif-item'+unread+'" onclick="fbNotifClick('+n.id+',\''+escHtml(n.url||'#')+'\')">'
+                + '<img class="fb-notif-avatar" src="'+escHtml(avatar)+'" onerror="this.src=\''+defaultAvatar+'\'" alt="">'
+                + '<div class="fb-notif-body">'
+                + '<div class="fb-notif-title">'+escHtml(n.title||'')+'</div>'
+                + '<div class="fb-notif-msg">'+escHtml(n.body||'')+'</div>'
+                + '<div class="fb-notif-time">'+escHtml(n.created_at_diff||'')+'</div>'
+                + '</div></div>';
+        }).join('');
+        fbPollNotifCount();
+    }).catch(function(){
+        list.innerHTML = '<div class="fb-notif-empty">Gagal memuat notifikasi.</div>';
+    });
+}
+
+function fbNotifClick(id, url) {
+    fetch('/notifications/'+id+'/read', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : '', 'X-Requested-With': 'XMLHttpRequest' }
+    }).catch(function(){});
+    fbCloseNotif();
+    if (url && url !== '#') window.location.href = url;
+}
+
+function fbMarkAllRead() {
+    fetch('/notifications/read-all', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]').content : '', 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(function() {
+        fbLoadNotifs();
+    }).catch(function(){});
+}
 </script>
 </body>
 </html>

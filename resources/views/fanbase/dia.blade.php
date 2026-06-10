@@ -321,7 +321,7 @@
 
         <div class="dia-messages" id="diaMessages">
             @forelse($conversation->messages as $msg)
-            <div class="dia-msg {{ $msg->user_id===Auth::id() ? 'mine' : 'others' }}">
+            <div class="dia-msg {{ $msg->user_id===Auth::id() ? 'mine' : 'others' }}" data-id="{{ $msg->id }}">
                 @if($msg->user_id !== Auth::id())
                 <img src="{{ $msg->user->avatar ?? asset('images/default-avatar.png') }}" class="dia-msg-avatar" alt="">
                 @endif
@@ -330,7 +330,7 @@
                     <div class="dia-msg-name">{{ $msg->user->name }}</div>
                     @endif
                     <div class="dia-msg-bubble">{{ $msg->body }}</div>
-                    <div class="dia-msg-time">{{ $msg->created_at->format('H:i') }}</div>
+                    <div class="dia-msg-time">{{ $msg->created_at->diffForHumans() }}</div>
                 </div>
             </div>
             @empty
@@ -367,7 +367,7 @@
 
         <div class="dia-messages" id="diaMessages">
             @forelse($group->messages as $msg)
-            <div class="dia-msg {{ $msg->user_id===Auth::id() ? 'mine' : 'others' }}">
+            <div class="dia-msg {{ $msg->user_id===Auth::id() ? 'mine' : 'others' }}" data-id="{{ $msg->id }}">
                 @if($msg->user_id !== Auth::id())
                 <img src="{{ $msg->user->avatar ?? asset('images/default-avatar.png') }}" class="dia-msg-avatar" alt="">
                 @endif
@@ -376,7 +376,7 @@
                     <div class="dia-msg-name">{{ $msg->user->name }}</div>
                     @endif
                     <div class="dia-msg-bubble">{{ $msg->body }}</div>
-                    <div class="dia-msg-time">{{ $msg->created_at->format('H:i') }}</div>
+                    <div class="dia-msg-time">{{ $msg->created_at->diffForHumans() }}</div>
                 </div>
             </div>
             @empty
@@ -445,10 +445,48 @@ var diaUsers  = @json($users->map(fn($u) => ['id'=>$u->id,'name'=>$u->name,'avat
 @if(isset($conversation)) var convId = {{ $conversation->id }}; @endif
 @if(isset($group))        var groupId = {{ $group->id }}; @endif
 
+var diaLastMsgId = 0;
+var diaPollTimer  = null;
+
 document.addEventListener('DOMContentLoaded', function() {
     var msgs = document.getElementById('diaMessages');
-    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+    if (msgs) {
+        msgs.scrollTop = msgs.scrollHeight;
+        // collect highest existing message id
+        msgs.querySelectorAll('[data-id]').forEach(function(el) {
+            var id = parseInt(el.getAttribute('data-id'), 10);
+            if (id > diaLastMsgId) diaLastMsgId = id;
+        });
+    }
+    startPolling();
 });
+
+function startPolling() {
+    if (typeof convId === 'undefined' && typeof groupId === 'undefined') return;
+    clearInterval(diaPollTimer);
+    diaPollTimer = setInterval(diaPoll, 4000);
+}
+
+function diaPoll() {
+    var url = null;
+    if (typeof convId !== 'undefined') {
+        url = '/dia/conversation/' + convId + '/poll?after=' + diaLastMsgId;
+    } else if (typeof groupId !== 'undefined') {
+        url = '/dia/group/' + groupId + '/poll?after=' + diaLastMsgId;
+    }
+    if (!url) return;
+
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+        if (!data || !data.messages || data.messages.length === 0) return;
+        data.messages.forEach(function(msg) {
+            diaAppend(msg, msg.mine);
+            if (msg.id > diaLastMsgId) diaLastMsgId = msg.id;
+        });
+    })
+    .catch(function() {});
+}
 
 function diaSend() {
     var input = document.getElementById('diaInput');

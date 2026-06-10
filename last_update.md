@@ -2,6 +2,63 @@
 
 ---
 
+## 2026-06-10 — Bug Fixes: Notifikasi, Pesan Realtime, WIB, Kamu 500
+
+### Yang Dikerjakan
+
+#### 1. Timestamp WIB + Relative Time (Pesan Dia)
+- `config/app.php`: `timezone` diubah ke `Asia/Jakarta`
+- `AppServiceProvider::boot()`: `Carbon::setLocale('id')` → `diffForHumans()` output bahasa Indonesia
+- `DiaController`: `now()->format('H:i')` → `$message->created_at->diffForHumans()` di `send()` dan `sendGroup()`
+- `dia.blade.php`: timestamp semua pesan menggunakan `diffForHumans()`
+
+#### 2. Pesan Realtime — Polling setiap 4 detik
+- `DiaController`: tambah `pollMessages()` dan `pollGroupMessages()` endpoint
+- `routes/web.php`: dua route baru `GET /dia/conversation/{id}/poll` dan `GET /dia/group/{id}/poll`
+- `dia.blade.php`: `data-id="{{ $msg->id }}"` pada setiap `.dia-msg`, JS `setInterval(diaPoll, 4000)` yang append pesan baru tanpa reload halaman
+
+#### 3. NotifHelper Dead Code Fix
+- `DiaController::send()`: `NotifHelper::send()` sebelumnya dipanggil SETELAH `return response()` (tidak pernah jalan), dipindah sebelum return + dibungkus `try-catch(\Throwable $e)`
+
+#### 4. Notifikasi Lonceng
+- `fanbase.blade.php`: bell button diberi `id="fbNotifBtn"`, badge merah unread count, dropdown panel dengan daftar notifikasi
+- JS: klik buka dropdown → fetch `/notifications`, tampilkan daftar, badge hilang saat 0, "Baca semua" → POST `/notifications/read-all`, klik item → mark read + redirect
+- Poll unread count setiap 30 detik
+- `NotificationController::index()`: append `created_at_diff` (diffForHumans) ke setiap item
+- CSRF meta tag ditambah ke `<head>` fanbase layout
+
+#### 5. Kamu 500 di Mobile
+- `kamu.blade.php`: tiga `->format()` call tanpa null check → diubah ke null-safe `?->format() ?? fallback`
+- `fanbase.blade.php`: `Auth::user()->avatar` (dua lokasi, topbar + sidebar kiri) → `Auth::user()->avatar ?? asset('images/default-avatar.png')`
+- Right sidebar member avatars: ganti fallback Google favicon → `asset('images/default-avatar.png')`
+
+---
+
+## 2026-06-10 — Renovasi Halaman Komunitas & Lagu
+
+### Yang Dikerjakan
+
+#### Renovasi Community/Thread/Chat Pages & Song Detail
+Semua halaman yang menggunakan `layouts.app` diperbarui: warna hardcode (`#0a0a0a`, `#111`, `#ccc`, dll.) diganti dengan CSS variables dari `layouts.app` (`var(--bg)`, `var(--text)`, `var(--border)`, dll.). Hasilnya: tema gelap/terang (dark/light toggle) kini berfungsi di semua halaman ini.
+
+#### File yang Diubah
+| File | Perubahan |
+|------|-----------|
+| `resources/views/community/threads.blade.php` | CSS variables, avatar fallback |
+| `resources/views/community/thread_show.blade.php` | CSS variables, avatar fallback, inline styles |
+| `resources/views/community/index.blade.php` | CSS variables |
+| `resources/views/community/chat.blade.php` | CSS variables, avatar fallback, input sticky atas bottom nav |
+| `resources/views/songs/show.blade.php` | CSS variables, avatar fallback, chord/hero section |
+
+#### Detail Teknis
+- Semua `https://www.google.com/favicon.ico` sebagai avatar fallback diganti `asset('images/default-avatar.png')`
+- Primary buttons: `background: #fff; color: #000` → `background: var(--text); color: var(--bg)` (benar di dark & light mode)
+- Active badges/items menggunakan `var(--accent)` (biru) bukan `#fff` hardcode
+- Song hero: gradient overlay menggunakan `var(--bg)` agar smooth di kedua tema
+- Community chat: `.chat-input-area` diberi `position: sticky; bottom: 0` agar tidak tertimpa bottom nav
+
+---
+
 ## 2026-06-10 — Route Security, Lokasi Otomatis, Chat Input Mobile, Profil
 **Commit**: `9e6fdd6`, `ac898cb`
 
@@ -146,6 +203,6 @@
 
 - [ ] Verifikasi tabel `notifications` sudah di-migrate di server hosting
 - [ ] Chat grup: belum diuji end-to-end setelah perbaikan cast integer
-- [ ] Community/thread page: belum diaudit (masih pakai `layouts.app` gelap)
-- [ ] Song detail page (`/lagu/{slug}`): belum diaudit
-- [ ] `$user->avatar` di kamu.blade.php masih pakai `https://www.google.com/favicon.ico` sebagai fallback — ganti ke `asset('images/default-avatar.png')`
+- [x] Community/thread page: direnovasi ke CSS variables (2026-06-10)
+- [x] Song detail page (`/lagu/{slug}`): direnovasi ke CSS variables (2026-06-10)
+- [x] Avatar fallback `google.com/favicon.ico` → `asset('images/default-avatar.png')` di semua halaman komunitas & lagu

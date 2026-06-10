@@ -8,6 +8,7 @@ use App\Models\Message;
 use App\Models\Group;
 use App\Models\GroupMember;
 use App\Models\GroupMessage;
+use App\Helpers\NotifHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -100,24 +101,81 @@ class DiaController extends Controller
             'last_message_at' => now(),
         ]);
 
+        try {
+            NotifHelper::send(
+                $conversation->getOtherUser($userId)->id,
+                $userId,
+                'message', Auth::user()->name . ' mengirim pesan',
+                $request->body,
+                url('/dia/conversation/' . $id)
+            );
+        } catch (\Throwable $e) {}
+
         return response()->json([
             'success' => true,
             'message' => [
-                'id'     => $message->id,
-                'body'   => $message->body,
-                'user_id'=> $userId,
-                'name'   => Auth::user()->name,
-                'avatar' => Auth::user()->avatar,
-                'time'   => now()->format('H:i'),
+                'id'      => $message->id,
+                'body'    => $message->body,
+                'user_id' => $userId,
+                'name'    => Auth::user()->name,
+                'avatar'  => Auth::user()->avatar,
+                'time'    => $message->created_at->diffForHumans(),
             ]
         ]);
-        NotifHelper::send(
-            $conversation->getOtherUser(Auth::id())->id,
-            Auth::id(),
-            'message', Auth::user()->name . ' mengirim pesan',
-            $request->body,
-            url('/dia/conversation/' . $id)
-        );
+    }
+
+    public function pollMessages(Request $request, $id)
+    {
+        $userId       = Auth::id();
+        $conversation = Conversation::findOrFail($id);
+
+        if ($conversation->user_one_id !== $userId && $conversation->user_two_id !== $userId) {
+            abort(403);
+        }
+
+        $afterId  = (int) ($request->after ?? 0);
+        $messages = Message::with('user')
+            ->where('conversation_id', $id)
+            ->where('id', '>', $afterId)
+            ->orderBy('id')
+            ->get()
+            ->map(fn($msg) => [
+                'id'      => $msg->id,
+                'body'    => $msg->body,
+                'user_id' => $msg->user_id,
+                'name'    => $msg->user->name,
+                'avatar'  => $msg->user->avatar,
+                'time'    => $msg->created_at->diffForHumans(),
+                'mine'    => ($msg->user_id === $userId),
+            ]);
+
+        return response()->json(['messages' => $messages]);
+    }
+
+    public function pollGroupMessages(Request $request, $id)
+    {
+        $userId = Auth::id();
+        $group  = Group::findOrFail($id);
+
+        if (!$group->isMember($userId)) abort(403);
+
+        $afterId  = (int) ($request->after ?? 0);
+        $messages = GroupMessage::with('user')
+            ->where('group_id', $id)
+            ->where('id', '>', $afterId)
+            ->orderBy('id')
+            ->get()
+            ->map(fn($msg) => [
+                'id'      => $msg->id,
+                'body'    => $msg->body,
+                'user_id' => $msg->user_id,
+                'name'    => $msg->user->name,
+                'avatar'  => $msg->user->avatar,
+                'time'    => $msg->created_at->diffForHumans(),
+                'mine'    => ($msg->user_id === $userId),
+            ]);
+
+        return response()->json(['messages' => $messages]);
     }
 
     public function group($id)
@@ -196,10 +254,8 @@ class DiaController extends Controller
                 'user_id' => $userId,
                 'name'    => Auth::user()->name,
                 'avatar'  => Auth::user()->avatar,
-                'time'    => now()->format('H:i'),
+                'time'    => $message->created_at->diffForHumans(),
             ]
         ]);
-
-        
     }
 }

@@ -16,8 +16,12 @@ class NotificationController extends Controller
             ->take(30)
             ->get();
 
+        $mapped = $notifications->map(fn($n) => array_merge($n->toArray(), [
+            'created_at_diff' => $n->created_at?->diffForHumans() ?? '',
+        ]));
+
         return response()->json([
-            'notifications' => $notifications,
+            'notifications' => $mapped,
             'unread_count'  => $notifications->whereNull('read_at')->count(),
         ]);
     }
