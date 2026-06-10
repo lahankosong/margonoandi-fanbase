@@ -289,7 +289,7 @@
 {{-- PROFILE HERO --}}
 <div class="kamu-hero">
     <div class="kamu-avatar-wrap">
-        <img src="{{ $user->avatar ?? 'https://www.google.com/favicon.ico' }}"
+        <img src="{{ $user->avatar ?? asset('images/default-avatar.png') }}"
              class="kamu-avatar" alt="{{ $user->name }}">
         <div class="kamu-avatar-badge">&#10022;</div>
     </div>

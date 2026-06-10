@@ -2,6 +2,47 @@
 
 ---
 
+## 2026-06-10 — Route Security, Lokasi Otomatis, Chat Input Mobile, Profil
+**Commit**: `9e6fdd6`, `ac898cb`
+
+### Yang Dikerjakan
+
+#### Keamanan Route (Security Fix)
+- Semua route yang sebelumnya di luar `auth` middleware dipindahkan ke dalam group `auth`
+- Route yang diamankan: `/kamu/note` (CRUD), `/kamu/{id}` (edit/hapus), `/aku/{id}` (edit), `/kita/{id}` (edit), hapus komentar aku/kita, semua endpoint `/notifications/*`
+- Sebelumnya: unauthenticated request bisa menyentuh endpoint ini langsung
+
+#### Lokasi Otomatis Kota/Kabupaten (Kita)
+- `kitaToggleLocation()` di `kita.blade.php` diupdate
+- Klik tombol Lokasi → deteksi GPS → kirim koordinat ke Nominatim (OpenStreetMap, gratis, tanpa API key) → isi dengan nama kota/kabupaten (`address.city / .town / .village / .county`)
+- Fallback ke input manual jika GPS ditolak atau tidak tersedia
+- Tidak overwrite input yang sudah diisi user
+
+#### Chat Input di Atas Bottom Nav (Dia — Mobile)
+- `dia.blade.php` media query mobile: tinggi `dia-layout` diubah dari `calc(100vh - 52px)` ke `calc(100vh - 56px - 84px)` (memperhitungkan topbar 56px + bottom nav ~84px)
+- `dia-input-area` diberi `position: sticky; bottom: 0` agar menempel tepat di atas bottom nav
+
+#### Halaman Kamu — Error Di Semua Device
+- `KamuController::index()`: hapus `->with(['comments.user'])` yang tidak diperlukan
+- Kamu blade hanya menampilkan `comments_count` (kolom DB), bukan isi komentar
+- Eager load yang tidak perlu itu penyebab error saat ada postingan dengan komentar
+
+#### Renovasi Halaman Profil (`/profile`)
+- Konversi dari `layouts.app` (warna gelap hardcode `#111, #666`) ke `layouts.fanbase`
+- Menggunakan CSS variables fanbase (`var(--sky)`, `var(--card)`, dll.)
+- Tampilkan: hero avatar/nama/email/tanggal bergabung, kartu tautan cepat ke Kamu/Kita/Dia
+
+### File yang Diubah
+| File | Perubahan |
+|------|-----------|
+| `routes/web.php` | Pindahkan 14 route ke dalam middleware `auth` |
+| `resources/views/fanbase/kita.blade.php` | Lokasi otomatis via Nominatim |
+| `resources/views/fanbase/dia.blade.php` | Tinggi layout mobile diperbaiki |
+| `app/Http/Controllers/KamuController.php` | Hapus eager load komentar |
+| `resources/views/profile.blade.php` | Renovasi ke fanbase layout |
+
+---
+
 ## 2026-06-10 — Perbaikan Bug Komentar, Error 500 Kamu, Error 403 Dia
 **Commit**: `91dfbdf`
 
@@ -90,8 +131,12 @@
 | Like + tooltip who liked (Aku, Kita) | ✅ Berfungsi |
 | Komentar (Aku, Kita) | ✅ Diperbaiki |
 | Halaman Kamu (desktop + mobile) | ✅ Diperbaiki |
+| Lokasi otomatis kota/kabupaten | ✅ Diperbaiki |
 | Chat DM (Dia) | ✅ Diperbaiki |
 | Chat Grup (Dia) | ✅ Seharusnya berfungsi |
+| Chat input di atas bottom nav (mobile) | ✅ Diperbaiki |
+| Keamanan route (auth middleware) | ✅ Diperbaiki |
+| Halaman Profil | ✅ Direnovasi ke fanbase layout |
 | Notifikasi | ⚠️ Perlu verifikasi tabel `notifications` ada di DB |
 | Deploy ke cPanel | ✅ Via `deploy.php` + GitHub ZIP |
 
@@ -100,7 +145,7 @@
 ## Hal yang Belum Dicek / TODO
 
 - [ ] Verifikasi tabel `notifications` sudah di-migrate di server hosting
-- [ ] Beberapa route (`/kamu/note`, `/kamu/{id}`) masih di luar middleware `auth` — perlu dipindah ke dalam group auth
 - [ ] Chat grup: belum diuji end-to-end setelah perbaikan cast integer
-- [ ] Halaman profil (`/profile`): belum diaudit konektivitas & fitur
-- [ ] Community thread: belum diaudit
+- [ ] Community/thread page: belum diaudit (masih pakai `layouts.app` gelap)
+- [ ] Song detail page (`/lagu/{slug}`): belum diaudit
+- [ ] `$user->avatar` di kamu.blade.php masih pakai `https://www.google.com/favicon.ico` sebagai fallback — ganti ke `asset('images/default-avatar.png')`
