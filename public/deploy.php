@@ -127,8 +127,36 @@ File dilewati : ' . $skipped . ' (vendor, .env, storage — aman)</pre>';
 
 // ── Step 4: Cleanup ───────────────────────────────────────────────────────────
 @unlink($tmp_zip);
+echo '<h2>4. Cleanup ✅</h2>';
+echo '<pre class="ok">Temp files dihapus.</pre>';
+flush();
 
-echo '<h2>4. Selesai ✅</h2>';
+// ── Step 5: Artisan Commands ──────────────────────────────────────────────────
+echo '<h2>5. Artisan Cache & Clear</h2>';
+flush();
+
+$php    = PHP_BINARY ?: 'php';
+$artisan = escapeshellarg($base . '/artisan');
+
+$commands = [
+    'config:clear'  => 'Hapus config cache lama',
+    'config:cache'  => 'Buat config cache baru (timezone, locale, dll.)',
+    'route:clear'   => 'Hapus route cache lama',
+    'route:cache'   => 'Buat route cache baru',
+    'view:clear'    => 'Hapus compiled views',
+    'cache:clear'   => 'Hapus application cache',
+];
+
+foreach ($commands as $cmd => $desc) {
+    $output = shell_exec(escapeshellarg($php) . ' ' . $artisan . ' ' . $cmd . ' 2>&1');
+    $ok     = ($output !== null && stripos($output, 'error') === false);
+    $cls    = $ok ? 'ok' : 'err';
+    echo '<pre class="' . $cls . '">$ php artisan ' . htmlspecialchars($cmd) . '  <span class="info">← ' . $desc . '</span>
+' . htmlspecialchars(trim($output ?? 'shell_exec tidak tersedia')) . '</pre>';
+    flush();
+}
+
+echo '<h2>6. Selesai 🎉</h2>';
 echo '<pre class="ok">Deploy berhasil! Website sudah menggunakan kode terbaru dari GitHub.</pre>';
 
 echo '<div class="warn">⚠️ File ini aman untuk tetap ada (terlindungi password), tapi disarankan hapus jika tidak dibutuhkan lagi.</div>';
