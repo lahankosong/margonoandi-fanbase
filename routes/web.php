@@ -41,24 +41,6 @@ Route::post('/chat/group/create', [ChatController::class, 'createGroup'])->name(
 Route::post('/chat/group/{id}/send', [ChatController::class, 'sendGroupMessage'])->name('chat.group.send');
 Route::get('/logout', [GoogleController::class, 'logout'])->name('logout');
 
-Route::post('/kamu/note', [KamuNoteController::class, 'store'])->name('kamu.note.store');
-Route::put('/kamu/note/{id}', [KamuNoteController::class, 'update'])->name('kamu.note.update');
-Route::delete('/kamu/note/{id}', [KamuNoteController::class, 'destroy'])->name('kamu.note.destroy');
-
-// Edit/hapus komentar
-Route::delete('/aku/{postId}/comment/{id}', [AkuController::class, 'destroyComment'])->name('aku.comment.destroy');
-Route::delete('/kita/{postId}/comment/{id}', [KitaController::class, 'destroyComment'])->name('kita.comment.destroy');
-
-// Edit post
-Route::put('/aku/{id}', [AkuController::class, 'update'])->name('aku.update');
-Route::put('/kita/{id}', [KitaController::class, 'update'])->name('kita.update');
-Route::put('/kamu/{id}', [KamuController::class, 'update'])->name('kamu.update');
-Route::delete('/kamu/{id}', [KamuController::class, 'destroy'])->name('kamu.destroy');
-
-Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
-Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
-Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.count');
 
 // Halaman per lagu
 Route::get('/lagu/{slug}', [SongController::class, 'show'])->name('song.show');
@@ -111,4 +93,25 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dia/group/{id}', [DiaController::class, 'group'])->name('dia.group');
     Route::post('/dia/group/create', [DiaController::class, 'createGroup'])->name('dia.group.create');
     Route::post('/dia/group/{id}/send', [DiaController::class, 'sendGroup'])->name('dia.group.send');
+
+    // Catatan kamu (private notes)
+    Route::post('/kamu/note', [KamuNoteController::class, 'store'])->name('kamu.note.store');
+    Route::put('/kamu/note/{id}', [KamuNoteController::class, 'update'])->name('kamu.note.update');
+    Route::delete('/kamu/note/{id}', [KamuNoteController::class, 'destroy'])->name('kamu.note.destroy');
+    Route::put('/kamu/{id}', [KamuController::class, 'update'])->name('kamu.update');
+    Route::delete('/kamu/{id}', [KamuController::class, 'destroy'])->name('kamu.destroy');
+
+    // Edit/hapus post
+    Route::put('/aku/{id}', [AkuController::class, 'update'])->name('aku.update');
+    Route::put('/kita/{id}', [KitaController::class, 'update'])->name('kita.update');
+
+    // Hapus komentar
+    Route::delete('/aku/{postId}/comment/{id}', [AkuController::class, 'destroyComment'])->name('aku.comment.destroy');
+    Route::delete('/kita/{postId}/comment/{id}', [KitaController::class, 'destroyComment'])->name('kita.comment.destroy');
+
+    // Notifikasi
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.count');
 });
