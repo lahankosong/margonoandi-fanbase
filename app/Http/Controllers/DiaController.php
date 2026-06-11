@@ -310,18 +310,22 @@ class DiaController extends Controller
 
     // ─── Helpers ───────────────────────────────────────────────────
 
-    private function resolveConversationAccess(Conversation $conv, int $userId): ?\Carbon\Carbon
+    private function resolveConversationAccess(Conversation $conv, int $userId)
     {
-        // Original member
+        // Original member — no restriction
         if ($conv->user_one_id === $userId || $conv->user_two_id === $userId) {
-            return null; // no join restriction
+            return null;
         }
 
         // Invited and accepted member
-        $invite = ConversationInvite::where('conversation_id', $conv->id)
-            ->where('to_user_id', $userId)
-            ->where('status', 'accepted')
-            ->first();
+        try {
+            $invite = ConversationInvite::where('conversation_id', $conv->id)
+                ->where('to_user_id', $userId)
+                ->where('status', 'accepted')
+                ->first();
+        } catch (\Throwable $e) {
+            abort(403);
+        }
 
         if (!$invite) abort(403);
 
@@ -332,19 +336,20 @@ class DiaController extends Controller
     {
         $participants = [];
 
-        // Original two users (except sender)
         foreach ([$conv->user_one_id, $conv->user_two_id] as $uid) {
             if ($uid !== $senderUserId) $participants[] = $uid;
         }
 
-        // Accepted invited members
-        $invitedIds = ConversationInvite::where('conversation_id', $conv->id)
-            ->where('status', 'accepted')
-            ->where('to_user_id', '!=', $senderUserId)
-            ->pluck('to_user_id')
-            ->toArray();
+        try {
+            $invitedIds = ConversationInvite::where('conversation_id', $conv->id)
+                ->where('status', 'accepted')
+                ->where('to_user_id', '!=', $senderUserId)
+                ->pluck('to_user_id')
+                ->toArray();
+            $participants = array_unique(array_merge($participants, $invitedIds));
+        } catch (\Throwable $e) {}
 
-        return array_unique(array_merge($participants, $invitedIds));
+        return $participants;
     }
 
     private function processMentions(string $body, Conversation $conv, int $senderUserId): void
@@ -402,19 +407,25 @@ class DiaController extends Controller
 
     private function userConversations(int $userId)
     {
-        $direct = Conversation::with(['userOne', 'userTwo'])
-            ->where('user_one_id', $userId)
-            ->orWhere('user_two_id', $userId);
-
-        $invitedIds = ConversationInvite::where('to_user_id', $userId)
-            ->where('status', 'accepted')
-            ->pluck('conversation_id');
-
-        if ($invitedIds->isNotEmpty()) {
-            $direct->orWhereIn('id', $invitedIds);
+        try {
+            $invitedConvIds = ConversationInvite::where('to_user_id', $userId)
+                ->where('status', 'accepted')
+                ->pluck('conversation_id')
+                ->toArray();
+        } catch (\Throwable $e) {
+            $invitedConvIds = [];
         }
 
-        return $direct->orderByDesc('last_message_at')->get();
+        $query = Conversation::with(['userOne', 'userTwo'])
+            ->where(function ($q) use ($userId, $invitedConvIds) {
+                $q->where('user_one_id', $userId)
+                  ->orWhere('user_two_id', $userId);
+                if (!empty($invitedConvIds)) {
+                    $q->orWhereIn('id', $invitedConvIds);
+                }
+            });
+
+        return $query->orderByDesc('last_message_at')->get();
     }
 
     private function userGroups(int $userId)
