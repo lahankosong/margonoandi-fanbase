@@ -123,6 +123,47 @@
     }
     .dia-empty p { font-size:13px; margin-top:0.75rem; color:var(--text-3); }
 
+    /* ─── SEARCH ──────────────────────────────────────────── */
+    .dia-search-wrap {
+        padding:10px 1rem 6px; flex-shrink:0;
+        background:var(--card); border-bottom:1px solid var(--border-lt);
+        position:sticky; top:0; z-index:10;
+    }
+    .dia-search-box {
+        display:flex; align-items:center; gap:6px;
+        background:var(--cream); border:1px solid var(--border);
+        border-radius:20px; padding:0 12px; transition:0.2s;
+    }
+    .dia-search-box:focus-within { border-color:var(--sky); box-shadow:0 0 0 3px var(--sky-glow); }
+    .dia-search-box svg { flex-shrink:0; color:var(--text-4); }
+    .dia-search-input {
+        flex:1; border:none; background:transparent; outline:none;
+        font-size:13px; color:var(--text-1); padding:9px 0; font-family:inherit;
+    }
+    .dia-search-input::placeholder { color:var(--text-4); }
+    .dia-search-clear {
+        background:transparent; border:none; color:var(--text-3);
+        cursor:pointer; padding:0; line-height:1;
+    }
+    .dia-search-results { flex-shrink:0; }
+    .dia-search-result-item {
+        display:flex; align-items:center; gap:10px;
+        padding:10px 1rem; border-bottom:1px solid var(--border-lt);
+        background:transparent; border-left:none; border-right:none; border-top:none;
+        cursor:pointer; transition:0.15s; width:100%; text-align:left;
+    }
+    .dia-search-result-item:hover { background:var(--sky-lt); }
+    .dia-search-avatar {
+        width:36px; height:36px; border-radius:50%; overflow:hidden;
+        border:1.5px solid var(--border); flex-shrink:0;
+        background:var(--sky-lt); display:flex; align-items:center; justify-content:center;
+        color:var(--sky-dk); font-size:15px; font-weight:700;
+    }
+    .dia-search-avatar img { width:36px; height:36px; border-radius:50%; object-fit:cover; }
+    .dia-search-name { font-size:13px; font-weight:500; color:var(--text-1); }
+    .dia-search-sub  { font-size:11px; color:var(--text-3); margin-top:1px; }
+    .dia-search-empty { text-align:center; padding:1.5rem; font-size:12px; color:var(--text-4); }
+
     /* ─── MOBILE: daftar obrolan ────────────────────────────── */
     .dia-mobile-list {
         display:none; flex:1; overflow-y:auto; flex-direction:column;
@@ -131,6 +172,9 @@
         display:flex; align-items:center; gap:10px;
         padding:12px 1rem; border-bottom:1px solid var(--border-lt);
         text-decoration:none; background:transparent; transition:0.15s;
+    }
+    button.dia-mobile-item {
+        border:none; cursor:pointer; width:100%; text-align:left;
     }
     .dia-mobile-item:hover { background:var(--sky-lt); }
     .dia-mobile-avatar {
@@ -162,69 +206,126 @@
 
     @media (max-width:768px) {
         .fb-main { height:calc(100vh - 56px - 84px); }
+    }
+    @media (max-width:1060px) {
         .dia-chat-wrap { display:none; flex-direction:column; flex:1; overflow:hidden; }
         .dia-chat-wrap.active { display:flex; }
         .dia-mobile-list { display:flex; }
         .dia-mobile-list.hide { display:none; }
         .dia-back-btn { display:block; }
     }
-    @media (min-width:769px) {
+    @media (min-width:1061px) {
         .dia-chat-wrap { display:flex; flex-direction:column; flex:1; overflow:hidden; }
         .dia-mobile-list { display:none !important; }
+        .dia-back-btn { display:none !important; }
     }
 </style>
 @endpush
 
 @section('content')
 
-{{-- MOBILE: daftar obrolan/grup --}}
+{{-- MOBILE/TABLET: daftar obrolan/grup --}}
 <div class="dia-mobile-list {{ (isset($conversation)||isset($group)) ? 'hide' : '' }}">
-    @if($conversations->count() > 0)
-    <div class="dia-mobile-section-label">Obrolan</div>
-    @foreach($conversations as $conv)
-    @php $other = $conv->getOtherUser(Auth::id()); $convUnread = $unreadCounts[$conv->id] ?? 0; @endphp
-    <a href="{{ route('dia.conversation', $conv->id) }}" class="dia-mobile-item">
-        <div class="dia-mobile-avatar">
-            <img src="{{ $other->avatar ?? asset('images/default-avatar.png') }}" alt="">
-            <span class="dia-mobile-dot {{ $other->isOnline() ? 'online' : '' }}"></span>
-        </div>
-        <div class="dia-mobile-info">
-            <div class="dia-mobile-name">{{ $other->name }}</div>
-            <div class="dia-mobile-preview">{{ $conv->last_message ?? 'Belum ada pesan' }}</div>
-        </div>
-        <div class="dia-mobile-meta">
-            @if($conv->last_message_at)<span class="dia-mobile-time">{{ $conv->last_message_at->format('H:i') }}</span>@endif
-            @if($convUnread > 0)<span class="dia-unread-badge">{{ $convUnread > 99 ? '99+' : $convUnread }}</span>@endif
-        </div>
-    </a>
-    @endforeach
-    @endif
 
-    @if($groups->count() > 0)
-    <div class="dia-mobile-section-label">Grup</div>
-    @foreach($groups as $grp)
-    <a href="{{ route('dia.group', $grp->id) }}" class="dia-mobile-item">
-        <div class="dia-mobile-avatar">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    {{-- Search bar --}}
+    <div class="dia-search-wrap">
+        <div class="dia-search-box">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="diaSearchInput" class="dia-search-input"
+                   placeholder="Cari pengguna untuk ngobrol..."
+                   oninput="diaDoSearch(this.value)" autocomplete="off">
+            <button class="dia-search-clear" id="diaSearchClear" onclick="diaClearSearch()" style="display:none" aria-label="Hapus">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
         </div>
-        <div class="dia-mobile-info">
-            <div class="dia-mobile-name">{{ $grp->name }}</div>
-            <div class="dia-mobile-preview">{{ $grp->last_message ?? 'Belum ada pesan' }}</div>
-        </div>
-        @if($grp->last_message_at)
-        <div class="dia-mobile-meta"><span class="dia-mobile-time">{{ $grp->last_message_at->format('H:i') }}</span></div>
-        @endif
-    </a>
-    @endforeach
-    @endif
-
-    @if($conversations->count() === 0 && $groups->count() === 0)
-    <div style="text-align:center;padding:3rem 1rem;color:var(--text-4);font-size:12px;">
-        <div style="font-size:32px;margin-bottom:8px;">💬</div>
-        Belum ada obrolan.<br>Klik member di sidebar kanan.
     </div>
-    @endif
+
+    {{-- Search results (shown while typing) --}}
+    <div id="diaSearchResults" class="dia-search-results" style="display:none"></div>
+
+    {{-- Normal content (hidden while searching) --}}
+    <div id="diaNormalContent">
+        @if($conversations->count() > 0)
+        <div class="dia-mobile-section-label">Obrolan</div>
+        @foreach($conversations as $conv)
+        @php $other = $conv->getOtherUser(Auth::id()); $convUnread = $unreadCounts[$conv->id] ?? 0; @endphp
+        <a href="{{ route('dia.conversation', $conv->id) }}" class="dia-mobile-item">
+            <div class="dia-mobile-avatar">
+                <img src="{{ $other->avatar ?? asset('images/default-avatar.png') }}" alt="">
+                <span class="dia-mobile-dot {{ $other->isOnline() ? 'online' : '' }}"></span>
+            </div>
+            <div class="dia-mobile-info">
+                <div class="dia-mobile-name">{{ $other->name }}</div>
+                <div class="dia-mobile-preview">{{ $conv->last_message ?? 'Belum ada pesan' }}</div>
+            </div>
+            <div class="dia-mobile-meta">
+                @if($conv->last_message_at)<span class="dia-mobile-time">{{ $conv->last_message_at->format('H:i') }}</span>@endif
+                @if($convUnread > 0)<span class="dia-unread-badge">{{ $convUnread > 99 ? '99+' : $convUnread }}</span>@endif
+            </div>
+        </a>
+        @endforeach
+        @endif
+
+        @if($groups->count() > 0)
+        <div class="dia-mobile-section-label">Grup</div>
+        @foreach($groups as $grp)
+        <a href="{{ route('dia.group', $grp->id) }}" class="dia-mobile-item">
+            <div class="dia-mobile-avatar" style="background:var(--sky-lt);color:var(--sky-dk);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="dia-mobile-info">
+                <div class="dia-mobile-name">{{ $grp->name }}</div>
+                <div class="dia-mobile-preview">{{ $grp->last_message ?? 'Belum ada pesan' }}</div>
+            </div>
+            @if($grp->last_message_at)
+            <div class="dia-mobile-meta"><span class="dia-mobile-time">{{ $grp->last_message_at->format('H:i') }}</span></div>
+            @endif
+        </a>
+        @endforeach
+        @endif
+
+        {{-- Online users --}}
+        @php $onlineUsers = $users->filter(fn($u) => $u->isOnline())->take(8); @endphp
+        @if($onlineUsers->count() > 0)
+        <div class="dia-mobile-section-label" style="display:flex;align-items:center;gap:5px;">
+            <span style="width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;"></span>
+            Online Sekarang ({{ $onlineUsers->count() }})
+        </div>
+        @foreach($onlineUsers as $u)
+        <button class="dia-mobile-item" onclick="diaStartConv({{ $u->id }})">
+            <div class="dia-mobile-avatar">
+                @if($u->avatar)
+                <img src="{{ $u->avatar }}" alt="">
+                @else
+                <span style="font-size:15px;font-weight:700;">{{ mb_substr($u->name,0,1) }}</span>
+                @endif
+                <span class="dia-mobile-dot online"></span>
+            </div>
+            <div class="dia-mobile-info">
+                <div class="dia-mobile-name">{{ $u->name }}</div>
+                <div class="dia-mobile-preview">Ketuk untuk mulai ngobrol</div>
+            </div>
+            <div class="dia-mobile-meta">
+                <span style="font-size:9px;color:#10b981;font-weight:600;letter-spacing:0.02em;">&#9679; Online</span>
+            </div>
+        </button>
+        @endforeach
+        @endif
+
+        @if($conversations->count() === 0 && $groups->count() === 0 && $onlineUsers->count() === 0)
+        <div style="text-align:center;padding:3rem 1rem;color:var(--text-4);font-size:12px;">
+            <div style="font-size:32px;margin-bottom:8px;">💬</div>
+            Belum ada obrolan.<br>Cari pengguna di atas untuk memulai.
+        </div>
+        @endif
+    </div>{{-- /#diaNormalContent --}}
+
 </div>
+
+{{-- Hidden form for POST /dia/start/{userId} --}}
+<form id="diaStartForm" method="POST" action="" style="display:none">
+    @csrf
+</form>
 
 {{-- CHAT WINDOW --}}
 <div class="dia-chat-wrap {{ (isset($conversation)||isset($group)) ? 'active' : '' }}">
@@ -342,7 +443,7 @@
 @push('scripts')
 <script>
 var csrfToken = '{{ csrf_token() }}';
-var diaUsers  = @json($users->map(fn($u) => ['id'=>$u->id,'name'=>$u->name,'avatar'=>$u->avatar]));
+var diaUsers  = @json($users->map(fn($u) => ['id'=>$u->id,'name'=>$u->name,'avatar'=>$u->avatar,'online'=>$u->isOnline()]));
 
 @if(isset($conversation)) var convId  = {{ $conversation->id }}; @endif
 @if(isset($group))        var groupId = {{ $group->id }};        @endif
@@ -524,6 +625,67 @@ function escHtml(t) {
     var d = document.createElement('div');
     d.appendChild(document.createTextNode(String(t)));
     return d.innerHTML;
+}
+
+function diaStartConv(userId) {
+    var form = document.getElementById('diaStartForm');
+    if (!form) return;
+    form.action = '/dia/start/' + userId;
+    form.submit();
+}
+
+function diaDoSearch(q) {
+    var clear   = document.getElementById('diaSearchClear');
+    var results = document.getElementById('diaSearchResults');
+    var normal  = document.getElementById('diaNormalContent');
+    if (!results || !normal) return;
+
+    q = (q || '').trim().toLowerCase();
+
+    if (clear) clear.style.display = q ? 'flex' : 'none';
+
+    if (!q) {
+        results.style.display = 'none';
+        results.innerHTML     = '';
+        normal.style.display  = 'block';
+        return;
+    }
+
+    normal.style.display  = 'none';
+    results.style.display = 'block';
+
+    var filtered = diaUsers.filter(function(u) {
+        return u.name.toLowerCase().includes(q);
+    });
+
+    if (filtered.length === 0) {
+        results.innerHTML = '<div class="dia-search-empty">Pengguna "<strong>' + escHtml(q) + '</strong>" tidak ditemukan.</div>';
+        return;
+    }
+
+    results.innerHTML = filtered.slice(0, 10).map(function(u) {
+        var initials = escHtml(u.name.charAt(0).toUpperCase());
+        var avatarHtml = u.avatar
+            ? '<img src="' + escHtml(u.avatar) + '" alt="">'
+            : initials;
+        var subHtml = u.online
+            ? '<span style="color:#10b981;font-weight:600;">&#9679; Online</span>'
+            : 'Mulai percakapan';
+        return '<button class="dia-search-result-item" onclick="diaStartConv(' + u.id + ')">'
+            + '<div class="dia-search-avatar">' + avatarHtml + '</div>'
+            + '<div style="flex:1;min-width:0;">'
+            + '<div class="dia-search-name">' + escHtml(u.name) + '</div>'
+            + '<div class="dia-search-sub">' + subHtml + '</div>'
+            + '</div>'
+            + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>'
+            + '</button>';
+    }).join('');
+}
+
+function diaClearSearch() {
+    var input = document.getElementById('diaSearchInput');
+    if (input) { input.value = ''; input.focus(); }
+    diaDoSearch('');
 }
 </script>
 @endpush
