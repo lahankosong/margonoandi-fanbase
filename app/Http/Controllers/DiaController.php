@@ -29,11 +29,7 @@ class DiaController extends Controller
             ->orderByDesc('last_message_at')
             ->get();
 
-        $users = User::where('id', '!=', $userId)
-            ->orderByDesc('is_online')
-            ->orderByDesc('last_seen')
-            ->get();
-
+        $users        = $this->sortedUsers($userId);
         $unreadCounts = $this->getUnreadCounts($conversations, $userId);
 
         return view('fanbase.dia', compact('conversations', 'groups', 'users', 'unreadCounts'));
@@ -41,11 +37,23 @@ class DiaController extends Controller
 
     public function ping()
     {
-        User::where('id', Auth::id())->update([
-            'last_seen' => now(),
-            'is_online' => true,
-        ]);
+        try {
+            User::where('id', Auth::id())->update([
+                'last_seen' => now(),
+                'is_online' => true,
+            ]);
+        } catch (\Throwable $e) {}
         return response()->json(['ok' => true]);
+    }
+
+    private function sortedUsers(int $excludeId)
+    {
+        return User::where('id', '!=', $excludeId)->get()
+            ->sortByDesc(fn($u) => [
+                $u->getAttribute('is_online') ? 1 : 0,
+                $u->getAttribute('last_seen') ? strtotime($u->getAttribute('last_seen')) : 0,
+            ])
+            ->values();
     }
 
     private function getUnreadCounts($conversations, int $userId): array
@@ -82,10 +90,7 @@ class DiaController extends Controller
             ->orderByDesc('last_message_at')
             ->get();
 
-        $users = User::where('id', '!=', $userId)
-            ->orderByDesc('is_online')
-            ->orderByDesc('last_seen')
-            ->get();
+        $users = $this->sortedUsers($userId);
 
         $unreadCounts = $this->getUnreadCounts($conversations, $userId);
 
@@ -224,10 +229,7 @@ class DiaController extends Controller
             ->orderByDesc('last_message_at')
             ->get();
 
-        $users = User::where('id', '!=', $userId)
-            ->orderByDesc('is_online')
-            ->orderByDesc('last_seen')
-            ->get();
+        $users = $this->sortedUsers($userId);
 
         $unreadCounts = $this->getUnreadCounts($conversations, $userId);
 
