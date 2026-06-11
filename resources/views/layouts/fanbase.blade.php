@@ -931,14 +931,19 @@ function fbTryResume(){
         if(!s||!s.playing||s.idx<0||s.idx>=fbTotal)return;
         fbCurrent=s.idx;
         var seekTo=parseFloat(s.time)||0;
-        fbAudio.src=fbTracks[fbCurrent].audio;
-        fbAudio.addEventListener('canplay',function onCp(){
-            fbAudio.removeEventListener('canplay',onCp);
+        var doPlay=function(){
             if(seekTo>1)fbAudio.currentTime=seekTo;
             fbAudio.play()
                 .then(function(){fbPlaying=true;fbUpdateUI();})
                 .catch(function(){fbShowResumeToast();fbUpdateUI();});
+        };
+        // Listener harus ditambah SEBELUM set src agar tidak melewatkan canplay dari cache
+        fbAudio.addEventListener('canplay',function onCp(){
+            fbAudio.removeEventListener('canplay',onCp);
+            doPlay();
         });
+        fbAudio.src=fbTracks[fbCurrent].audio;
+        fbAudio.load(); // paksa load meski preload="none"
         fbUpdateUI();
     }catch(e){}
 }

@@ -26,14 +26,25 @@ class User extends Authenticatable
 
     public function isOnline(): bool
     {
-        return $this->last_seen !== null && $this->last_seen->gt(now()->subMinutes(2));
+        try {
+            $seen = $this->attributes['last_seen'] ?? null;
+            if (!$seen) return false;
+            return strtotime($seen) > (time() - 120);
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 
     public function lastSeenLabel(): string
     {
-        if ($this->isOnline()) return 'Online';
-        if (!$this->last_seen) return 'Offline';
-        return 'Aktif ' . $this->last_seen->format('H:i');
+        try {
+            if ($this->isOnline()) return 'Online';
+            $seen = $this->attributes['last_seen'] ?? null;
+            if (!$seen) return 'Offline';
+            return 'Aktif ' . date('H:i', strtotime($seen));
+        } catch (\Throwable $e) {
+            return 'Offline';
+        }
     }
 
     protected $hidden = [
