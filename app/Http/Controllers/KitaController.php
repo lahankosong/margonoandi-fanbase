@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use App\Models\PostLike;
 use App\Models\PostComment;
+use App\Models\PostCommentLike;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\NotifHelper;
@@ -14,24 +15,31 @@ class KitaController extends Controller
 {
     public function index()
     {
-        $posts = Post::with(['user', 'comments.user'])
-            ->orderByDesc('created_at')
-            ->paginate(15);
+        $posts = Post::with([
+            'user',
+            'comments' => fn($q) => $q->whereNull('parent_id')
+                ->with(['user', 'replies.user'])->latest(),
+        ])->orderByDesc('created_at')->paginate(15);
 
         $likedIds = PostLike::where('user_id', Auth::id())
             ->pluck('post_id')->toArray();
 
         $likersByPost = PostLike::whereIn('post_id', $posts->pluck('id'))
-            ->with('user')
-            ->latest()
-            ->get()
+            ->with('user')->latest()->get()
             ->groupBy('post_id')
             ->map(fn($likes) => $likes->take(5)->map(fn($l) => [
                 'name'   => $l->user->name ?? '?',
                 'avatar' => $l->user->avatar ?? null,
             ])->values());
 
-        return view('fanbase.kita', compact('posts', 'likedIds', 'likersByPost'));
+        // Komentar yang sudah di-like oleh user (safe jika tabel belum ada)
+        $likedCommentIds = [];
+        try {
+            $likedCommentIds = PostCommentLike::where('user_id', Auth::id())
+                ->pluck('comment_id')->toArray();
+        } catch (\Throwable $e) {}
+
+        return view('fanbase.kita', compact('posts', 'likedIds', 'likersByPost', 'likedCommentIds'));
     }
 
     public function store(Request $request)
@@ -104,17 +112,39 @@ class KitaController extends Controller
         ]);
     }
 
+    public function likeComment(Request $request, $postId, $commentId)
+    {
+        try {
+            $comment  = PostComment::findOrFail($commentId);
+            $userId   = Auth::id();
+            $existing = PostCommentLike::where('comment_id', $commentId)->where('user_id', $userId)->first();
+            if ($existing) {
+                $existing->delete();
+                $comment->decrement('likes_count');
+                return response()->json(['liked' => false, 'likes_count' => max(0, $comment->fresh()->likes_count)]);
+            }
+            PostCommentLike::create(['comment_id' => $commentId, 'user_id' => $userId]);
+            $comment->increment('likes_count');
+            return response()->json(['liked' => true, 'likes_count' => $comment->fresh()->likes_count]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Fitur belum tersedia'], 422);
+        }
+    }
+
     public function comment(Request $request, $id)
     {
         $request->validate(['body' => 'required|string|min:1|max:300']);
 
-        $post = Post::findOrFail($id);
+        $post    = Post::findOrFail($id);
+        $parentId = $request->parent_id ?? null;
         $comment = PostComment::create([
-            'user_id' => Auth::id(),
-            'post_id' => $id,
-            'body'    => $request->body,
+            'user_id'   => Auth::id(),
+            'post_id'   => $id,
+            'parent_id' => $parentId,
+            'body'      => $request->body,
         ]);
-        $post->increment('comments_count');
+        // Hanya increment comments_count untuk komentar root
+        if (!$parentId) $post->increment('comments_count');
 
         if ($post->user_id !== Auth::id()) {
             try {
@@ -130,11 +160,12 @@ class KitaController extends Controller
         return response()->json([
             'success' => true,
             'comment' => [
-                'id'     => $comment->id,
-                'body'   => $comment->body,
-                'user'   => Auth::user()->name,
-                'avatar' => Auth::user()->avatar,
-                'time'   => 'Baru saja',
+                'id'        => $comment->id,
+                'body'      => $comment->body,
+                'parent_id' => $parentId,
+                'user'      => Auth::user()->name,
+                'avatar'    => Auth::user()->avatar ?? asset('images/default-avatar.png'),
+                'time'      => 'Baru saja',
             ]
         ]);
     }

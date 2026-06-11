@@ -999,9 +999,39 @@ function fbClosePlaylist(){
 }
 function escHtml(t){var d=document.createElement('div');d.appendChild(document.createTextNode(t));return d.innerHTML;}
 
+// ===== SOUND SYSTEM =====
+var fbSndCtx = null;
+function fbSnd() {
+    if (!fbSndCtx) {
+        try { fbSndCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { return null; }
+    }
+    return fbSndCtx;
+}
+function fbTone(freqs, durs, vol, type) {
+    var ctx = fbSnd(); if (!ctx) return;
+    type = type || 'sine'; vol = vol || 0.22;
+    var t = ctx.currentTime;
+    freqs.forEach(function(f, i) {
+        var off = durs.slice(0, i).reduce(function(a,b){return a+b;}, 0);
+        var osc = ctx.createOscillator();
+        var g   = ctx.createGain();
+        osc.type = type; osc.frequency.value = f;
+        g.gain.setValueAtTime(vol, t + off);
+        g.gain.exponentialRampToValueAtTime(0.001, t + off + durs[i]);
+        osc.connect(g); g.connect(ctx.destination);
+        osc.start(t + off); osc.stop(t + off + durs[i]);
+    });
+}
+function fbSoundLike()        { fbTone([880, 1109], [0.08, 0.18], 0.20); }
+function fbSoundComment()     { fbTone([659, 880, 1047], [0.07, 0.07, 0.18], 0.18); }
+function fbSoundMessage()     { fbTone([523, 659, 784], [0.08, 0.08, 0.22], 0.25); }
+function fbSoundInvite()      { fbTone([523, 659, 784, 1047], [0.07,0.07,0.07,0.28], 0.22); }
+function fbSoundTunerInTune() { fbTone([1000, 1250], [0.15, 0.45], 0.30); }
+
 // ===== NOTIFICATION BELL =====
 var fbNotifOpen = false;
 var fbNotifLoaded = false;
+var fbPrevBadgeCount = -1; // -1 = first load, jangan bunyi
 
 document.addEventListener('DOMContentLoaded', function() {
     var btn = document.getElementById('fbNotifBtn');
@@ -1043,14 +1073,15 @@ function fbPollNotifCount() {
     .then(function(r) { return r.ok ? r.json() : null; })
     .then(function(d) {
         if (!d || typeof d.count === 'undefined') return;
+        var count = d.count;
         var badge = document.getElementById('fbNotifBadge');
-        if (!badge) return;
-        if (d.count > 0) {
-            badge.textContent = d.count > 99 ? '99+' : d.count;
-            badge.style.display = 'flex';
-        } else {
-            badge.style.display = 'none';
+        if (badge) {
+            if (count > 0) { badge.textContent = count > 99 ? '99+' : count; badge.style.display = 'flex'; }
+            else badge.style.display = 'none';
         }
+        // Bunyi hanya saat ada notif BARU (bukan saat pertama load)
+        if (fbPrevBadgeCount >= 0 && count > fbPrevBadgeCount) fbSoundMessage();
+        fbPrevBadgeCount = count;
     }).catch(function(){});
 }
 

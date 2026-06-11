@@ -211,6 +211,30 @@
         border-radius: 4px; transition: 0.15s;
     }
     .kita-comment-delete:hover { color: #ef4444; background: #fef2f2; }
+    .kita-comment-footer {
+        display: flex; align-items: center; gap: 10px; margin-top: 5px;
+    }
+    .kc-action {
+        background: transparent; border: none; font-size: 11px; cursor: pointer;
+        color: var(--text-3); padding: 2px 6px; border-radius: 6px;
+        font-family: 'DM Sans', sans-serif; transition: 0.15s; display: flex; align-items: center; gap: 3px;
+    }
+    .kc-action:hover { background: var(--sky-lt); color: var(--sky-dk); }
+    .kc-action.liked { color: #e11d48; }
+    .kc-action.liked:hover { color: #e11d48; background: #fff1f2; }
+    .kita-reply-item {
+        display: flex; gap: 7px; margin-top: 6px; padding-left: 14px;
+        border-left: 2px solid var(--border-lt);
+    }
+    .kita-reply-item .kita-comment-avatar { width: 22px; height: 22px; }
+    .kita-reply-item .kita-comment-bubble {
+        padding: 6px 10px; background: var(--cream);
+    }
+    .kita-reply-wrap {
+        display: none; margin-top: 6px; padding-top: 6px;
+        border-top: 1px solid var(--border-lt);
+    }
+    .kita-reply-wrap.open { display: flex; gap: 8px; align-items: center; }
 
     .kita-comment-input-wrap {
         display: flex; gap: 8px; margin-top: 10px; align-items: center;
@@ -326,14 +350,15 @@
         {{-- COMMENTS --}}
         <div class="kita-comments" id="kitaComments{{ $post->id }}">
             <div id="kitaCommentsList{{ $post->id }}">
-                @foreach($post->comments->take(5) as $comment)
+                @foreach($post->comments->take(8) as $comment)
+                @php $isLikedCmt = in_array($comment->id, $likedCommentIds); @endphp
                 <div class="kita-comment-item" id="kitaComment{{ $comment->id }}">
-                    <img src="{{ $comment->user->avatar ?? 'https://www.google.com/favicon.ico' }}"
+                    <img src="{{ $comment->user->avatar ?? asset('images/default-avatar.png') }}"
                          class="kita-comment-avatar" alt="">
                     <div class="kita-comment-bubble">
                         <div class="kita-comment-header">
                             <span class="kita-comment-name">{{ $comment->user->name }}</span>
-                            <div style="display:flex;align-items:center;gap:6px;">
+                            <div style="display:flex;align-items:center;gap:4px;">
                                 <span class="kita-comment-time">{{ $comment->created_at->diffForHumans() }}</span>
                                 @if(Auth::id() === $comment->user_id)
                                 <button class="kita-comment-delete"
@@ -342,6 +367,53 @@
                             </div>
                         </div>
                         <div class="kita-comment-body">{{ $comment->body }}</div>
+                        <div class="kita-comment-footer">
+                            <button class="kc-action {{ $isLikedCmt ? 'liked' : '' }}"
+                                    id="kcLike{{ $comment->id }}"
+                                    onclick="kitaLikeComment({{ $post->id }}, {{ $comment->id }}, this)">
+                                &#9829; <span id="kcLikeCount{{ $comment->id }}">{{ $comment->likes_count ?? 0 }}</span>
+                            </button>
+                            <button class="kc-action" onclick="kitaToggleReply({{ $comment->id }}, '{{ addslashes($comment->user->name) }}')">
+                                &#8629; Balas
+                            </button>
+                        </div>
+                        {{-- Replies --}}
+                        @foreach($comment->replies->take(6) as $reply)
+                        @php $isLikedReply = in_array($reply->id, $likedCommentIds); @endphp
+                        <div class="kita-reply-item" id="kitaComment{{ $reply->id }}">
+                            <img src="{{ $reply->user->avatar ?? asset('images/default-avatar.png') }}"
+                                 class="kita-comment-avatar" alt="">
+                            <div class="kita-comment-bubble">
+                                <div class="kita-comment-header">
+                                    <span class="kita-comment-name">{{ $reply->user->name }}</span>
+                                    <div style="display:flex;align-items:center;gap:4px;">
+                                        <span class="kita-comment-time">{{ $reply->created_at->diffForHumans() }}</span>
+                                        @if(Auth::id() === $reply->user_id)
+                                        <button class="kita-comment-delete"
+                                                onclick="kitaDeleteComment({{ $post->id }}, {{ $reply->id }})">&#10005;</button>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="kita-comment-body">{{ $reply->body }}</div>
+                                <div class="kita-comment-footer">
+                                    <button class="kc-action {{ $isLikedReply ? 'liked' : '' }}"
+                                            id="kcLike{{ $reply->id }}"
+                                            onclick="kitaLikeComment({{ $post->id }}, {{ $reply->id }}, this)">
+                                        &#9829; <span id="kcLikeCount{{ $reply->id }}">{{ $reply->likes_count ?? 0 }}</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                        {{-- Reply input --}}
+                        <div class="kita-reply-wrap" id="kitaReplyWrap{{ $comment->id }}">
+                            <img src="{{ Auth::user()->avatar ?? asset('images/default-avatar.png') }}"
+                                 class="kita-comment-avatar" style="width:22px;height:22px;" alt="">
+                            <input class="kita-comment-input" id="kitaReplyInput{{ $comment->id }}"
+                                   placeholder="Balas..." style="font-size:11px;padding:5px 12px;">
+                            <button class="kita-comment-submit" style="padding:5px 12px;font-size:11px;"
+                                    onclick="kitaSubmitReply({{ $post->id }}, {{ $comment->id }})">Kirim</button>
+                        </div>
                     </div>
                 </div>
                 @endforeach
@@ -481,6 +553,67 @@ function kitaToggleComments(postId) {
     if(el) el.classList.toggle('open');
 }
 
+function kitaLikeComment(postId, commentId, btn) {
+    fetch(BASE_URL+'/kita/'+postId+'/comment/'+commentId+'/like', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrfToken, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.error) return;
+        btn.classList.toggle('liked', d.liked);
+        var countEl = document.getElementById('kcLikeCount'+commentId);
+        if (countEl) countEl.textContent = d.likes_count;
+        fbSoundLike();
+    }).catch(function(){});
+}
+
+function kitaToggleReply(commentId, replyToName) {
+    var wrap  = document.getElementById('kitaReplyWrap'+commentId);
+    var input = document.getElementById('kitaReplyInput'+commentId);
+    if (!wrap) return;
+    var isOpen = wrap.classList.contains('open');
+    // Tutup semua reply wrap lain
+    document.querySelectorAll('.kita-reply-wrap.open').forEach(function(w){ w.classList.remove('open'); });
+    if (!isOpen) {
+        wrap.classList.add('open');
+        if (input) { input.placeholder = 'Balas @' + replyToName + '...'; input.focus(); }
+    }
+}
+
+function kitaSubmitReply(postId, parentId) {
+    var input = document.getElementById('kitaReplyInput'+parentId);
+    var body  = input ? input.value.trim() : '';
+    if (!body) return;
+    fetch(BASE_URL+'/kita/'+postId+'/comment', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ body: body, parent_id: parentId })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (!d.success) return;
+        input.value = '';
+        // Tutup reply wrap
+        var wrap = document.getElementById('kitaReplyWrap'+parentId);
+        if (wrap) wrap.classList.remove('open');
+        // Inject reply HTML sebelum reply-wrap
+        var replyHtml = '<div class="kita-reply-item" id="kitaComment'+d.comment.id+'">'
+            + '<img src="'+escHtml(d.comment.avatar)+'" class="kita-comment-avatar" style="width:22px;height:22px;" onerror="this.src=\''+d.comment.avatar+'\'" alt="">'
+            + '<div class="kita-comment-bubble">'
+            + '<div class="kita-comment-header">'
+            + '<span class="kita-comment-name">'+escHtml(d.comment.user)+'</span>'
+            + '<div style="display:flex;align-items:center;gap:4px;">'
+            + '<span class="kita-comment-time">Baru saja</span>'
+            + '<button class="kita-comment-delete" onclick="kitaDeleteComment('+postId+','+d.comment.id+')">&#10005;</button>'
+            + '</div></div>'
+            + '<div class="kita-comment-body">'+escHtml(d.comment.body)+'</div>'
+            + '<div class="kita-comment-footer"><button class="kc-action" id="kcLike'+d.comment.id+'" onclick="kitaLikeComment('+postId+','+d.comment.id+',this)">&#9829; <span id="kcLikeCount'+d.comment.id+'">0</span></button></div>'
+            + '</div></div>';
+        if (wrap) wrap.insertAdjacentHTML('beforebegin', replyHtml);
+    }).catch(function(){});
+}
+
 function kitaSubmitComment(postId) {
     var input = document.getElementById('kitaInput'+postId);
     var body  = input ? input.value.trim() : '';
@@ -591,24 +724,28 @@ function escHtml(t){
     return d.innerHTML;
 }
 
-// Auto-buka komentar jika URL mengandung ?openPost={id}
+// Auto-buka komentar: deteksi ?openPost= ATAU #kitaPost{id}
 document.addEventListener('DOMContentLoaded', function() {
     var params = new URLSearchParams(window.location.search);
     var openId = params.get('openPost');
+
+    // Fallback: deteksi dari hash #kitaPost123
+    if (!openId) {
+        var hashMatch = window.location.hash.match(/^#kitaPost(\d+)/);
+        if (hashMatch) openId = hashMatch[1];
+    }
     if (!openId) return;
+
     var post = document.getElementById('kitaPost' + openId);
     if (!post) return;
-    // Buka section komentar
     var comments = document.getElementById('kitaComments' + openId);
     if (comments) comments.classList.add('open');
-    // Scroll ke post dengan sedikit delay agar layout render
     setTimeout(function() {
         post.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // Highlight sebentar
-        post.style.transition = 'box-shadow 0.4s';
-        post.style.boxShadow = '0 0 0 3px rgba(56,168,204,0.4)';
-        setTimeout(function() { post.style.boxShadow = ''; }, 2000);
-    }, 200);
+        post.style.transition = 'box-shadow 0.5s';
+        post.style.boxShadow = '0 0 0 3px rgba(56,168,204,0.45)';
+        setTimeout(function() { post.style.boxShadow = ''; }, 2200);
+    }, 150);
 });
 </script>
 @endpush

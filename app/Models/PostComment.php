@@ -1,15 +1,12 @@
 <?php
-
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Model;
 
 class PostComment extends Model
 {
-    protected $fillable = ['user_id', 'post_id', 'body'];
+    protected $fillable = ['user_id', 'post_id', 'parent_id', 'body', 'likes_count'];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+    public function user()    { return $this->belongsTo(User::class); }
+    public function replies() { return $this->hasMany(PostComment::class, 'parent_id')->with('user')->oldest(); }
+    public function commentLikes() { return $this->hasMany(PostCommentLike::class, 'comment_id'); }
 }

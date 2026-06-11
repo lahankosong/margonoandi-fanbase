@@ -171,8 +171,44 @@ if (!tableExists($conn, $dbname, 'conversation_invites')) {
     markMigration($conn, '2026_06_11_150000_create_conversation_invites_table');
 }
 
-// ── 5. Mark remaining pending migrations ─────────────────────────────────────
-echo '<h2>5. Tandai migration yang pending sebagai selesai</h2>';
+// ── 5. Kolom parent_id & likes_count di post_comments ─────────────────────────
+echo '<h2>5. Kolom like & balasan di post_comments</h2>';
+if (tableExists($conn, $dbname, 'post_comments')) {
+    if (!columnExists($conn, $dbname, 'post_comments', 'parent_id')) {
+        runSQL($conn, 'ADD COLUMN parent_id ke post_comments',
+            "ALTER TABLE `post_comments` ADD COLUMN `parent_id` bigint(20) UNSIGNED NULL AFTER `post_id`");
+    } else { echo '<pre class="info">&#8212; Kolom parent_id sudah ada</pre>'; }
+    if (!columnExists($conn, $dbname, 'post_comments', 'likes_count')) {
+        runSQL($conn, 'ADD COLUMN likes_count ke post_comments',
+            "ALTER TABLE `post_comments` ADD COLUMN `likes_count` int(10) UNSIGNED NOT NULL DEFAULT 0 AFTER `body`");
+    } else { echo '<pre class="info">&#8212; Kolom likes_count sudah ada</pre>'; }
+}
+
+// ── 6. Tabel post_comment_likes ───────────────────────────────────────────────
+echo '<h2>6. Tabel post_comment_likes</h2>';
+if (!tableExists($conn, $dbname, 'post_comment_likes')) {
+    runSQL($conn, 'CREATE TABLE post_comment_likes', "
+        CREATE TABLE `post_comment_likes` (
+            `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            `comment_id` bigint(20) UNSIGNED NOT NULL,
+            `user_id` bigint(20) UNSIGNED NOT NULL,
+            `created_at` timestamp NULL DEFAULT NULL,
+            `updated_at` timestamp NULL DEFAULT NULL,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `pcl_unique` (`comment_id`,`user_id`),
+            KEY `post_comment_likes_user_id_foreign` (`user_id`),
+            CONSTRAINT `pcl_comment_fk` FOREIGN KEY (`comment_id`) REFERENCES `post_comments` (`id`) ON DELETE CASCADE,
+            CONSTRAINT `pcl_user_fk` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
+    markMigration($conn, '2026_06_11_200000_add_comment_features');
+} else {
+    echo '<pre class="info">&#8212; Tabel post_comment_likes sudah ada</pre>';
+    markMigration($conn, '2026_06_11_200000_add_comment_features');
+}
+
+// ── 7. Mark remaining pending migrations ─────────────────────────────────────
+echo '<h2>7. Tandai migration yang pending sebagai selesai</h2>';
 $toMark = [
     '2026_04_25_033848_fix_posts_and_post_likes_tables',
     '2026_04_28_054029_add_edit_fields_to_comments',
@@ -183,12 +219,13 @@ foreach ($toMark as $m) {
     echo '<pre class="ok">&#10003; Ditandai: ' . htmlspecialchars($m) . '</pre>';
 }
 
-// ── 6. Verifikasi akhir ───────────────────────────────────────────────────────
-echo '<h2>6. Verifikasi Tabel Kritis</h2>';
+// ── 8. Verifikasi akhir ───────────────────────────────────────────────────────
+echo '<h2>8. Verifikasi Tabel Kritis</h2>';
 $check = [
     'notifications'        => 'Notifikasi lonceng',
     'kamu_notes'           => 'Catatan Kamu',
     'conversation_invites' => 'Invite @mention',
+    'post_comment_likes'   => 'Like komentar',
     'posts'                => 'Postingan Kita',
     'post_comments'        => 'Komentar Kita',
 ];

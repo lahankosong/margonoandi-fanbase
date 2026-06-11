@@ -706,7 +706,8 @@ function kamuDeletePost(id) {
 /* ===== GUITAR TUNER ===== */
 var tunerCtx = null, tunerAnalyser = null, tunerBuf = null;
 var tunerStream = null, tunerRunning = false, tunerRaf = null;
-var tunerSmooth = 0, tunerSelectedFreq = 0; // 0 = auto-detect closest
+var tunerSmooth = 0, tunerSelectedFreq = 0;
+var tunerWasInTune = false; // cegah suara ding berulang
 
 var TUNER_STRINGS = [
     { freq: 82.41,  label: 'E₂' },
@@ -744,7 +745,7 @@ function tunerStart() {
         tunerRunning = true;
         tunerSmooth = 0;
         var btn = document.getElementById('tunerBtn');
-        btn.textContent = '&#9646;&#9646; Stop';
+        btn.innerHTML = '&#9646;&#9646; Stop';
         btn.classList.add('stop');
         document.getElementById('tunerMsg').textContent = 'Petik senar gitarmu...';
         tunerLoop();
@@ -841,15 +842,18 @@ function tunerRenderUI(freq) {
     var absC = Math.abs(cents);
     if (absC <= 5) {
         noteEl.className   = 'tuner-note-big in-tune';
-        statusEl.textContent = '&#10003; Tepat!';
-        statusEl.className   = 'tuner-status in-tune';
+        statusEl.innerHTML = '&#10003; Tepat!';
+        statusEl.className = 'tuner-status in-tune';
         needle.setAttribute('stroke', '#22c55e');
+        if (!tunerWasInTune) { tunerWasInTune = true; fbSoundTunerInTune(); }
     } else if (cents < 0) {
+        tunerWasInTune = false;
         noteEl.className   = 'tuner-note-big too-low';
         statusEl.textContent = '▼ Rendah ' + cents + ' cent';
         statusEl.className   = 'tuner-status too-low';
         needle.setAttribute('stroke', '#F07040');
     } else {
+        tunerWasInTune = false;
         noteEl.className   = 'tuner-note-big too-high';
         statusEl.textContent = '▲ Tinggi +' + cents + ' cent';
         statusEl.className   = 'tuner-status too-high';

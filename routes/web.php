@@ -85,6 +85,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/kita/{id}', [KitaController::class, 'destroy'])->name('kita.destroy');
     Route::post('/kita/{id}/like', [KitaController::class, 'like'])->name('kita.like');
     Route::post('/kita/{id}/comment', [KitaController::class, 'comment'])->name('kita.comment');
+    Route::post('/kita/{postId}/comment/{commentId}/like', [KitaController::class, 'likeComment'])->name('kita.comment.like');
 
     Route::get('/dia', [DiaController::class, 'index'])->name('dia');
     Route::get('/dia/conversation/{id}', [DiaController::class, 'conversation'])->name('dia.conversation');
