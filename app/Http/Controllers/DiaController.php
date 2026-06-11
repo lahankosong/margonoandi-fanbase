@@ -20,10 +20,17 @@ class DiaController extends Controller
     {
         $userId = Auth::id();
 
-        $conversations = $this->userConversations($userId);
-        $groups        = $this->userGroups($userId);
-        $users         = $this->sortedUsers($userId);
-        $unreadCounts  = $this->getUnreadCounts($conversations, $userId);
+        try { $conversations = $this->userConversations($userId); }
+        catch (\Throwable $e) { \Log::error('DiaController@index conversations: '.$e->getMessage()); $conversations = collect(); }
+
+        try { $groups = $this->userGroups($userId); }
+        catch (\Throwable $e) { \Log::error('DiaController@index groups: '.$e->getMessage()); $groups = collect(); }
+
+        try { $users = $this->sortedUsers($userId); }
+        catch (\Throwable $e) { \Log::error('DiaController@index users: '.$e->getMessage()); $users = collect(); }
+
+        try { $unreadCounts = $this->getUnreadCounts($conversations, $userId); }
+        catch (\Throwable $e) { $unreadCounts = []; }
 
         return view('fanbase.dia', compact('conversations', 'groups', 'users', 'unreadCounts'));
     }

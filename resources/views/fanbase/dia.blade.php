@@ -284,8 +284,15 @@
         @endforeach
         @endif
 
-        {{-- Online users --}}
-        @php $onlineUsers = $users->filter(fn($u) => $u->isOnline())->take(8); @endphp
+        {{-- Online users — cek raw atribut last_seen tanpa memanggil isOnline() --}}
+        @php
+        $onlineUsers = $users->filter(function($u) {
+            try {
+                $seen = $u->getAttributes()['last_seen'] ?? null;
+                return $seen && strtotime((string)$seen) > (time() - 120);
+            } catch (\Throwable $e) { return false; }
+        })->take(8);
+        @endphp
         @if($onlineUsers->count() > 0)
         <div class="dia-mobile-section-label" style="display:flex;align-items:center;gap:5px;">
             <span style="width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;"></span>
@@ -443,7 +450,19 @@
 @push('scripts')
 <script>
 var csrfToken = '{{ csrf_token() }}';
-var diaUsers  = @json($users->map(fn($u) => ['id'=>$u->id,'name'=>$u->name,'avatar'=>$u->avatar,'online'=>$u->isOnline()]));
+@php
+try {
+    $_diaUsersArr = $users->map(function($u) {
+        try {
+            $seen   = $u->getAttributes()['last_seen'] ?? null;
+            $online = $seen && strtotime((string)$seen) > (time() - 120);
+        } catch (\Throwable $e) { $online = false; }
+        return ['id'=>(int)$u->id,'name'=>(string)$u->name,'avatar'=>(string)($u->avatar??''),'online'=>(bool)$online];
+    })->values()->all();
+    $_diaUsersJson = json_encode($_diaUsersArr, JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_AMP|JSON_HEX_QUOT|JSON_UNESCAPED_UNICODE);
+} catch (\Throwable $e) { $_diaUsersJson = '[]'; }
+@endphp
+var diaUsers = {!! $_diaUsersJson !!};
 
 @if(isset($conversation)) var convId  = {{ $conversation->id }}; @endif
 @if(isset($group))        var groupId = {{ $group->id }};        @endif
