@@ -254,12 +254,14 @@
             } catch (\Throwable $e) { return false; }
         })->take(8);
         @endphp
-        @if($onlineUsers->count() > 0)
         <div class="dia-mobile-section-label" style="display:flex;align-items:center;gap:5px;">
             <span style="width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;"></span>
-            Online Sekarang ({{ $onlineUsers->count() }})
+            Online Sekarang
+            @if($onlineUsers->count() > 0)
+            <span style="font-size:10px;color:#10b981;font-weight:600;">({{ $onlineUsers->count() }})</span>
+            @endif
         </div>
-        @foreach($onlineUsers as $u)
+        @forelse($onlineUsers as $u)
         <button class="dia-mobile-item" onclick="diaStartConv({{ $u->id }})">
             <div class="dia-mobile-avatar">
                 @if($u->avatar)
@@ -277,8 +279,11 @@
                 <span style="font-size:9px;color:#10b981;font-weight:600;letter-spacing:0.02em;">&#9679; Online</span>
             </div>
         </button>
-        @endforeach
-        @endif
+        @empty
+        <div style="font-size:12px;color:var(--text-4);padding:0.5rem 0 0.25rem;text-align:center;">
+            Belum ada yang online saat ini
+        </div>
+        @endforelse
 
         @if($conversations->count() > 0)
         <div class="dia-mobile-section-label">Obrolan</div>
