@@ -22,11 +22,26 @@ class KitaController extends Controller
                 ->with(['user', 'replies.user'])->latest(),
         ])->orderByDesc('created_at')->paginate(15);
 
-        // Member logs (safe jika tabel belum ada)
+        // Member join logs — pakai member_logs jika ada, fallback ke users.created_at
         $memberLogs = collect();
         try {
-            $memberLogs = MemberLog::with('user')->orderByDesc('created_at')->get();
-        } catch (\Throwable $e) {}
+            $logs = MemberLog::with('user')->orderByDesc('created_at')->get();
+            if ($logs->isNotEmpty()) {
+                $memberLogs = $logs;
+            } else {
+                throw new \RuntimeException('empty');
+            }
+        } catch (\Throwable $e) {
+            // Fallback: tiap user punya created_at sebagai waktu bergabung
+            try {
+                $memberLogs = \App\Models\User::orderByDesc('created_at')->get()
+                    ->map(fn($u) => (object)[
+                        'id'         => $u->id,
+                        'user'       => $u,
+                        'created_at' => $u->created_at,
+                    ]);
+            } catch (\Throwable $e2) {}
+        }
 
         $likedIds = PostLike::where('user_id', Auth::id())
             ->pluck('post_id')->toArray();
