@@ -27,8 +27,11 @@ class KitaController extends Controller
                 ->with(['user', 'replies.user'])->latest(),
         ])->orderByDesc('created_at')->get();
 
-        // Ambil semua member log dengan relasi user
-        $allLogs = MemberLog::with('user')->orderByDesc('created_at')->get();
+        // Ambil semua member log (safe jika tabel belum ada)
+        $allLogs = collect();
+        try {
+            $allLogs = MemberLog::with('user')->orderByDesc('created_at')->get();
+        } catch (\Throwable $e) {}
 
         // Gabung ke unified feed, urutkan berdasarkan waktu
         $feedItems = $allPosts
@@ -46,7 +49,10 @@ class KitaController extends Controller
         );
 
         // Like data hanya untuk post yang ada di halaman ini
-        $postIdsOnPage = $pageItems->where('type', 'post')->pluck('item.id');
+        $postIdsOnPage = $pageItems
+            ->filter(fn($i) => $i['type'] === 'post')
+            ->map(fn($i) => $i['item']->id)
+            ->values();
 
         $likedIds = PostLike::where('user_id', Auth::id())
             ->whereIn('post_id', $postIdsOnPage)
