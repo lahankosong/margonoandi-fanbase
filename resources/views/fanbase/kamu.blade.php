@@ -100,9 +100,13 @@
         box-shadow: 0 12px 40px rgba(0,0,0,0.5);
     }
     .tuner-label {
-        font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase;
-        color: #2a4a5a; font-weight: 700; margin-bottom: 1rem;
+        font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+        color: #5b8298; font-weight: 700; margin-bottom: 0.5rem;
     }
+    .tuner-steps {
+        font-size: 12px; color: #9fc0d0; margin-bottom: 1rem; line-height: 1.5;
+    }
+    .tuner-steps b { color: #7EC8E3; font-weight: 700; }
     /* ===== Meter ===== */
     .tuner-meter-wrap {
         position: relative; width: calc(100% - 24px); max-width: 320px;
@@ -111,8 +115,8 @@
     /* angka cent besar di atas meter */
     .tuner-cents {
         font-family: 'Sora', sans-serif;
-        font-size: 1.05rem; font-weight: 700; min-height: 22px; line-height: 22px;
-        color: #2a4a5a; margin: 0 0 0.5rem; letter-spacing: 0.01em;
+        font-size: 1.35rem; font-weight: 800; min-height: 30px; line-height: 30px;
+        color: #8fb3c4; margin: 0 0 0.6rem; letter-spacing: 0.02em;
         font-variant-numeric: tabular-nums; transition: color 0.15s;
     }
     .tuner-cents.in-tune  { color: #22c55e; }
@@ -167,12 +171,12 @@
     .tuner-meter-needle.too-high { background: #ef4444; color: #ef4444; box-shadow: 0 0 12px rgba(239,68,68,0.8); }
     .tuner-meter-labels {
         display: flex; justify-content: space-between; align-items: center;
-        font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.22);
-        margin-top: 6px; padding: 0 2px; font-variant-numeric: tabular-nums;
+        font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.4);
+        margin-top: 7px; padding: 0 2px;
     }
-    .tuner-meter-labels .flat  { color: #fb923c; font-size: 13px; }
-    .tuner-meter-labels .sharp { color: #ef4444; font-size: 13px; }
-    .tuner-meter-labels .mid   { color: rgba(34,197,94,0.7); }
+    .tuner-meter-labels .flat  { color: #fb923c; }
+    .tuner-meter-labels .sharp { color: #ef4444; }
+    .tuner-meter-labels .mid   { color: #22c55e; }
     /* Note */
     .tuner-note-big {
         font-family: 'Sora', sans-serif;
@@ -213,7 +217,7 @@
         background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
         box-shadow: 0 4px 16px rgba(239,68,68,0.4);
     }
-    .tuner-msg { font-size: 11px; color: #2a4a5a; margin-top: 8px; min-height: 16px; }
+    .tuner-msg { font-size: 12px; color: #7a9db0; margin-top: 10px; min-height: 18px; }
 
     /* ===== NOTES ===== */
     .notes-form {
@@ -554,11 +558,14 @@
 <div class="tuner-card">
 
     <div class="tuner-label">Tuner Gitar &mdash; Standar EADGBE</div>
+    <div class="tuner-steps">
+        <b>1.</b> Tekan Mulai &nbsp;·&nbsp; <b>2.</b> Petik 1 senar &nbsp;·&nbsp; <b>3.</b> Putar pasak sampai jarum di tengah (hijau)
+    </div>
 
     {{-- Note besar --}}
     <div class="tuner-note-big" id="tunerNote">—</div>
-    {{-- Angka cent --}}
-    <div class="tuner-cents" id="tunerCents">Petik atau pilih senar</div>
+    {{-- Status: arah putar + seberapa meleset --}}
+    <div class="tuner-cents" id="tunerCents">Petik senar gitarmu</div>
 
     {{-- Meter jarum --}}
     <div class="tuner-meter-wrap">
@@ -569,7 +576,7 @@
             <div class="tuner-meter-needle" id="tunerBarCursor"></div>
         </div>
         <div class="tuner-meter-labels">
-            <span class="flat">♭</span><span>−25</span><span class="mid">0</span><span>+25</span><span class="sharp">♯</span>
+            <span class="flat">terlalu rendah</span><span class="mid">pas</span><span class="sharp">terlalu tinggi</span>
         </div>
     </div>
 
@@ -703,7 +710,7 @@
     </div>
 
     <button class="tuner-btn" id="tunerBtn" onclick="tunerToggle()">&#9654; Mulai Tuning</button>
-    <div class="tuner-msg" id="tunerMsg">Ketuk senar di headstock, lalu mulai</div>
+    <div class="tuner-msg" id="tunerMsg">Tip: ketuk pasak di gambar untuk kunci 1 senar</div>
 
 </div>
 </div>
@@ -965,11 +972,9 @@ function tunerLoop(ts) {
             var median = sorted[Math.floor(sorted.length / 2)];
             tunerSmooth = tunerSmooth === 0 ? median : tunerSmooth * 0.65 + median * 0.35;
         } else {
+            // Sinyal hilang/redup: TAHAN pembacaan terakhir di layar (lebih mudah dibaca pemula),
+            // jangan langsung reset ke "—". Hanya kosongkan history agar petik berikutnya akurat.
             tunerFreqHistory = [];
-            if (tunerSmooth > 0) {
-                tunerSmooth *= 0.45;
-                if (tunerSmooth < 60) { tunerSmooth = 0; tunerRenderUI(null); tunerLastRender = ts; }
-            }
         }
     }
 
@@ -1049,7 +1054,7 @@ function tunerRenderUI(freq) {
 
     if (!freq) {
         noteEl.textContent  = '—'; noteEl.className  = 'tuner-note-big';
-        centsEl.textContent = tunerRunning ? 'Mendengarkan…' : 'Petik atau pilih senar';
+        centsEl.textContent = 'Petik senar gitarmu';
         centsEl.className = 'tuner-cents';
         if (cursor) { cursor.style.left = '50%'; cursor.className = 'tuner-meter-needle'; }
         if (track)  track.classList.remove('active');
@@ -1084,13 +1089,13 @@ function tunerRenderUI(freq) {
     }
 
     var absC = Math.abs(centsRaw);
-    var sign = centsRaw >= 0 ? '+' : '';
+    var off  = Math.abs(Math.round(centsRaw)); // angka bulat sederhana, makin kecil makin pas
     // Hysteresis: masuk in-tune saat ≤5 cent, bertahan sampai >8 cent (cegah flip-flop di tepi)
     var wasInTune = tunerWasInTune;
     var inTune = wasInTune ? (absC < 8) : (absC <= 5);
     if (inTune) {
         noteEl.className    = 'tuner-note-big in-tune';
-        centsEl.textContent = absC <= 1 ? '✓ Pas' : '✓ ' + sign + cents.toFixed(1) + ' cent';
+        centsEl.textContent = '✓ SUDAH PAS';
         centsEl.className   = 'tuner-cents in-tune';
         if (cursor) cursor.className = 'tuner-meter-needle in-tune';
         document.querySelectorAll('.tuner-peg').forEach(function(p){
@@ -1102,14 +1107,14 @@ function tunerRenderUI(freq) {
         tunerWasInTune = false;
         document.querySelectorAll('.tuner-peg.in-tune').forEach(function(p){ p.classList.remove('in-tune'); });
         noteEl.className    = 'tuner-note-big too-low';
-        centsEl.textContent = sign + cents.toFixed(1) + ' cent  ▼ naikkan tegangan';
+        centsEl.textContent = '⬆ KENCANGKAN  ·  meleset ' + off;
         centsEl.className   = 'tuner-cents too-low';
         if (cursor) cursor.className = 'tuner-meter-needle too-low';
     } else {
         tunerWasInTune = false;
         document.querySelectorAll('.tuner-peg.in-tune').forEach(function(p){ p.classList.remove('in-tune'); });
         noteEl.className    = 'tuner-note-big too-high';
-        centsEl.textContent = sign + cents.toFixed(1) + ' cent  ▲ kendurkan tegangan';
+        centsEl.textContent = '⬇ KENDURKAN  ·  meleset ' + off;
         centsEl.className   = 'tuner-cents too-high';
         if (cursor) cursor.className = 'tuner-meter-needle too-high';
     }
