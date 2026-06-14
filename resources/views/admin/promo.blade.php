@@ -186,21 +186,24 @@
 
 <div class="toast" id="toast">Tersalin!</div>
 
+@php
+    $songsData = $songs->map(function($s) {
+        return [
+            'id'         => $s->id,
+            'title'      => $s->title,
+            'era'        => $s->era,
+            'hook'       => $s->story_hook,
+            'desc'       => $s->description,
+            'spotify'    => $s->spotify_url,
+            'apple'      => $s->apple_music_url,
+            'youtube_id' => $s->youtube_id,
+            'key'        => $s->key_signature,
+            'tempo'      => $s->tempo,
+        ];
+    })->values();
+@endphp
 <script>
-var SONGS = @json($songs->map(function($s) {
-    return [
-        'id'          => $s->id,
-        'title'       => $s->title,
-        'era'         => $s->era,
-        'hook'        => $s->story_hook,
-        'desc'        => $s->description,
-        'spotify'     => $s->spotify_url,
-        'apple'       => $s->apple_music_url,
-        'youtube_id'  => $s->youtube_id,
-        'key'         => $s->key_signature,
-        'tempo'       => $s->tempo,
-    ];
-})->values());
+var SONGS = {!! json_encode($songsData, JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) !!};
 
 var SITE = 'margonoandi.my.id';
 var igVariants = ['', '', ''];
