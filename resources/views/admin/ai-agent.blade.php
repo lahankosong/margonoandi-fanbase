@@ -2,459 +2,335 @@
 
 @push('styles')
 <style>
-    .agent-header {
-        display: flex; align-items: center; justify-content: space-between;
-        margin-bottom: 2rem; padding-bottom: 1rem;
-        border-bottom: 1px solid var(--border);
-    }
-    .agent-header h2 { font-size: 1rem; font-weight: 500; color: var(--text); }
-    .agent-header p  { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+    .ai-header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid var(--border); }
+    .ai-header h2 { font-size:1rem; font-weight:500; color:var(--text); }
+    .ai-header p { font-size:12px; color:var(--text-3); margin-top:2px; }
+    .btn-back { font-size:12px; color:var(--text-2); text-decoration:none; border:1px solid var(--border); padding:6px 14px; border-radius:8px; }
+    .btn-back:hover { color:var(--text); border-color:var(--text-3); }
+    .alert-success { background:#0d2e1a; color:#4ade80; border:1px solid #166534; padding:10px 16px; border-radius:8px; margin-bottom:1.25rem; font-size:13px; }
 
-    .agent-layout {
-        display: grid; grid-template-columns: 300px 1fr;
-        gap: 2rem; align-items: start;
-    }
+    .card { background:var(--bg-2); border:1px solid var(--border); border-radius:12px; margin-bottom:1.25rem; overflow:hidden; }
+    .card > summary, .card-head { padding:0.9rem 1.1rem; border-bottom:1px solid var(--border); font-size:12px; color:var(--text-2); font-weight:600; letter-spacing:0.04em; }
+    .card > summary { cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; }
+    .card > summary::-webkit-details-marker { display:none; }
+    .card > summary::after { content:'▾'; color:var(--text-3); transition:transform 0.2s; }
+    details.card[open] > summary::after { transform:rotate(180deg); }
+    .card-body { padding:1.1rem; }
 
-    /* SONG SELECTOR */
-    .song-selector {
-        background: var(--bg-2); border: 1px solid var(--border);
-        border-radius: 12px; overflow: hidden; position: sticky; top: 80px;
-    }
-    .selector-header {
-        padding: 1rem 1.25rem; border-bottom: 1px solid var(--border);
-        font-size: 11px; color: var(--text-3); letter-spacing: 0.15em; text-transform: uppercase;
-    }
-    .song-list { max-height: 70vh; overflow-y: auto; }
-    .song-option {
-        display: flex; align-items: center; gap: 10px;
-        padding: 10px 1.25rem; cursor: pointer; transition: 0.15s;
-        border-bottom: 1px solid var(--border-2);
-    }
-    .song-option:hover { background: var(--card-bg); }
-    .song-option.selected { background: var(--card-bg); border-left: 2px solid var(--accent); }
-    .song-option-thumb {
-        width: 44px; height: 28px; object-fit: cover;
-        border-radius: 4px; background: var(--bg-3); flex-shrink: 0;
-    }
-    .song-option-info { min-width: 0; }
-    .song-option-title { font-size: 12px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .song-option-era   { font-size: 10px; color: var(--text-3); margin-top: 1px; }
+    .fg { display:flex; flex-direction:column; gap:5px; margin-bottom:12px; }
+    .fg label { font-size:11px; color:var(--text-3); text-transform:uppercase; letter-spacing:0.05em; }
+    .fi { background:var(--bg-3); border:1px solid var(--border); border-radius:8px; color:var(--text); font-size:13px; padding:9px 11px; outline:none; font-family:inherit; width:100%; }
+    .fi:focus { border-color:var(--text-3); }
+    .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .btn { padding:9px 18px; border-radius:8px; font-size:13px; font-weight:500; border:none; cursor:pointer; transition:0.2s; }
+    .btn-primary { background:var(--text); color:var(--bg); }
+    .btn-primary:hover { filter:brightness(0.88); }
+    .btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+    .btn-accent { background:var(--accent-dim); color:var(--accent); }
 
-    /* MAIN AREA */
-    .agent-main { min-width: 0; }
+    .prov-item { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border-2); flex-wrap:wrap; }
+    .prov-item:last-child { border-bottom:none; }
+    .prov-name { font-size:13px; color:var(--text); font-weight:500; }
+    .prov-meta { font-size:11px; color:var(--text-3); }
+    .prov-badge { font-size:10px; padding:2px 7px; border-radius:20px; background:var(--bg-3); color:var(--text-3); border:1px solid var(--border); }
+    .prov-key-ok { color:#4ade80; } .prov-key-no { color:#f87171; }
+    .btn-del { background:transparent; border:1px solid var(--border); color:var(--text-3); border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer; }
+    .btn-del:hover { border-color:#ef4444; color:#ef4444; }
 
-    /* SELECTED SONG INFO */
-    .selected-song-card {
-        background: var(--bg-2); border: 1px solid var(--border);
-        border-radius: 12px; padding: 1.25rem;
-        display: flex; align-items: center; gap: 1rem;
-        margin-bottom: 1.5rem;
-    }
-    .selected-thumb {
-        width: 80px; height: 50px; object-fit: cover;
-        border-radius: 6px; background: var(--bg-3); flex-shrink: 0;
-    }
-    .selected-title { font-size: 15px; font-weight: 500; color: var(--text); }
-    .selected-meta  { font-size: 12px; color: var(--text-3); margin-top: 3px; }
+    .gen-bar { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+    .gen-bar .fg { flex:1; min-width:160px; margin-bottom:0; }
+    .gen-status { font-size:12px; color:var(--text-3); margin-top:10px; min-height:18px; }
 
-    /* GENERATE BUTTON */
-    .generate-section {
-        display: flex; align-items: center; gap: 12px;
-        margin-bottom: 2rem;
-    }
-    .btn-generate {
-        padding: 11px 28px; border-radius: 50px; font-size: 13px;
-        font-weight: 500; background: var(--text); color: var(--bg);
-        border: none; cursor: pointer; transition: 0.2s;
-        display: flex; align-items: center; gap: 8px;
-    }
-    .btn-generate:hover { filter: brightness(0.88); }
-    .btn-generate:disabled { background: var(--bg-3); color: var(--text-3); cursor: not-allowed; }
-    .generate-hint { font-size: 12px; color: var(--text-3); }
+    .niche-box { background:var(--accent-dim); border:1px solid transparent; border-radius:10px; padding:12px 14px; margin-bottom:1.25rem; }
+    .niche-box .lbl { font-size:10px; color:var(--accent); text-transform:uppercase; letter-spacing:0.1em; }
+    .niche-box .val { font-size:14px; color:var(--text); margin-top:3px; }
+    .topic { background:var(--bg-2); border:1px solid var(--border); border-radius:12px; margin-bottom:1rem; overflow:hidden; }
+    .topic-head { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:0.8rem 1.1rem; border-bottom:1px solid var(--border); }
+    .topic-title { font-size:13px; font-weight:600; color:var(--text); }
+    .mini-btn { font-size:11px; padding:4px 10px; border-radius:6px; background:var(--bg-3); border:1px solid var(--border); color:var(--text-2); cursor:pointer; }
+    .narr { display:flex; gap:10px; padding:11px 1.1rem; border-bottom:1px solid var(--border-2); }
+    .narr:last-child { border-bottom:none; }
+    .narr input[type=checkbox] { margin-top:3px; width:15px; height:15px; cursor:pointer; flex-shrink:0; }
+    .narr-body { flex:1; min-width:0; }
+    .narr-text { font-size:13px; color:var(--text); line-height:1.5; }
+    .narr-prompt { font-size:11px; color:var(--text-3); margin-top:5px; line-height:1.5; background:var(--bg-3); border:1px solid var(--border-2); border-radius:6px; padding:6px 8px; font-family:monospace; }
+    .narr-copy { font-size:10px; color:var(--accent); cursor:pointer; margin-left:8px; }
 
-    /* LOADING */
-    .loading-state {
-        display: none; text-align: center; padding: 3rem;
-        background: var(--bg-2); border: 1px solid var(--border);
-        border-radius: 12px;
-    }
-    .loading-state.visible { display: block; }
-    .loading-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 1rem; }
-    .loading-dot {
-        width: 8px; height: 8px; border-radius: 50%; background: var(--bg-4);
-        animation: dotPulse 1.4s ease-in-out infinite;
-    }
-    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
-    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes dotPulse {
-        0%, 80%, 100% { background: var(--bg-4); transform: scale(0.8); }
-        40% { background: var(--accent); transform: scale(1.2); }
-    }
-    .loading-text    { font-size: 13px; color: var(--text-3); }
-    .loading-subtext { font-size: 11px; color: var(--text-3); margin-top: 4px; opacity: 0.6; }
+    .sched-bar { position:sticky; bottom:0; background:var(--bg-2); border:1px solid var(--border); border-radius:12px; padding:12px 14px; margin-top:1rem; display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; }
+    .sched-bar .fg { margin-bottom:0; }
+    .sched-count { font-size:12px; color:var(--text-3); }
 
-    /* RESULTS */
-    .results-area { display: none; }
-    .results-area.visible { display: block; }
+    .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--text); color:var(--bg); padding:10px 20px; border-radius:8px; font-size:13px; opacity:0; pointer-events:none; transition:0.25s; z-index:999; }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+    .spinner { display:inline-block; width:13px; height:13px; border:2px solid var(--text-3); border-top-color:transparent; border-radius:50%; animation:spin 0.7s linear infinite; vertical-align:middle; }
+    @keyframes spin { to { transform:rotate(360deg); } }
 
-    .result-section {
-        background: var(--bg-2); border: 1px solid var(--border);
-        border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;
-    }
-    .result-section-title {
-        font-size: 10px; letter-spacing: 0.2em; color: var(--text-3);
-        text-transform: uppercase; margin-bottom: 1rem;
-        padding-bottom: 0.75rem; border-bottom: 1px solid var(--border-2);
-        display: flex; align-items: center; justify-content: space-between;
-    }
-    .result-section-title span { font-size: 14px; }
-
-    /* TOPIC TABS */
-    .topic-tabs {
-        display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem;
-    }
-    .topic-tab {
-        padding: 6px 14px; border-radius: 20px; font-size: 11px;
-        background: var(--bg-3); border: 1px solid var(--border);
-        color: var(--text-2); cursor: pointer; transition: 0.15s;
-    }
-    .topic-tab:hover { border-color: var(--text-3); color: var(--text); }
-    .topic-tab.active { background: var(--text); color: var(--bg); border-color: var(--text); }
-
-    /* VARIATION BUTTONS */
-    .variation-buttons { display: flex; gap: 8px; margin-bottom: 1rem; }
-    .variation-btn {
-        padding: 5px 12px; border-radius: 16px; font-size: 10px;
-        background: var(--bg-3); border: 1px solid var(--border); color: var(--text-3);
-        cursor: pointer; transition: 0.15s;
-    }
-    .variation-btn.active { background: var(--bg-4); border-color: var(--accent); color: var(--text); }
-
-    /* CAPTION LINES */
-    .caption-lines { background: var(--bg-3); border-radius: 8px; padding: 16px; }
-    .caption-line  { font-size: 13px; color: var(--text-2); margin-bottom: 8px; }
-    .caption-punchline {
-        padding-left: 20px; border-left: 2px solid var(--accent);
-        font-weight: 500; margin-top: 8px;
-    }
-
-    /* SCENE LIST */
-    .scene-list { display: flex; flex-direction: column; gap: 10px; }
-    .scene-card {
-        background: var(--bg-3); border-left: 2px solid var(--accent);
-        padding: 10px 12px; border-radius: 6px;
-    }
-    .scene-duration { font-size: 10px; color: var(--accent); font-family: monospace; margin-bottom: 6px; }
-    .scene-desc { font-size: 11px; color: var(--text-2); margin-top: 4px; line-height: 1.4; }
-    .scene-desc strong { color: var(--text-3); }
-
-    /* DREAMINA PROMPT */
-    .dreamina-prompt-box {
-        background: var(--bg-3); border: 1px solid var(--accent-dim);
-        border-radius: 8px; padding: 12px; margin-top: 1rem;
-    }
-    .dreamina-prompt-text {
-        font-size: 11px; color: var(--text-2); font-family: monospace;
-        word-break: break-word; white-space: pre-wrap;
-    }
-
-    /* DESCRIPTION */
-    .desc-box {
-        background: var(--bg-3); border: 1px solid var(--border);
-        border-radius: 8px; padding: 12px;
-        font-size: 13px; color: var(--text-2); line-height: 1.6;
-    }
-    .hashtags {
-        background: var(--bg-3); border: 1px solid var(--border);
-        border-radius: 8px; padding: 12px;
-        font-size: 12px; color: var(--accent); margin-top: 10px;
-    }
-
-    /* ERROR & EMPTY */
-    .error-box {
-        background: #2e0d0d; color: #f87171; border: 1px solid #991b1b;
-        padding: 12px 16px; border-radius: 8px; font-size: 13px;
-        display: none; margin-bottom: 1rem;
-    }
-    .error-box.visible { display: block; }
-    .empty-state {
-        text-align: center; padding: 4rem 2rem;
-        background: var(--bg-2); border: 1px solid var(--border); border-radius: 12px;
-    }
-    .empty-state p { font-size: 14px; color: var(--text-3); }
-
-    /* TOAST */
-    .toast {
-        position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-        background: var(--bg-4); color: var(--text); padding: 8px 16px; border-radius: 40px;
-        font-size: 12px; z-index: 1000; opacity: 0; transition: 0.2s;
-        pointer-events: none; border: 1px solid var(--border);
-    }
-    .toast.show { opacity: 1; }
-
-    /* COPY BUTTON */
-    .hook-copy {
-        padding: 5px 12px; border-radius: 6px; font-size: 11px;
-        border: 1px solid var(--accent-dim); color: var(--accent); background: transparent;
-        cursor: pointer; transition: 0.15s;
-    }
-    .hook-copy:hover { background: var(--accent-dim); }
-
-    @media (max-width: 768px) {
-        .agent-layout { grid-template-columns: 1fr; }
-        .song-selector { position: static; }
-    }
+    @media (max-width:600px){ .row2{grid-template-columns:1fr;} }
 </style>
 @endpush
 
 @section('content')
-<div class="agent-header">
+
+<div class="ai-header">
     <div>
-        <h2>AI Content Agent — Multi-Scene Video Generator</h2>
-        <p>Generate 5 topik × 3 variasi × 4 adegan = 60 konten per lagu</p>
+        <h2>AI Agent v2</h2>
+        <p>Niche → topik → narasi → prompt gambar → jadwalkan ke Calendar</p>
     </div>
-    <a href="{{ route('admin.index') }}" style="font-size:12px;color:var(--text-2);text-decoration:none;border:1px solid var(--border);padding:6px 14px;border-radius:8px;">← Panel Admin</a>
+    <a href="{{ route('admin.index') }}" class="btn-back">← Panel Admin</a>
 </div>
 
-<div style="background:#2a210a;color:#facc15;border:1px solid #854d0e;border-radius:10px;padding:12px 16px;margin-bottom:1.5rem;font-size:13px;line-height:1.6;">
-    ⏸️ <b>Fitur dijeda sementara (hemat budget).</b> Setiap "Generate" memakai kredit Claude API.
-    Untuk promosi harian, gunakan <b>Promo Templates</b> (tanpa biaya). Pakai AI Agent hanya saat rilis lagu baru.
-</div>
+@if(session('success'))
+<div class="alert-success">{{ session('success') }}</div>
+@endif
 
-<div class="agent-layout">
-    {{-- SONG SELECTOR --}}
-    <div class="song-selector">
-        <div class="selector-header">Pilih lagu</div>
-        <div class="song-list">
-            @foreach($songs as $song)
-            <div class="song-option" onclick="selectSong({{ $song->id }}, '{{ addslashes($song->title) }}', '{{ $song->youtube_id }}', '{{ addslashes($song->era ?? '') }}', '{{ addslashes($song->key_signature ?? '') }}', {{ $song->lyrics ? 'true' : 'false' }})">
-                <img src="https://img.youtube.com/vi/{{ $song->youtube_id }}/mqdefault.jpg" class="song-option-thumb">
-                <div class="song-option-info">
-                    <div class="song-option-title">{{ $song->title }}</div>
-                    <div class="song-option-era">{{ $song->era ?? '—' }}</div>
+{{-- ===== PENGATURAN AI (provider) ===== --}}
+<details class="card">
+    <summary>⚙️ Pengaturan AI — Provider &amp; API Key ({{ $providers->count() }})</summary>
+    <div class="card-body">
+        @if($providers->count())
+        <div style="margin-bottom:1rem;">
+            @foreach($providers as $prov)
+            <div class="prov-item">
+                <div style="flex:1;min-width:0;">
+                    <span class="prov-name">{{ $prov->name }}</span>
+                    <span class="prov-badge">{{ $prov->format }}</span>
+                    <div class="prov-meta">{{ $prov->model }} ·
+                        @if($prov->api_key)<span class="prov-key-ok">● key terisi</span>@else<span class="prov-key-no">● key kosong</span>@endif
+                    </div>
                 </div>
+                <form method="POST" action="{{ route('admin.ai-agent.provider.destroy', $prov->id) }}" onsubmit="return confirm('Hapus provider {{ $prov->name }}?')">
+                    @csrf @method('DELETE')
+                    <button class="btn-del">Hapus</button>
+                </form>
             </div>
             @endforeach
         </div>
+        @else
+        <p style="font-size:12px;color:var(--text-3);margin-bottom:1rem;">Belum ada provider. Tambah di bawah (mulai dari preset gratis seperti Gemini / Groq).</p>
+        @endif
+
+        <form method="POST" action="{{ route('admin.ai-agent.provider.store') }}">
+            @csrf
+            <div class="fg">
+                <label>Preset cepat (otomatis isi kolom)</label>
+                <select class="fi" id="presetSelect" onchange="applyPreset(this.value)">
+                    <option value="">— Pilih preset / isi manual —</option>
+                    <option value="gemini">Google Gemini (gratis)</option>
+                    <option value="groq">Groq — Llama 3.3 (gratis)</option>
+                    <option value="openrouter">OpenRouter (ada model gratis)</option>
+                    <option value="openai">OpenAI</option>
+                    <option value="deepseek">DeepSeek (murah)</option>
+                    <option value="claude">Claude (Anthropic)</option>
+                </select>
+            </div>
+            <div class="row2">
+                <div class="fg"><label>Nama</label><input type="text" name="name" id="pName" class="fi" placeholder="Gemini Flash" required></div>
+                <div class="fg"><label>Model</label><input type="text" name="model" id="pModel" class="fi" placeholder="gemini-2.0-flash" required></div>
+            </div>
+            <div class="fg"><label>Base URL</label><input type="text" name="base_url" id="pUrl" class="fi" placeholder="https://..." required></div>
+            <div class="row2">
+                <div class="fg"><label>Format</label>
+                    <select name="format" id="pFormat" class="fi">
+                        <option value="openai">openai-compatible</option>
+                        <option value="anthropic">anthropic</option>
+                    </select>
+                </div>
+                <div class="fg"><label>API Key (disimpan terenkripsi)</label><input type="password" name="api_key" class="fi" placeholder="sk-... / AIza..." autocomplete="off"></div>
+            </div>
+            <button class="btn btn-primary" type="submit">Simpan Provider</button>
+        </form>
     </div>
+</details>
 
-    {{-- MAIN AREA --}}
-    <div class="agent-main">
-        <div class="empty-state" id="emptyState">
-            <p style="font-size:24px;margin-bottom:1rem;">🎵</p>
-            <p>Pilih lagu dari daftar di sebelah kiri<br>untuk mulai generate konten.</p>
+{{-- ===== GENERATE ===== --}}
+<div class="card">
+    <div class="card-head">✨ Generate Konten</div>
+    <div class="card-body">
+        <div class="gen-bar">
+            <div class="fg">
+                <label>Lagu</label>
+                <select class="fi" id="songSelect">
+                    <option value="">— Pilih lagu —</option>
+                    @foreach($songs as $song)
+                    <option value="{{ $song->id }}" data-title="{{ $song->title }}">{{ $song->title }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="fg">
+                <label>AI Provider</label>
+                <select class="fi" id="providerSelect">
+                    <option value="">— Pilih AI —</option>
+                    @foreach($providers as $prov)
+                    <option value="{{ $prov->id }}">{{ $prov->name }} ({{ $prov->model }})</option>
+                    @endforeach
+                </select>
+            </div>
+            <button class="btn btn-primary" id="genBtn" onclick="doGenerate()">Generate</button>
         </div>
+        <div class="gen-status" id="genStatus"></div>
+    </div>
+</div>
 
-        <div id="selectedSongCard" style="display:none;">
-            <div class="selected-song-card">
-                <img id="selThumb" src="" class="selected-thumb">
-                <div>
-                    <div class="selected-title" id="selTitle">—</div>
-                    <div class="selected-meta" id="selMeta">—</div>
-                </div>
-            </div>
+{{-- ===== HASIL ===== --}}
+<div id="results" style="display:none;">
+    <div class="niche-box">
+        <div class="lbl">Niche</div>
+        <div class="val" id="nicheVal"></div>
+    </div>
+    <div id="topicsWrap"></div>
 
-            <div class="generate-section">
-                <button class="btn-generate" id="generateBtn" onclick="generateContent()">✨ Generate dengan AI</button>
-                <span class="generate-hint">Claude AI · 5 topik × 15 naskah × 4 adegan</span>
-            </div>
-
-            <div class="error-box" id="errorBox"></div>
-
-            <div class="loading-state" id="loadingState">
-                <div class="loading-dots"><div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div></div>
-                <div class="loading-text">AI sedang menganalisis lagu...</div>
-            </div>
-
-            <div class="results-area" id="resultsArea">
-                <div class="result-section">
-                    <div class="result-section-title">📌 Pilih Topik</div>
-                    <div class="topic-tabs" id="topicTabs"></div>
-                </div>
-
-                <div id="selectedTopicInfo" style="display:none;">
-                    <div class="result-section">
-                        <div class="result-section-title">📝 Caption Overlay</div>
-                        <div class="variation-buttons" id="variationButtons"></div>
-                        <div id="captionLines"></div>
-                    </div>
-
-                    <div class="result-section">
-                        <div class="result-section-title">🎬 Visual Sequence (4×5 detik = 20 detik)</div>
-                        <div class="scene-list" id="sceneList"></div>
-                    </div>
-
-                    <div class="dreamina-prompt-box">
-                        <div style="font-size:10px;color:var(--text-3);margin-bottom:6px;">🎨 COPY-PASTE KE DREAMINA:</div>
-                        <div id="dreaminaPrompt" class="dreamina-prompt-text"></div>
-                        <button class="hook-copy" onclick="copyDreaminaPrompt()" style="margin-top:8px;">📋 Copy Prompt</button>
-                    </div>
-                </div>
-
-                <div class="result-section">
-                    <div class="result-section-title">📄 Deskripsi & Hashtag</div>
-                    <div id="shortsDesc" class="desc-box" contenteditable="true"></div>
-                    <div id="hashtags" class="hashtags" contenteditable="true"></div>
-                </div>
-            </div>
+    <div class="sched-bar">
+        <div class="fg"><label>Mulai tanggal</label><input type="date" id="schedDate" class="fi" value="{{ now()->toDateString() }}"></div>
+        <div class="fg"><label>Platform</label><input type="text" id="schedPlatforms" class="fi" value="TikTok,Instagram" placeholder="TikTok,Instagram"></div>
+        <div style="flex:1;"></div>
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+            <span class="sched-count" id="schedCount">0 narasi dipilih</span>
+            <button class="btn btn-accent" onclick="doSchedule()">📅 Jadwalkan terpilih ke Calendar</button>
         </div>
     </div>
 </div>
 
-<div class="toast" id="toast">Copied!</div>
-@endsection
+<div class="toast" id="toast"></div>
 
-@push('scripts')
 <script>
-let currentSongId = null;
-let currentData = null;
-let currentTopicId = 1;
-let currentVariationId = 1;
-let topicsData = [], scriptsData = [], visualSequencesData = [], dreaminaPromptsData = [];
+var CSRF = '{{ csrf_token() }}';
+var ROUTE_GEN_BASE = '{{ url('admin/ai-agent/generate') }}';
+var ROUTE_SCHEDULE = '{{ route('admin.ai-agent.schedule') }}';
+var ROUTE_CALENDAR = '{{ route('admin.calendar') }}';
+var currentSongId = null;
 
-function selectSong(id, title, ytId, era, key, hasLyrics) {
-    currentSongId = id;
-    document.querySelectorAll('.song-option').forEach(el => el.classList.remove('selected'));
-    event.currentTarget.classList.add('selected');
-    document.getElementById('emptyState').style.display = 'none';
-    document.getElementById('selectedSongCard').style.display = 'block';
-    document.getElementById('resultsArea').classList.remove('visible');
-    document.getElementById('selectedTopicInfo').style.display = 'none';
-    document.getElementById('errorBox').classList.remove('visible');
-    document.getElementById('selThumb').src = `https://img.youtube.com/vi/${ytId}/mqdefault.jpg`;
-    document.getElementById('selTitle').textContent = title;
-    document.getElementById('selMeta').textContent = (era || 'Margonoandi') + (key ? ' · Key ' + key : '');
-    document.getElementById('generateBtn').disabled = false;
+var PRESETS = {
+    gemini:    {name:'Gemini Flash',   base_url:'https://generativelanguage.googleapis.com/v1beta/openai', model:'gemini-2.0-flash', format:'openai'},
+    groq:      {name:'Groq Llama 3.3', base_url:'https://api.groq.com/openai/v1', model:'llama-3.3-70b-versatile', format:'openai'},
+    openrouter:{name:'OpenRouter',     base_url:'https://openrouter.ai/api/v1', model:'deepseek/deepseek-chat-v3.1:free', format:'openai'},
+    openai:    {name:'OpenAI',         base_url:'https://api.openai.com/v1', model:'gpt-4o-mini', format:'openai'},
+    deepseek:  {name:'DeepSeek',       base_url:'https://api.deepseek.com', model:'deepseek-chat', format:'openai'},
+    claude:    {name:'Claude Haiku',   base_url:'https://api.anthropic.com/v1', model:'claude-haiku-4-5-20251001', format:'anthropic'},
+};
+function applyPreset(k) {
+    if (!k || !PRESETS[k]) return;
+    var p = PRESETS[k];
+    document.getElementById('pName').value = p.name;
+    document.getElementById('pUrl').value = p.base_url;
+    document.getElementById('pModel').value = p.model;
+    document.getElementById('pFormat').value = p.format;
 }
 
-function generateContent() {
-    if (!currentSongId) return;
-    // Cegah pemakaian kredit API tak sengaja (fitur dijeda demi budget)
-    if (!confirm('Generate ini memakai kredit Claude API. Lanjutkan?\n\nUntuk konten harian, pakai Promo Templates (gratis).')) return;
-    document.getElementById('generateBtn').disabled = true;
-    document.getElementById('loadingState').classList.add('visible');
-    document.getElementById('resultsArea').classList.remove('visible');
-    document.getElementById('errorBox').classList.remove('visible');
+function esc(s){ return (s||'').replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
-    fetch('{{ url("/admin/ai-agent/generate") }}/' + currentSongId, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
-        body: JSON.stringify({})
+function doGenerate() {
+    var songId = document.getElementById('songSelect').value;
+    var provId = document.getElementById('providerSelect').value;
+    if (!songId) { alert('Pilih lagu dulu.'); return; }
+    if (!provId) { alert('Pilih AI provider dulu (atau tambah di Pengaturan AI).'); return; }
+    if (!confirm('Generate akan memakai kuota/kredit AI provider yang dipilih. Lanjutkan?')) return;
+
+    var btn = document.getElementById('genBtn');
+    btn.disabled = true;
+    document.getElementById('genStatus').innerHTML = '<span class="spinner"></span> Menganalisis lirik & membuat konten… (10–40 detik)';
+
+    fetch(ROUTE_GEN_BASE + '/' + songId, {
+        method:'POST',
+        headers:{'X-CSRF-TOKEN':CSRF,'Content-Type':'application/json','Accept':'application/json'},
+        body: JSON.stringify({ provider_id: provId })
     })
-    .then(res => res.json())
-    .then(res => {
-        document.getElementById('loadingState').classList.remove('visible');
-        document.getElementById('generateBtn').disabled = false;
-        if (res.error) {
-            document.getElementById('errorBox').textContent = 'Error: ' + res.error;
-            document.getElementById('errorBox').classList.add('visible');
+    .then(function(r){ return r.json().then(function(d){ return {ok:r.ok, d:d}; }); })
+    .then(function(res){
+        btn.disabled = false;
+        if (!res.ok || res.d.error) {
+            document.getElementById('genStatus').textContent = '⚠️ ' + (res.d.error || 'Gagal generate.');
             return;
         }
-        currentData = res.data;
-        renderResults(currentData);
+        document.getElementById('genStatus').textContent = '✓ Selesai via ' + res.d.provider;
+        renderResults(res.d);
     })
-    .catch(err => {
-        document.getElementById('loadingState').classList.remove('visible');
-        document.getElementById('generateBtn').disabled = false;
-        document.getElementById('errorBox').textContent = 'Error: ' + err.message;
-        document.getElementById('errorBox').classList.add('visible');
+    .catch(function(e){
+        btn.disabled = false;
+        document.getElementById('genStatus').textContent = '⚠️ Error: ' + e.message;
     });
 }
 
-function renderResults(data) {
-    topicsData = data.topics || [];
-    scriptsData = data.scripts || [];
-    visualSequencesData = data.visual_sequences || [];
-    dreaminaPromptsData = data.dreamina_prompts || [];
+function renderResults(d) {
+    currentSongId = d.song_id;
+    document.getElementById('nicheVal').textContent = d.niche || '—';
+    var wrap = document.getElementById('topicsWrap');
+    wrap.innerHTML = '';
 
-    let topicHtml = '';
-    topicsData.forEach(topic => {
-        topicHtml += `<div class="topic-tab" onclick="selectTopic(${topic.id})">${escapeHtml(topic.label)}</div>`;
-    });
-    document.getElementById('topicTabs').innerHTML = topicHtml;
-    document.getElementById('shortsDesc').textContent = data.shorts_description || '';
-    document.getElementById('hashtags').textContent = data.hashtags || '';
-
-    if (topicsData.length) selectTopic(topicsData[0].id);
-    document.getElementById('resultsArea').classList.add('visible');
-}
-
-function selectTopic(topicId) {
-    currentTopicId = topicId;
-    document.querySelectorAll('.topic-tab').forEach((tab, i) => {
-        if (i + 1 === topicId) tab.classList.add('active');
-        else tab.classList.remove('active');
-    });
-
-    const topicScript = scriptsData.find(s => s.topic_id === topicId);
-    if (topicScript) {
-        let varHtml = '';
-        for (let i = 1; i <= 3; i++) {
-            varHtml += `<button class="variation-btn" onclick="selectVariation(${i})">Variasi ${i}</button>`;
-        }
-        document.getElementById('variationButtons').innerHTML = varHtml;
-        window.currentVariations = topicScript.variations;
-        selectVariation(1);
-    }
-
-    const visualSeq = visualSequencesData.find(v => v.topic_id === topicId);
-    if (visualSeq && visualSeq.scenes) {
-        let sceneHtml = '';
-        visualSeq.scenes.forEach(scene => {
-            sceneHtml += `<div class="scene-card">
-                <div class="scene-duration">🎬 ADEGAN ${scene.order} · ${scene.duration} DETIK</div>
-                <div class="scene-desc"><strong>Visual:</strong> ${escapeHtml(scene.visual)}</div>
-                <div class="scene-desc"><strong>Camera:</strong> ${escapeHtml(scene.camera)}</div>
-                <div class="scene-desc"><strong>Action:</strong> ${escapeHtml(scene.action)}</div>
-                <div class="scene-desc"><strong>Lighting:</strong> ${escapeHtml(scene.lighting)}</div>
-                <div class="scene-desc"><strong>➡ Transisi:</strong> ${escapeHtml(scene.transition_to_next)}</div>
-            </div>`;
+    (d.topics || []).forEach(function(t, ti){
+        var html = '<div class="topic"><div class="topic-head">' +
+            '<span class="topic-title">' + (ti+1) + '. ' + esc(t.label) + '</span>' +
+            '<span class="mini-btn" onclick="toggleTopic(this)">Pilih semua</span></div>';
+        (t.narrations || []).forEach(function(n){
+            html += '<div class="narr">' +
+                '<input type="checkbox" class="narrChk" data-text="' + esc(n.text) + '" data-prompt="' + esc(n.image_prompt) + '" onchange="updateCount()">' +
+                '<div class="narr-body">' +
+                    '<div class="narr-text">' + esc(n.text) + '</div>' +
+                    '<div class="narr-prompt">🎨 ' + esc(n.image_prompt) +
+                        '<span class="narr-copy" onclick="copyText(this,\'' + encodeURIComponent(n.image_prompt) + '\')">[copy]</span>' +
+                    '</div>' +
+                '</div></div>';
         });
-        document.getElementById('sceneList').innerHTML = sceneHtml;
-    }
-
-    const dreaminaPrompt = dreaminaPromptsData.find(p => p.topic_id === topicId);
-    if (dreaminaPrompt) document.getElementById('dreaminaPrompt').textContent = dreaminaPrompt.prompt;
-
-    document.getElementById('selectedTopicInfo').style.display = 'block';
-}
-
-function selectVariation(variationId) {
-    currentVariationId = variationId;
-    document.querySelectorAll('.variation-btn').forEach((btn, i) => {
-        if (i + 1 === variationId) btn.classList.add('active');
-        else btn.classList.remove('active');
+        html += '</div>';
+        wrap.insertAdjacentHTML('beforeend', html);
     });
 
-    const variation = window.currentVariations.find(v => v.v === variationId);
-    if (variation && variation.lines) {
-        let linesHtml = '<div class="caption-lines">';
-        variation.lines.forEach((line, idx) => {
-            const isPunchline = idx === 4;
-            linesHtml += `<div class="caption-line${isPunchline ? ' caption-punchline' : ''}">${isPunchline ? '✨ ' : ''}${escapeHtml(line)}</div>`;
-        });
-        linesHtml += '</div>';
-        document.getElementById('captionLines').innerHTML = linesHtml;
-    }
+    document.getElementById('results').style.display = 'block';
+    updateCount();
+    document.getElementById('results').scrollIntoView({behavior:'smooth'});
 }
 
-function copyDreaminaPrompt() {
-    const prompt = document.getElementById('dreaminaPrompt').textContent;
-    navigator.clipboard.writeText(prompt);
-    const toast = document.getElementById('toast');
-    toast.textContent = '✅ Prompt Dreamina disalin!';
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 2000);
+function toggleTopic(btn) {
+    var topic = btn.closest('.topic');
+    var chks = topic.querySelectorAll('.narrChk');
+    var allOn = Array.prototype.every.call(chks, function(c){ return c.checked; });
+    chks.forEach(function(c){ c.checked = !allOn; });
+    updateCount();
 }
 
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
+function updateCount() {
+    var n = document.querySelectorAll('.narrChk:checked').length;
+    document.getElementById('schedCount').textContent = n + ' narasi dipilih';
+}
+
+function copyText(el, enc) {
+    navigator.clipboard.writeText(decodeURIComponent(enc)).then(function(){
+        var old = el.textContent; el.textContent = '[tersalin]';
+        setTimeout(function(){ el.textContent = old; }, 1200);
     });
+}
+
+function doSchedule() {
+    var checked = document.querySelectorAll('.narrChk:checked');
+    if (!checked.length) { alert('Centang minimal 1 narasi dulu.'); return; }
+    var items = Array.prototype.map.call(checked, function(c){
+        return { text: c.getAttribute('data-text'), image_prompt: c.getAttribute('data-prompt') };
+    });
+    var body = {
+        song_id: currentSongId,
+        start_date: document.getElementById('schedDate').value,
+        platforms: document.getElementById('schedPlatforms').value,
+        items: items
+    };
+    fetch(ROUTE_SCHEDULE, {
+        method:'POST',
+        headers:{'X-CSRF-TOKEN':CSRF,'Content-Type':'application/json','Accept':'application/json'},
+        body: JSON.stringify(body)
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+        if (d.success) {
+            showToast('✓ ' + d.count + ' jadwal dibuat. Membuka Calendar…');
+            setTimeout(function(){ window.location = ROUTE_CALENDAR; }, 1400);
+        } else { showToast('⚠️ ' + (d.error || 'Gagal menjadwalkan')); }
+    })
+    .catch(function(e){ showToast('⚠️ ' + e.message); });
+}
+
+function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 2200);
 }
 </script>
-@endpush
+
+@endsection

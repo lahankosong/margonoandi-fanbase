@@ -253,6 +253,29 @@ if (!tableExists($conn, $dbname, 'content_plans')) {
     markMigration($conn, '2026_06_14_000001_create_content_plans_table');
 }
 
+// ── 6d. Tabel ai_providers ────────────────────────────────────────────────────
+echo '<h2>6d. Tabel ai_providers</h2>';
+if (!tableExists($conn, $dbname, 'ai_providers')) {
+    runSQL($conn, 'CREATE TABLE ai_providers', "
+        CREATE TABLE `ai_providers` (
+            `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            `name` varchar(255) NOT NULL,
+            `base_url` varchar(255) NOT NULL,
+            `api_key` text DEFAULT NULL,
+            `model` varchar(255) NOT NULL,
+            `format` varchar(255) NOT NULL DEFAULT 'openai',
+            `enabled` tinyint(1) NOT NULL DEFAULT 1,
+            `created_at` timestamp NULL DEFAULT NULL,
+            `updated_at` timestamp NULL DEFAULT NULL,
+            PRIMARY KEY (`id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
+    markMigration($conn, '2026_06_14_000002_create_ai_providers_table');
+} else {
+    echo '<pre class="info">&#8212; Tabel ai_providers sudah ada</pre>';
+    markMigration($conn, '2026_06_14_000002_create_ai_providers_table');
+}
+
 // ── 7. Mark remaining pending migrations ─────────────────────────────────────
 echo '<h2>7. Tandai migration yang pending sebagai selesai</h2>';
 $toMark = [
@@ -305,6 +328,7 @@ $check = [
     'post_comments'        => 'Komentar Kita',
     'member_logs'          => 'Log member baru',
     'content_plans'        => 'Content Calendar',
+    'ai_providers'         => 'AI Agent providers',
 ];
 foreach ($check as $tbl => $label) {
     $exists = tableExists($conn, $dbname, $tbl);

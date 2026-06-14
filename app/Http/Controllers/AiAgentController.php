@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Song;
 use App\Models\AiGeneration;
+use App\Models\AiProvider;
+use App\Models\ContentPlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -12,222 +14,198 @@ class AiAgentController extends Controller
 {
     public function index()
     {
-        $songs = Song::where('is_active', true)->orderBy('track_number')->get();
-        return view('admin.ai-agent', compact('songs'));
+        $songs = Song::orderBy('track_number')->get();
+        $providers = collect();
+        try {
+            $providers = AiProvider::orderBy('name')->get();
+        } catch (\Throwable $e) {
+            // tabel belum ada — jalankan fixdb.php
+        }
+        return view('admin.ai-agent', compact('songs', 'providers'));
     }
 
-    protected function callClaude(string $prompt): string
-    {
-        $response = Http::timeout(120)->withHeaders([
-            'x-api-key'         => env('ANTHROPIC_API_KEY'),
-            'anthropic-version' => '2023-06-01',
-            'content-type'      => 'application/json',
-        ])->post('https://api.anthropic.com/v1/messages', [
-            'model' => 'claude-haiku-4-5-20251001',
-            'max_tokens' => 8000,
-            'messages'   => [['role' => 'user', 'content' => $prompt]],
-        ]);
+    /* ===================== Provider CRUD ===================== */
 
-        if (!$response->successful()) {
-            throw new \Exception('Claude API error: ' . $response->body());
+    public function storeProvider(Request $request)
+    {
+        $data = $request->validate([
+            'name'     => 'required|string|max:100',
+            'base_url' => 'required|string|max:255',
+            'model'    => 'required|string|max:120',
+            'format'   => 'required|in:openai,anthropic',
+            'api_key'  => 'nullable|string|max:300',
+        ]);
+        $data['enabled'] = true;
+        AiProvider::create($data);
+        return back()->with('success', 'Provider AI "' . $data['name'] . '" disimpan.');
+    }
+
+    public function destroyProvider($id)
+    {
+        AiProvider::findOrFail($id)->delete();
+        return back()->with('success', 'Provider dihapus.');
+    }
+
+    /* ===================== AI call ===================== */
+
+    protected function callAi(AiProvider $p, string $prompt): string
+    {
+        $key = $p->api_key;
+        if (!$key) throw new \Exception('API key untuk "' . $p->name . '" belum diisi.');
+
+        if ($p->format === 'anthropic') {
+            $resp = Http::timeout(120)->withHeaders([
+                'x-api-key'         => $key,
+                'anthropic-version' => '2023-06-01',
+                'content-type'      => 'application/json',
+            ])->post(rtrim($p->base_url, '/') . '/messages', [
+                'model'      => $p->model,
+                'max_tokens' => 8000,
+                'messages'   => [['role' => 'user', 'content' => $prompt]],
+            ]);
+            if (!$resp->successful()) throw new \Exception('AI error (' . $resp->status() . '): ' . $resp->body());
+            return $resp->json('content.0.text', '');
         }
 
-        return $response->json('content.0.text', '');
+        // OpenAI-compatible (Gemini/Groq/OpenRouter/OpenAI/DeepSeek/dll)
+        $resp = Http::timeout(120)->withToken($key)->post(rtrim($p->base_url, '/') . '/chat/completions', [
+            'model'       => $p->model,
+            'messages'    => [['role' => 'user', 'content' => $prompt]],
+            'temperature' => 0.9,
+            'max_tokens'  => 8000,
+        ]);
+        if (!$resp->successful()) throw new \Exception('AI error (' . $resp->status() . '): ' . $resp->body());
+        return $resp->json('choices.0.message.content', '');
     }
+
+    /* ===================== Generate ===================== */
 
     public function generate(Request $request, $id)
     {
         $song = Song::findOrFail($id);
 
-        $lyricsSection = $song->lyrics
-            ? "Lirik lagu:\n" . $song->lyrics
-            : "Lirik belum tersedia. Gunakan judul dan deskripsi sebagai panduan.";
+        $provider = AiProvider::find($request->input('provider_id'));
+        if (!$provider) {
+            return response()->json(['error' => 'Pilih provider AI dulu (atau tambahkan di Pengaturan AI).'], 422);
+        }
 
-        $hookSource = $song->story_hook ?? $song->description ?? $song->title;
+        $lyrics = $song->lyrics ? "Lirik:\n" . $song->lyrics
+            : "Lirik belum ada — gunakan judul, hook, dan deskripsi sebagai panduan.";
+        $hook = $song->story_hook ?? $song->description ?? $song->title;
 
         $prompt = <<<EOT
-Kamu adalah AI content strategist musik Indonesia yang menulis seperti manusia asli — hangat, relatable, tidak kaku. Kamu paham psikologi audiens 25-40 tahun yang galau di malam hari dan scrolling HP sebelum tidur.
+Kamu adalah content strategist musik Indonesia yang menulis seperti manusia asli — hangat, relatable, tidak kaku. Audiens: 25–40 tahun, galau malam hari, scrolling HP sebelum tidur.
 
 DATA LAGU:
 - Judul: {$song->title}
 - Era: {$song->era}
-- Hook utama: {$hookSource}
-- Key: {$song->key_signature}
-{$lyricsSection}
+- Hook: {$hook}
+{$lyrics}
 
-IDENTITAS VISUAL BRAND (wajib konsisten di semua output):
+IDENTITAS VISUAL BRAND (konsisten di semua image prompt):
 - Palet: retro blue, warm cream, burnt orange
 - Mood: sinematik, intimate, melankolis tapi tidak lebay
-- Karakter: orang Indonesia 25-35 tahun, urban, thoughtful
-- Gaya: candid, natural light, depth of field lensa 50mm atau 85mm
+- Karakter: orang Indonesia 25–35 tahun, urban, thoughtful
+- Gaya: candid, natural light, depth of field lensa 50mm/85mm
 
-===
+TUGAS:
+1. NICHE: tentukan satu sudut konten/niche paling kuat dari lirik (1 kalimat, bahasa Indonesia).
+2. TOPIK: pecah niche jadi 3–5 topik kejadian sehari-hari yang SANGAT spesifik & berbeda (bukan generik). Tiap topik max 5 kata label.
+3. NARASI: tiap topik buat 5 narasi pendek (kata-kata pendek & punchy, gaya caption/hook notes HP jam 2 pagi, 1–2 kalimat, Indonesia).
+4. IMAGE PROMPT: tiap narasi buat 1 prompt gambar (BAHASA INGGRIS, untuk text-to-image, max 400 karakter, wajib mencakup palet brand + gaya sinematik + karakter Indonesia).
 
-TAHAP 1 — 3 TOPIK
-Pecah hook menjadi 3 sudut pandang kejadian sehari-hari yang sangat spesifik dan berbeda. Bukan yang generik. Contoh bagus: "ngetik panjang terus dihapus semua", bukan "kesepian".
-
-TAHAP 2 — 15 NASKAH CAPTION
-Per topik: 3 variasi × 5 baris sekuensial. Baris ke-5 adalah punchline yang nyambung dengan hook lagu. Gaya: seperti notes HP jam 2 pagi. Boleh gue/lo atau aku/kamu.
-
-TAHAP 3 — VISUAL SEQUENCE (4 adegan per topik = 20 detik)
-Per topik: 4 adegan yang saling nyambung. Masing-masing adegan 5 detik. Wajib ada:
-- visual: apa yang terlihat (spesifik: warna baju, ekspresi, lokasi detail)
-- camera: angle dan gerakan kamera
-- action: apa yang bergerak/terjadi
-- lighting: sumber, arah, warna cahaya
-- transition_to_next: cara pindah ke adegan berikutnya
-
-TAHAP 4 — PROMPT DREAMINA (per topik, 1 prompt per topik)
-Dari 4 adegan, buat 1 prompt bahasa Inggris max 500 karakter untuk Dreamina text-to-video. Harus mencakup keseluruhan 20 detik sequence. Sertakan: palet brand (retro blue, cream, burnt orange), gaya sinematik, karakter Indonesia.
-
-TAHAP 5 — DESKRIPSI & HASHTAG
-Deskripsi YouTube Shorts max 120 karakter, personal, bahasa Indonesia. Plus hashtag relevan.
-
-===
-
-Response dalam format JSON valid tanpa markdown tanpa backtick:
+Balas HANYA JSON valid tanpa markdown tanpa backtick:
 {
+  "niche": "...",
   "topics": [
-    {"id": 1, "label": "max 5 kata"},
-    {"id": 2, "label": "max 5 kata"},
-    {"id": 3, "label": "max 5 kata"},
-    {"id": 4, "label": "max 5 kata"},
-    {"id": 5, "label": "max 5 kata"}
-  ],
-  "scripts": [
     {
-      "topic_id": 1,
-      "variations": [
-        {"v": 1, "lines": ["baris1","baris2","baris3","baris4","punchline"]},
-        {"v": 2, "lines": ["baris1","baris2","baris3","baris4","punchline"]},
-        {"v": 3, "lines": ["baris1","baris2","baris3","baris4","punchline"]}
+      "id": 1,
+      "label": "max 5 kata",
+      "narrations": [
+        {"text": "narasi pendek", "image_prompt": "english image prompt"},
+        {"text": "...", "image_prompt": "..."},
+        {"text": "...", "image_prompt": "..."},
+        {"text": "...", "image_prompt": "..."},
+        {"text": "...", "image_prompt": "..."}
       ]
-    },
-    {"topic_id": 2, "variations": [{"v":1,"lines":["","","","",""]},{"v":2,"lines":["","","","",""]},{"v":3,"lines":["","","","",""]}]},
-    {"topic_id": 3, "variations": [{"v":1,"lines":["","","","",""]},{"v":2,"lines":["","","","",""]},{"v":3,"lines":["","","","",""]}]},
-    {"topic_id": 4, "variations": [{"v":1,"lines":["","","","",""]},{"v":2,"lines":["","","","",""]},{"v":3,"lines":["","","","",""]}]},
-    {"topic_id": 5, "variations": [{"v":1,"lines":["","","","",""]},{"v":2,"lines":["","","","",""]},{"v":3,"lines":["","","","",""]}]}
-  ],
-  "visual_sequences": [
-    {
-      "topic_id": 1,
-      "total_duration": 20,
-      "scenes": [
-        {"order":1,"duration":5,"visual":"...","camera":"...","action":"...","lighting":"...","transition_to_next":"..."},
-        {"order":2,"duration":5,"visual":"...","camera":"...","action":"...","lighting":"...","transition_to_next":"..."},
-        {"order":3,"duration":5,"visual":"...","camera":"...","action":"...","lighting":"...","transition_to_next":"..."},
-        {"order":4,"duration":5,"visual":"...","camera":"...","action":"...","lighting":"...","transition_to_next":"..."}
-      ]
-    },
-    {"topic_id":2,"total_duration":20,"scenes":[{"order":1,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""},{"order":2,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""},{"order":3,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""},{"order":4,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""}]},
-    {"topic_id":3,"total_duration":20,"scenes":[{"order":1,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""},{"order":2,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""},{"order":3,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""},{"order":4,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""}]},
-    {"topic_id":4,"total_duration":20,"scenes":[{"order":1,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""},{"order":2,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""},{"order":3,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""},{"order":4,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""}]},
-    {"topic_id":5,"total_duration":20,"scenes":[{"order":1,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""},{"order":2,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""},{"order":3,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""},{"order":4,"duration":5,"visual":"","camera":"","action":"","lighting":"","transition_to_next":""}]}
-  ],
-  "dreamina_prompts": [
-    {"topic_id": 1, "prompt": "english prompt max 500 chars for 20s video..."},
-    {"topic_id": 2, "prompt": "..."},
-    {"topic_id": 3, "prompt": "..."},
-    {"topic_id": 4, "prompt": "..."},
-    {"topic_id": 5, "prompt": "..."}
-  ],
-  "shorts_description": "max 120 karakter personal",
-  "hashtags": "#margonoandi #laguindie #musikindonesia #lagugalau"
+    }
+  ]
 }
+Jumlah topics 3 sampai 5. Tiap topik WAJIB 5 narasi.
 EOT;
 
         try {
-            // Di dalam method generate(), ganti bagian ini:
+            $raw = $this->callAi($provider, $prompt);
 
-            $raw = $this->callClaude($prompt);
-
-            // === PERBAIKAN PARSING ===
-            // 1. Cari JSON pertama yang dimulai dengan { dan diakhiri dengan }
-            preg_match('/\{[^{}]*+(?:(?R)[^{}]*)*+\}/s', $raw, $matches);
-
-            if (isset($matches[0])) {
-                $clean = $matches[0];
-            } else {
-                // 2. Fallback: hapus markdown
-                $clean = preg_replace('/^```json\\s*|\\s*```$/i', '', trim($raw));
-                $clean = preg_replace('/^```\\s*|\\s*```$/i', '', $clean);
+            // Ekstrak JSON (buang teks/markdown di luar kurung)
+            $clean = trim($raw);
+            $clean = preg_replace('/^```(json)?\s*|\s*```$/i', '', $clean);
+            $start = strpos($clean, '{');
+            $end   = strrpos($clean, '}');
+            if ($start !== false && $end !== false) {
+                $clean = substr($clean, $start, $end - $start + 1);
             }
-
-            // 3. Coba decode
             $result = json_decode($clean, true);
 
-            // 4. Jika masih gagal, coba ekstrak dari dalam teks (misal: "Here is your JSON: {...}")
-            if (!$result && preg_match('/\{[^\}]*\}/', $raw, $simpleMatch)) {
-                $result = json_decode($simpleMatch[0], true);
+            if (!$result || empty($result['topics'])) {
+                Log::error('AI v2 parse failed', ['preview' => substr($raw, 0, 800)]);
+                return response()->json(['error' => 'Gagal memproses jawaban AI. Coba lagi / ganti provider.'], 422);
             }
 
-            // 5. Log error jika tetap gagal
-            if (!$result) {
-                Log::error('JSON parse failed', [
-                    'raw_preview' => substr($raw, 0, 1000),
-                    'clean_preview' => substr($clean, 0, 500)
-                ]);
-                return response()->json(['error' => 'Gagal parse response AI. Coba lagi.'], 422);
+            try {
+                AiGeneration::updateOrCreate(
+                    ['song_id' => $song->id, 'user_id' => auth()->id()],
+                    [
+                        'topics'             => json_encode($result['topics']),
+                        'shorts_description' => $result['niche'] ?? '',
+                    ]
+                );
+            } catch (\Throwable $e) {
+                // simpan history opsional — abaikan bila gagal
             }
 
-            // Simpan ke database
-            AiGeneration::updateOrCreate(
-                ['song_id' => $song->id, 'user_id' => auth()->id()],
-                [
-                    'topics'             => json_encode($result['topics'] ?? []),
-                    'scripts'            => json_encode($result['scripts'] ?? []),
-                    'visual_sequences'   => json_encode($result['visual_sequences'] ?? []),
-                    'dreamina_prompts'   => json_encode($result['dreamina_prompts'] ?? []),
-                    'shorts_description' => $result['shorts_description'] ?? '',
-                    'hashtags'           => $result['hashtags'] ?? '',
-                ]
-            );
-
-            return response()->json(['success' => true, 'song' => $song->title, 'data' => $result]);
-
-        } catch (\Exception $e) {
-            Log::error('Generate error', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success'  => true,
+                'song'     => $song->title,
+                'song_id'  => $song->id,
+                'provider' => $provider->name,
+                'niche'    => $result['niche'] ?? '',
+                'topics'   => $result['topics'],
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('AI v2 generate error', ['error' => $e->getMessage()]);
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
-    public function saveSelected(Request $request)
-    {
-        $validated = $request->validate([
-            'song_id' => 'required|exists:songs,id',
-            'topic_id' => 'nullable|integer',
-            'variation_id' => 'nullable|integer',
-            'selected_hook' => 'nullable|string',
-            'selected_caption' => 'nullable|string',
-            'selected_prompt' => 'nullable|string',
-        ]);
-        
-        $generation = AiGeneration::where('song_id', $validated['song_id'])
-            ->where('user_id', auth()->id())
-            ->latest()
-            ->first();
-            
-        if ($generation) {
-            $generation->update([
-                'selected_topic_id' => $validated['topic_id'] ?? $generation->selected_topic_id,
-                'selected_variation_id' => $validated['variation_id'] ?? $generation->selected_variation_id,
-                'selected_hook' => $validated['selected_hook'] ?? $generation->selected_hook,
-                'selected_caption' => $validated['selected_caption'] ?? $generation->selected_caption,
-                'selected_prompt' => $validated['selected_prompt'] ?? $generation->selected_prompt,
-            ]);
-        }
-        
-        return response()->json(['success' => true]);
-    }
+    /* ===================== Jadwalkan ke Calendar ===================== */
 
-    public function getHistory($songId)
+    public function scheduleToCalendar(Request $request)
     {
-        $generations = AiGeneration::where('song_id', $songId)
-            ->where('user_id', auth()->id())
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
-            
-        return response()->json(['data' => $generations]);
+        $data = $request->validate([
+            'song_id'           => 'nullable|integer',
+            'start_date'        => 'required|date',
+            'platforms'         => 'nullable|string',
+            'items'             => 'required|array|min:1',
+            'items.*.text'      => 'required|string',
+            'items.*.image_prompt' => 'nullable|string',
+        ]);
+
+        $date = \Carbon\Carbon::parse($data['start_date']);
+        $count = 0;
+        foreach ($data['items'] as $i => $item) {
+            $planDate = (clone $date)->addDays($i); // satu narasi per hari
+            ContentPlan::create([
+                'plan_date' => $planDate->toDateString(),
+                'song_id'   => $data['song_id'] ?: null,
+                'platforms' => $data['platforms'] ?? 'TikTok,Instagram',
+                'title'     => mb_substr($item['text'], 0, 240),
+                'status'    => 'rencana',
+                'notes'     => $item['image_prompt'] ? "🎨 Image prompt:\n" . $item['image_prompt'] : null,
+            ]);
+            $count++;
+        }
+
+        return response()->json(['success' => true, 'count' => $count]);
     }
 }
