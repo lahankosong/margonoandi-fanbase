@@ -52,6 +52,12 @@
     .plan-meta { font-size: 12px; color: var(--text-3); display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
     .pf-badge { background: var(--bg-3); border: 1px solid var(--border); border-radius: 20px; padding: 1px 8px; font-size: 11px; color: var(--text-2); }
     .plan-notes { font-size: 12px; color: var(--text-3); margin-top: 6px; line-height: 1.5; white-space: pre-wrap; }
+    .plan-notes.clamped { max-height: 4.6em; overflow: hidden; -webkit-mask-image: linear-gradient(180deg,#000 60%,transparent); mask-image: linear-gradient(180deg,#000 60%,transparent); }
+    .plan-notes.expanded { max-height: none; -webkit-mask-image: none; mask-image: none; }
+    .notes-actions { display: flex; gap: 12px; margin-top: 4px; }
+    .notes-toggle, .notes-copy { background: none; border: none; color: var(--accent); font-size: 11px; cursor: pointer; padding: 0; }
+    .notes-copy { color: var(--text-3); }
+    .notes-copy:hover { color: var(--text); }
     .plan-side { display: flex; align-items: center; gap: 6px; }
     .status-select {
         font-size: 11px; padding: 4px 8px; border-radius: 6px; cursor: pointer;
@@ -182,7 +188,14 @@
                                 @endforeach
                             @endif
                         </div>
-                        @if($plan->notes)<div class="plan-notes">{{ $plan->notes }}</div>@endif
+                        @if($plan->notes)
+                            @php $longNote = mb_strlen($plan->notes) > 160; @endphp
+                            <div class="plan-notes {{ $longNote ? 'clamped' : '' }}">{{ $plan->notes }}</div>
+                            <div class="notes-actions">
+                                @if($longNote)<button type="button" class="notes-toggle" onclick="toggleNotes(this)">selengkapnya ▾</button>@endif
+                                <button type="button" class="notes-copy" onclick="copyNotes(this)">salin</button>
+                            </div>
+                        @endif
                     </div>
                     <div class="plan-side">
                         <form method="POST" action="{{ route('admin.calendar.update', $plan->id) }}">
@@ -214,6 +227,19 @@
 </div>
 
 <script>
+function toggleNotes(btn) {
+    var notes = btn.closest('.notes-actions').previousElementSibling;
+    var ex = notes.classList.toggle('expanded');
+    notes.classList.toggle('clamped', !ex);
+    btn.textContent = ex ? 'tutup ▴' : 'selengkapnya ▾';
+}
+function copyNotes(btn) {
+    var notes = btn.closest('.notes-actions').previousElementSibling;
+    navigator.clipboard.writeText(notes.textContent).then(function(){
+        var old = btn.textContent; btn.textContent = 'tersalin';
+        setTimeout(function(){ btn.textContent = old; }, 1200);
+    });
+}
 function calFilter(f, el) {
     document.querySelectorAll('.cal-filter .chip').forEach(function(c){ c.classList.toggle('active', c.getAttribute('data-f') === f); });
     document.querySelectorAll('.day-group').forEach(function(g){
