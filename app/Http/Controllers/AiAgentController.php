@@ -30,12 +30,17 @@ class AiAgentController extends Controller
                 ->orderByDesc('updated_at')->get();
             foreach ($gens as $g) {
                 $topics = json_decode($g->topics, true);
-                // hanya hasil format v2 (punya narrations)
-                if (!is_array($topics) || empty($topics[0]['narrations'])) continue;
+                $long   = json_decode($g->scripts, true);
+                $umum   = json_decode($g->visual_sequences, true);
+                $hasShort = is_array($topics) && !empty($topics[0]['narrations']);
+                $hasLong  = is_array($long) && !empty($long['narration']);
+                $hasUmum  = is_array($umum) && !empty($umum[0]['theme']);
+                if (!$hasShort && !$hasLong && !$hasUmum) continue;
                 $saved[$g->song_id] = [
                     'niche'     => $g->shorts_description,
-                    'topics'    => $topics,
-                    'long_form' => json_decode($g->scripts, true),
+                    'topics'    => $hasShort ? $topics : null,
+                    'long_form' => $hasLong ? $long : null,
+                    'umum'      => $hasUmum ? $umum : null,
                 ];
                 if ($lastSongId === null) $lastSongId = $g->song_id;
             }
@@ -115,8 +120,11 @@ class AiAgentController extends Controller
             : "Lirik belum ada — gunakan judul, hook, dan deskripsi sebagai panduan.";
         $hook = $song->story_hook ?? $song->description ?? $song->title;
 
-        $prompt = <<<EOT
-Kamu adalah content strategist musik Indonesia yang menulis seperti manusia asli — hangat, relatable, tidak kaku. Audiens: 25–40 tahun, galau malam hari, scrolling HP sebelum tidur.
+        $mode = $request->input('mode', 'short');           // short | long | umum | all
+        $want = $mode === 'all' ? ['short', 'long', 'umum'] : [$mode];
+
+        $header = <<<EOT
+Kamu content strategist musik Indonesia yang menulis seperti manusia asli — hangat, relatable, tidak kaku. Audiens: 25–40 tahun, galau malam hari, scrolling HP sebelum tidur.
 
 DATA LAGU:
 - Judul: {$song->title}
@@ -132,38 +140,30 @@ IDENTITAS VISUAL BRAND (konsisten di semua image prompt):
 
 TUGAS:
 1. NICHE: tentukan satu sudut konten/niche paling kuat dari lirik (1 kalimat, bahasa Indonesia).
-2. TOPIK: pecah niche jadi 3–5 topik kejadian sehari-hari yang SANGAT spesifik & berbeda (bukan generik). Tiap topik max 5 kata label.
-3. NARASI: tiap topik buat 5 narasi pendek (kata-kata pendek & punchy, gaya caption/hook notes HP jam 2 pagi, 1–2 kalimat, Indonesia).
-4. IMAGE PROMPT: tiap narasi buat 1 prompt gambar (BAHASA INGGRIS, untuk text-to-image, max 400 karakter). WAJIB format VERTIKAL 9:16 untuk video short — sertakan frasa "vertical 9:16 aspect ratio, portrait". Wajib mencakup palet brand + gaya sinematik + karakter Indonesia.
-5. LONG FORM (konten video 3–5 menit): buat 1 video panjang — judul menarik + naskah NARASI mengalir bahasa Indonesia ~500–750 kata (durasi dibaca 3–5 menit, storytelling personal sesuai niche, ada pembuka-isi-penutup) + 6–8 image prompt (BAHASA INGGRIS, vertical 9:16, palet brand) untuk mengilustrasikan narasi.
-
-Balas HANYA JSON valid tanpa markdown tanpa backtick:
-{
-  "niche": "...",
-  "topics": [
-    {
-      "id": 1,
-      "label": "max 5 kata",
-      "narrations": [
-        {"text": "narasi pendek", "image_prompt": "english image prompt"},
-        {"text": "...", "image_prompt": "..."},
-        {"text": "...", "image_prompt": "..."},
-        {"text": "...", "image_prompt": "..."},
-        {"text": "...", "image_prompt": "..."}
-      ]
-    }
-  ],
-  "long_form": {
-    "title": "judul video 3-5 menit",
-    "duration_estimate": "± 4 menit",
-    "narration": "naskah narasi bahasa Indonesia mengalir 500-750 kata (3-5 menit)",
-    "scenes": [
-      {"image_prompt": "english vertical 9:16 image prompt"}
-    ]
-  }
-}
-Jumlah topics 3 sampai 5. Tiap topik WAJIB 5 narasi. long_form.scenes berisi 6-8 image prompt.
 EOT;
+
+        $tasks  = '';
+        $schema = ['"niche": "..."'];
+        $n = 2;
+        if (in_array('short', $want)) {
+            $tasks .= "\n{$n}. SHORT VIDEO: pecah niche jadi 3–5 topik kejadian sehari-hari yang SANGAT spesifik & berbeda (label max 5 kata). Tiap topik 5 narasi pendek (punchy, gaya notes HP jam 2 pagi, 1–2 kalimat, Indonesia). Tiap narasi 1 image prompt (BAHASA INGGRIS, max 400 char, WAJIB 'vertical 9:16 aspect ratio, portrait', palet brand, karakter Indonesia).";
+            $schema[] = '"topics": [{"id":1,"label":"max 5 kata","narrations":[{"text":"narasi","image_prompt":"english 9:16 prompt"},{"text":"...","image_prompt":"..."},{"text":"...","image_prompt":"..."},{"text":"...","image_prompt":"..."},{"text":"...","image_prompt":"..."}]}]';
+            $n++;
+        }
+        if (in_array('long', $want)) {
+            $tasks .= "\n{$n}. VIDEO PANJANG 3–5 MENIT: judul menarik + naskah NARASI mengalir bahasa Indonesia ~500–750 kata (pembuka-isi-penutup, storytelling sesuai niche) + 6–8 image prompt (BAHASA INGGRIS, vertical 9:16, palet brand).";
+            $schema[] = '"long_form": {"title":"...","duration_estimate":"± 4 menit","narration":"naskah 500-750 kata","scenes":[{"image_prompt":"english 9:16 prompt"}]}';
+            $n++;
+        }
+        if (in_array('umum', $want)) {
+            $tasks .= "\n{$n}. TEMA UMUM: 5 ide tema/cerita UMUM (cerita rakyat Indonesia, sejarah, kisah cinta legendaris, momen kehidupan, adegan film) yang COCOK memakai lagu ini sebagai BACKSOUND. Tiap tema: judul tema, angle (kenapa lagu ini cocok jadi backsound-nya), narasi pendek pembuka konten (Indonesia), 1 image prompt (BAHASA INGGRIS, vertical 9:16). Contoh tema: kisah Roro Jonggrang & Bandung Bondowoso.";
+            $schema[] = '"umum": [{"theme":"judul tema","angle":"alasan cocok jadi backsound","narration":"narasi pendek","image_prompt":"english 9:16 prompt"}]';
+            $n++;
+        }
+
+        $prompt = $header . "\n" . $tasks
+            . "\n\nBalas HANYA JSON valid tanpa markdown tanpa backtick:\n{\n  "
+            . implode(",\n  ", $schema) . "\n}";
 
         try {
             $raw = $this->callAi($provider, $prompt);
@@ -178,32 +178,38 @@ EOT;
             }
             $result = json_decode($clean, true);
 
-            if (!$result || empty($result['topics'])) {
+            if (!is_array($result)) {
                 Log::error('AI v2 parse failed', ['preview' => substr($raw, 0, 800)]);
                 return response()->json(['error' => 'Gagal memproses jawaban AI. Coba lagi / ganti provider.'], 422);
             }
 
+            // Simpan hanya section yang digenerate (preserve hasil mode lain)
             try {
-                AiGeneration::updateOrCreate(
-                    ['song_id' => $song->id, 'user_id' => auth()->id()],
-                    [
-                        'topics'             => json_encode($result['topics']),
-                        'shorts_description' => $result['niche'] ?? '',
-                        'scripts'            => json_encode($result['long_form'] ?? null),
-                    ]
-                );
+                $update = [];
+                if (!empty($result['niche']))    $update['shorts_description'] = $result['niche'];
+                if (isset($result['topics']))    $update['topics'] = json_encode($result['topics']);
+                if (isset($result['long_form'])) $update['scripts'] = json_encode($result['long_form']);
+                if (isset($result['umum']))      $update['visual_sequences'] = json_encode($result['umum']);
+                if ($update) {
+                    AiGeneration::updateOrCreate(
+                        ['song_id' => $song->id, 'user_id' => auth()->id()],
+                        $update
+                    );
+                }
             } catch (\Throwable $e) {
                 // simpan history opsional — abaikan bila gagal
             }
 
             return response()->json([
-                'success'  => true,
-                'song'     => $song->title,
-                'song_id'  => $song->id,
-                'provider' => $provider->name,
-                'niche'    => $result['niche'] ?? '',
-                'topics'   => $result['topics'],
+                'success'   => true,
+                'song'      => $song->title,
+                'song_id'   => $song->id,
+                'provider'  => $provider->name,
+                'mode'      => $mode,
+                'niche'     => $result['niche'] ?? null,
+                'topics'    => $result['topics'] ?? null,
                 'long_form' => $result['long_form'] ?? null,
+                'umum'      => $result['umum'] ?? null,
             ]);
         } catch (\Throwable $e) {
             Log::error('AI v2 generate error', ['error' => $e->getMessage()]);

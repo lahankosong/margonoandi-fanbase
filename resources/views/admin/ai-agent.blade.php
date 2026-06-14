@@ -166,6 +166,15 @@
                     @endforeach
                 </select>
             </div>
+            <div class="fg">
+                <label>Jenis konten</label>
+                <select class="fi" id="modeSelect">
+                    <option value="short">📱 Short saja (hemat)</option>
+                    <option value="long">🎬 Video panjang saja</option>
+                    <option value="umum">🌐 Umum saja (backsound tema)</option>
+                    <option value="all">Semua (3 jenis)</option>
+                </select>
+            </div>
             <button class="btn btn-primary" id="genBtn" onclick="doGenerate()">Generate</button>
         </div>
         <div class="gen-status" id="genStatus"></div>
@@ -180,6 +189,7 @@
     </div>
     <div id="topicsWrap"></div>
     <div id="longFormWrap"></div>
+    <div id="umumWrap"></div>
 
     <div class="sched-bar">
         <div class="fg"><label>Mulai tanggal</label><input type="date" id="schedDate" class="fi" value="{{ now()->toDateString() }}"></div>
@@ -229,6 +239,7 @@ function doGenerate() {
     if (!provId) { alert('Pilih AI provider dulu (atau tambah di Pengaturan AI).'); return; }
     if (!confirm('Generate akan memakai kuota/kredit AI provider yang dipilih. Lanjutkan?')) return;
 
+    var mode = document.getElementById('modeSelect').value;
     var btn = document.getElementById('genBtn');
     btn.disabled = true;
     document.getElementById('genStatus').innerHTML = '<span class="spinner"></span> Menganalisis lirik & membuat konten… (10–40 detik)';
@@ -236,7 +247,7 @@ function doGenerate() {
     fetch(ROUTE_GEN_BASE + '/' + songId, {
         method:'POST',
         headers:{'X-CSRF-TOKEN':CSRF,'Content-Type':'application/json','Accept':'application/json'},
-        body: JSON.stringify({ provider_id: provId })
+        body: JSON.stringify({ provider_id: provId, mode: mode })
     })
     .then(function(r){ return r.json().then(function(d){ return {ok:r.ok, d:d}; }); })
     .then(function(res){
@@ -246,8 +257,18 @@ function doGenerate() {
             return;
         }
         document.getElementById('genStatus').textContent = '✓ Selesai via ' + res.d.provider + ' · hasil tersimpan otomatis';
-        SAVED[res.d.song_id] = { niche: res.d.niche, topics: res.d.topics, long_form: res.d.long_form };
-        renderResults(res.d);
+        // gabung dengan hasil mode lain yang sudah tersimpan
+        var prev = SAVED[res.d.song_id] || {};
+        var merged = {
+            song_id:   res.d.song_id,
+            niche:     res.d.niche     || prev.niche,
+            topics:    res.d.topics    || prev.topics,
+            long_form: res.d.long_form || prev.long_form,
+            umum:      res.d.umum      || prev.umum,
+            provider:  res.d.provider
+        };
+        SAVED[res.d.song_id] = { niche: merged.niche, topics: merged.topics, long_form: merged.long_form, umum: merged.umum };
+        renderResults(merged);
     })
     .catch(function(e){
         btn.disabled = false;
@@ -301,6 +322,27 @@ function renderResults(d) {
                 '<div class="narr-prompt" style="white-space:pre-wrap;font-family:inherit;line-height:1.7;">' + esc(lf.narration) + '</div>' +
                 (scenes ? '<div style="margin-top:8px;font-size:11px;color:var(--text-3);">Image prompts (vertical 9:16):</div>' + scenes : '') +
             '</div></div></div>';
+    }
+
+    // ===== Tema Umum (backsound cerita) =====
+    var umWrap = document.getElementById('umumWrap');
+    umWrap.innerHTML = '';
+    var um = d.umum;
+    if (um && um.length) {
+        var uh = '<div class="section-divider">🌐 TEMA UMUM · backsound cerita</div>';
+        um.forEach(function(u){
+            var combined = 'Tema: ' + (u.theme||'') + '\nAngle: ' + (u.angle||'') + '\nNarasi: ' + (u.narration||'') + '\nImage: ' + (u.image_prompt||'');
+            uh += '<div class="topic"><div class="narr">' +
+                '<input type="checkbox" class="narrChk" data-type="umum" data-text="' + esc(u.theme) + '" data-prompt="' + esc(combined) + '" onchange="updateCount()">' +
+                '<div class="narr-body">' +
+                    '<div class="narr-text" style="font-weight:600;">' + esc(u.theme) + '</div>' +
+                    '<div style="font-size:12px;color:var(--text-3);margin-top:3px;">💡 ' + esc(u.angle) + '</div>' +
+                    '<div class="narr-text" style="margin-top:5px;">' + esc(u.narration) + '</div>' +
+                    '<div class="narr-prompt">🎨 ' + esc(u.image_prompt) +
+                        '<span class="narr-copy" onclick="copyText(this,\'' + encodeURIComponent(u.image_prompt) + '\')">[copy]</span></div>' +
+                '</div></div></div>';
+        });
+        umWrap.innerHTML = uh;
     }
 
     document.getElementById('results').style.display = 'block';
@@ -364,7 +406,7 @@ function showToast(msg) {
 // Tampilkan hasil tersimpan saat lagu dipilih
 function showSaved(id) {
     if (id && SAVED[id]) {
-        renderResults({ song_id: parseInt(id), niche: SAVED[id].niche, topics: SAVED[id].topics, long_form: SAVED[id].long_form, provider: 'tersimpan' });
+        renderResults({ song_id: parseInt(id), niche: SAVED[id].niche, topics: SAVED[id].topics, long_form: SAVED[id].long_form, umum: SAVED[id].umum, provider: 'tersimpan' });
         document.getElementById('genStatus').textContent = '📁 Hasil tersimpan ditampilkan. Generate lagi untuk memperbarui.';
         return true;
     }
