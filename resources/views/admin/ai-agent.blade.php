@@ -216,6 +216,11 @@
     <a href="{{ route('admin.index') }}" style="font-size:12px;color:var(--text-2);text-decoration:none;border:1px solid var(--border);padding:6px 14px;border-radius:8px;">← Panel Admin</a>
 </div>
 
+<div style="background:#2a210a;color:#facc15;border:1px solid #854d0e;border-radius:10px;padding:12px 16px;margin-bottom:1.5rem;font-size:13px;line-height:1.6;">
+    ⏸️ <b>Fitur dijeda sementara (hemat budget).</b> Setiap "Generate" memakai kredit Claude API.
+    Untuk promosi harian, gunakan <b>Promo Templates</b> (tanpa biaya). Pakai AI Agent hanya saat rilis lagu baru.
+</div>
+
 <div class="agent-layout">
     {{-- SONG SELECTOR --}}
     <div class="song-selector">
@@ -324,6 +329,8 @@ function selectSong(id, title, ytId, era, key, hasLyrics) {
 
 function generateContent() {
     if (!currentSongId) return;
+    // Cegah pemakaian kredit API tak sengaja (fitur dijeda demi budget)
+    if (!confirm('Generate ini memakai kredit Claude API. Lanjutkan?\n\nUntuk konten harian, pakai Promo Templates (gratis).')) return;
     document.getElementById('generateBtn').disabled = true;
     document.getElementById('loadingState').classList.add('visible');
     document.getElementById('resultsArea').classList.remove('visible');
