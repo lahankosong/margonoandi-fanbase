@@ -105,8 +105,9 @@ band_applications  (Tahap 5, opsional — bisa diganti DM dulu)
 
 ## Progress Fase 1
 - [x] `ecosystem.md` dibuat (2026-06-15)
-- [ ] Profil Musisi (migration, model, controller, form)
-- [ ] Direktori Musisi (list + filter)
-- [ ] Detail Musisi + tombol Hubungi
-- [ ] Cari Personil (band posts)
-- [ ] Nav "Musisi" di layout fanbase
+- [x] Profil Musisi (migration, model, controller, form) — `musician_profiles`
+- [x] Direktori Musisi (list + search + filter chip role)
+- [x] Detail Musisi + tombol Hubungi (reuse DM Dia)
+- [x] Nav "Musisi" di sidebar + ikon topbar (mobile)
+- [ ] **Cari Personil (band posts)** ← berikutnya
+- [ ] Lamaran / kelola pelamar (atau via DM dulu)

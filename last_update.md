@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-06-15 — Ecosystem Fase 1 dimulai: Direktori Musisi
+**Commit**: `f4cb24d` (ecosystem.md + visi), `0b44ed8` (Direktori Musisi)
+
+- **`ecosystem.md`** dibuat — spesifikasi Fase 1–4 (direktori musisi, band formation, studio booking, gear marketplace).
+- **Fase 1 fondasi (live)**:
+  - Tabel `musician_profiles` (+ model `MusicianProfile`, fixdb) — role, skill, genre, lokasi, bio, looking_for, link portofolio, open_to_band/collab.
+  - `MusicianController`: direktori (search + filter chip role), form profil sendiri (`/musisi/profil`), detail (`/musisi/{id}`).
+  - Halaman `fanbase/musisi/{index,edit,show}` (layout fanbase, CSS vars).
+  - **Kontak antar-musisi reuse DM "Dia"** (`/dia/start/{userId}`) — tanpa tabel pesan baru.
+  - Nav **Musisi** di sidebar + ikon di topbar (akses mobile).
+- **Berikutnya**: Cari Personil (band posts) + lamaran.
+
+---
+
 ## 2026-06-15 — AI Agent v2 lanjutan (pipeline konten lengkap) + Calendar
 **Commit**: `05f92a1` (simpan hasil), `3afaf66` (9:16 + video panjang), `bbe7324` (pisah tipe), `df91ef6` (mode + umum), `9cd332d` (umum panjang), `0a093ac` (fix prompt→jadwal), `5fae63a` (catatan lipat), `e5c05dd` (sumber + gaya gambar)
 
