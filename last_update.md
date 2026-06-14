@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-06-15 — Integrasi Musisi ke Kamu/Kita + Sistem Follow
+**Commit**: `af74cb7`
+
+- **Kamu (tetap privat)**: hero diringkas (hapus email, avatar lebih kecil, stats jadi 1 baris kompak); tambah **kartu Profil Musisi** (role + level badge warna + looking_for) dengan **ikon edit** (→ `/musisi/profil`); tampilkan **pengikut/diikuti**. Jika belum punya profil musisi → CTA "Aktifkan profil musisimu".
+- **Kita (discovery)**: tiap author post dapat **badge 🎵** → klik buka **popup**:
+  - Musisi: avatar, role (chip), **level warna** (pemula kuning, menengah biru, mahir hijau, profesional ungu), genre, looking_for.
+  - Non-musisi: ditandai **"🎧 Pendengar · calon fans"** (audiens).
+  - Tombol **+ Ikuti / Mengikuti** (toggle) + **💬 Hubungi** (DM Dia) + **Profil** (jika musisi).
+- **Sistem Follow**: tabel `follows` (follower/following, unique) + model `Follow` + endpoint `musisi.card` (data popup) & `follow.toggle` (+jumlah pengikut). fixdb diperluas.
+- Direktori `/musisi` tetap ada; discovery utama kini menyatu di Kita lewat popup.
+- *Catatan*: warna level pada badge di Kita masih ditampilkan di dalam popup (badge author masih netral) — bisa diwarnai per-author bila KitaController memuat data musisi penulis.
+
+---
+
 ## 2026-06-15 — Ecosystem Fase 1 dimulai: Direktori Musisi
 **Commit**: `f4cb24d` (ecosystem.md + visi), `0b44ed8` (Direktori Musisi)
 
