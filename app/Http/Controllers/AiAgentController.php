@@ -123,6 +123,38 @@ class AiAgentController extends Controller
         $mode = $request->input('mode', 'short');           // short | long | umum | all
         $want = $mode === 'all' ? ['short', 'long', 'umum'] : [$mode];
 
+        // Sumber tambahan: teks bebas atau link (Wikipedia dll) — diambil isinya
+        $sourceInput = trim((string) $request->input('source', ''));
+        $sourceText = '';
+        if ($sourceInput !== '') {
+            if (preg_match('~^https?://~i', $sourceInput)) {
+                try {
+                    $html = Http::timeout(20)->get($sourceInput)->body();
+                    $html = preg_replace('~<(script|style)[^>]*>.*?</\1>~is', ' ', $html);
+                    $text = html_entity_decode(strip_tags($html), ENT_QUOTES);
+                    $sourceText = trim(preg_replace('/\s+/', ' ', $text));
+                    $sourceText = mb_substr($sourceText, 0, 4000);
+                } catch (\Throwable $e) {
+                    $sourceText = '';
+                }
+            } else {
+                $sourceText = mb_substr($sourceInput, 0, 4000);
+            }
+        }
+
+        // Pengaturan gaya gambar (opsional) — nilai sudah dalam frasa Inggris dari frontend
+        $st = (array) $request->input('style', []);
+        $orient = $st['orientation'] ?? '9:16';
+        $orientText = $orient === '16:9' ? 'horizontal 16:9 landscape'
+            : ($orient === '1:1' ? 'square 1:1' : 'vertical 9:16 portrait');
+        $styleBits = [];
+        foreach (['art', 'people', 'gender', 'age', 'time', 'light'] as $k) {
+            if (!empty($st[$k])) $styleBits[] = $st[$k];
+        }
+        $styleLine = "setiap image prompt WAJIB beraspect-ratio {$orientText}"
+            . ($styleBits ? '; ' . implode('; ', $styleBits) : '')
+            . '; tetap memakai palet brand (retro blue, warm cream, burnt orange) & nuansa sinematik.';
+
         $header = <<<EOT
 Kamu content strategist musik Indonesia yang menulis seperti manusia asli — hangat, relatable, tidak kaku. Audiens: 25–40 tahun, galau malam hari, scrolling HP sebelum tidur.
 
@@ -146,22 +178,27 @@ EOT;
         $schema = ['"niche": "..."'];
         $n = 2;
         if (in_array('short', $want)) {
-            $tasks .= "\n{$n}. SHORT VIDEO: pecah niche jadi 3–5 topik kejadian sehari-hari yang SANGAT spesifik & berbeda (label max 5 kata). Tiap topik 5 narasi pendek (punchy, gaya notes HP jam 2 pagi, 1–2 kalimat, Indonesia). Tiap narasi 1 image prompt (BAHASA INGGRIS, max 400 char, WAJIB 'vertical 9:16 aspect ratio, portrait', palet brand, karakter Indonesia).";
+            $tasks .= "\n{$n}. SHORT VIDEO: pecah niche jadi 3–5 topik kejadian sehari-hari yang SANGAT spesifik & berbeda (label max 5 kata). Tiap topik 5 narasi pendek (punchy, gaya notes HP jam 2 pagi, 1–2 kalimat, Indonesia). Tiap narasi 1 image prompt (BAHASA INGGRIS, max 400 char, ikuti ATURAN GAMBAR, karakter Indonesia).";
             $schema[] = '"topics": [{"id":1,"label":"max 5 kata","narrations":[{"text":"narasi","image_prompt":"english 9:16 prompt"},{"text":"...","image_prompt":"..."},{"text":"...","image_prompt":"..."},{"text":"...","image_prompt":"..."},{"text":"...","image_prompt":"..."}]}]';
             $n++;
         }
         if (in_array('long', $want)) {
-            $tasks .= "\n{$n}. VIDEO PANJANG 3–5 MENIT: judul menarik + naskah NARASI mengalir bahasa Indonesia ~500–750 kata (pembuka-isi-penutup, storytelling sesuai niche) + 6–8 image prompt (BAHASA INGGRIS, vertical 9:16, palet brand).";
+            $tasks .= "\n{$n}. VIDEO PANJANG 3–5 MENIT: judul menarik + naskah NARASI mengalir bahasa Indonesia ~500–750 kata (pembuka-isi-penutup, storytelling sesuai niche) + 6–8 image prompt (BAHASA INGGRIS, ikuti ATURAN GAMBAR).";
             $schema[] = '"long_form": {"title":"...","duration_estimate":"± 4 menit","narration":"naskah 500-750 kata","scenes":[{"image_prompt":"english 9:16 prompt"}]}';
             $n++;
         }
         if (in_array('umum', $want)) {
-            $tasks .= "\n{$n}. TEMA UMUM (video panjang 3–5 menit): 3 ide tema/cerita UMUM (cerita rakyat Indonesia, sejarah, kisah cinta legendaris, adegan film, momen kehidupan) yang COCOK memakai lagu ini sebagai BACKSOUND. Tiap tema: judul tema, angle (kenapa lagu cocok jadi backsound-nya), NARASI panjang bahasa Indonesia ~500–700 kata (durasi dibaca 3–5 menit, storytelling utuh pembuka-konflik-penutup), + 5–6 image prompt (BAHASA INGGRIS, vertical 9:16, palet brand). Contoh tema: kisah Roro Jonggrang & Bandung Bondowoso.";
+            $umumSrc = $sourceText
+                ? "Jadikan SUMBER TAMBAHAN di bawah sebagai bahan cerita UTAMA (boleh 1–3 tema dari sumber itu)."
+                : "Pilih cerita rakyat Indonesia, sejarah, kisah cinta legendaris, adegan film, atau momen kehidupan.";
+            $tasks .= "\n{$n}. TEMA UMUM (video panjang 3–5 menit): 3 ide tema/cerita UMUM yang COCOK memakai lagu ini sebagai BACKSOUND. {$umumSrc} Tiap tema: judul tema, angle (kenapa lagu cocok jadi backsound-nya), NARASI panjang bahasa Indonesia ~500–700 kata (durasi dibaca 3–5 menit, storytelling utuh pembuka-konflik-penutup), + 5–6 image prompt (BAHASA INGGRIS, ikuti ATURAN GAMBAR). Contoh tema: kisah Roro Jonggrang & Bandung Bondowoso.";
             $schema[] = '"umum": [{"theme":"judul tema","angle":"alasan cocok jadi backsound","narration":"naskah 500-700 kata (3-5 menit)","scenes":[{"image_prompt":"english 9:16 prompt"}]}]';
             $n++;
         }
 
         $prompt = $header . "\n" . $tasks
+            . "\n\nATURAN GAMBAR (berlaku untuk SEMUA image prompt): " . $styleLine
+            . ($sourceText ? "\n\nSUMBER TAMBAHAN:\n" . $sourceText : "")
             . "\n\nBalas HANYA JSON valid tanpa markdown tanpa backtick:\n{\n  "
             . implode(",\n  ", $schema) . "\n}";
 

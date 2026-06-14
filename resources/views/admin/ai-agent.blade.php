@@ -40,6 +40,9 @@
     .gen-bar { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
     .gen-bar .fg { flex:1; min-width:160px; margin-bottom:0; }
     .gen-status { font-size:12px; color:var(--text-3); margin-top:10px; min-height:18px; }
+    .style-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:10px; }
+    .style-grid .fg { margin-bottom:0; }
+    @media(max-width:600px){ .style-grid{ grid-template-columns:1fr 1fr; } }
 
     .niche-box { background:var(--accent-dim); border:1px solid transparent; border-radius:10px; padding:12px 14px; margin-bottom:1.25rem; }
     .niche-box .lbl { font-size:10px; color:var(--accent); text-transform:uppercase; letter-spacing:0.1em; }
@@ -177,6 +180,78 @@
             </div>
             <button class="btn btn-primary" id="genBtn" onclick="doGenerate()">Generate</button>
         </div>
+
+        <div class="fg" style="margin-top:12px;">
+            <label>Sumber tambahan (opsional) — teks atau link Wikipedia</label>
+            <textarea class="fi" id="sourceInput" rows="2" placeholder="Tempel teks cerita / link, mis. https://id.wikipedia.org/wiki/Roro_Jonggrang"></textarea>
+            <span style="font-size:11px;color:var(--text-3);margin-top:3px;">Berguna untuk kategori Umum — cerita diambil dari sumber, lagu jadi backsound.</span>
+        </div>
+
+        <details style="margin-top:6px;">
+            <summary style="cursor:pointer;font-size:12px;color:var(--text-2);padding:4px 0;">🎨 Pengaturan Gaya Gambar (opsional)</summary>
+            <div class="style-grid">
+                <div class="fg"><label>Orientasi</label>
+                    <select class="fi" id="styleOrientation">
+                        <option value="9:16">9:16 Potrait (short)</option>
+                        <option value="16:9">16:9 Landscape</option>
+                        <option value="1:1">1:1 Kotak</option>
+                    </select>
+                </div>
+                <div class="fg"><label>Gaya gambar</label>
+                    <select class="fi" id="styleArt">
+                        <option value="">Default (sinematik)</option>
+                        <option value="cinematic photorealistic">Realistis sinematik</option>
+                        <option value="illustration, flat design">Ilustrasi</option>
+                        <option value="anime style">Anime</option>
+                        <option value="vintage film grain, retro">Vintage / retro</option>
+                        <option value="dramatic high-contrast">Dramatis kontras</option>
+                    </select>
+                </div>
+                <div class="fg"><label>Jumlah orang</label>
+                    <select class="fi" id="stylePeople">
+                        <option value="">Default</option>
+                        <option value="no people, scenery only">Tanpa orang</option>
+                        <option value="a single person">Sendiri</option>
+                        <option value="two people">Berdua</option>
+                        <option value="a group of people">Ramai</option>
+                    </select>
+                </div>
+                <div class="fg"><label>Gender</label>
+                    <select class="fi" id="styleGender">
+                        <option value="">Default</option>
+                        <option value="male subject">Pria</option>
+                        <option value="female subject">Wanita</option>
+                    </select>
+                </div>
+                <div class="fg"><label>Usia</label>
+                    <select class="fi" id="styleAge">
+                        <option value="">Default</option>
+                        <option value="child">Anak-anak</option>
+                        <option value="teenager">Remaja</option>
+                        <option value="adult">Dewasa</option>
+                        <option value="elderly person">Orang tua</option>
+                    </select>
+                </div>
+                <div class="fg"><label>Waktu</label>
+                    <select class="fi" id="styleTime">
+                        <option value="">Default</option>
+                        <option value="morning light">Pagi</option>
+                        <option value="midday">Siang</option>
+                        <option value="golden hour, sunset">Sore</option>
+                        <option value="night">Malam</option>
+                    </select>
+                </div>
+                <div class="fg"><label>Pencahayaan</label>
+                    <select class="fi" id="styleLight">
+                        <option value="">Default</option>
+                        <option value="bright, well-lit">Terang</option>
+                        <option value="dim, moody lighting">Redup</option>
+                        <option value="dark, low-key lighting">Gelap</option>
+                    </select>
+                </div>
+            </div>
+        </details>
+
         <div class="gen-status" id="genStatus"></div>
     </div>
 </div>
@@ -240,6 +315,17 @@ function doGenerate() {
     if (!confirm('Generate akan memakai kuota/kredit AI provider yang dipilih. Lanjutkan?')) return;
 
     var mode = document.getElementById('modeSelect').value;
+    var sv = function(id){ var e = document.getElementById(id); return e ? e.value : ''; };
+    var source = sv('sourceInput');
+    var style = {
+        orientation: sv('styleOrientation'),
+        art:    sv('styleArt'),
+        people: sv('stylePeople'),
+        gender: sv('styleGender'),
+        age:    sv('styleAge'),
+        time:   sv('styleTime'),
+        light:  sv('styleLight')
+    };
     var btn = document.getElementById('genBtn');
     btn.disabled = true;
     document.getElementById('genStatus').innerHTML = '<span class="spinner"></span> Menganalisis lirik & membuat konten… (10–40 detik)';
@@ -247,7 +333,7 @@ function doGenerate() {
     fetch(ROUTE_GEN_BASE + '/' + songId, {
         method:'POST',
         headers:{'X-CSRF-TOKEN':CSRF,'Content-Type':'application/json','Accept':'application/json'},
-        body: JSON.stringify({ provider_id: provId, mode: mode })
+        body: JSON.stringify({ provider_id: provId, mode: mode, source: source, style: style })
     })
     .then(function(r){ return r.json().then(function(d){ return {ok:r.ok, d:d}; }); })
     .then(function(res){
