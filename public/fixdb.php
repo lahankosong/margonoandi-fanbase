@@ -207,6 +207,26 @@ if (!tableExists($conn, $dbname, 'post_comment_likes')) {
     markMigration($conn, '2026_06_11_200000_add_comment_features');
 }
 
+// ── 6b. Tabel member_logs ─────────────────────────────────────────────────────
+echo '<h2>6b. Tabel member_logs</h2>';
+if (!tableExists($conn, $dbname, 'member_logs')) {
+    runSQL($conn, 'CREATE TABLE member_logs', "
+        CREATE TABLE `member_logs` (
+            `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            `user_id` bigint(20) UNSIGNED NOT NULL,
+            `created_at` timestamp NULL DEFAULT NULL,
+            `updated_at` timestamp NULL DEFAULT NULL,
+            PRIMARY KEY (`id`),
+            KEY `member_logs_user_id_foreign` (`user_id`),
+            CONSTRAINT `member_logs_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
+    markMigration($conn, '2026_06_13_000001_create_member_logs_table');
+} else {
+    echo '<pre class="info">&#8212; Tabel member_logs sudah ada</pre>';
+    markMigration($conn, '2026_06_13_000001_create_member_logs_table');
+}
+
 // ── 7. Mark remaining pending migrations ─────────────────────────────────────
 echo '<h2>7. Tandai migration yang pending sebagai selesai</h2>';
 $toMark = [
@@ -257,6 +277,7 @@ $check = [
     'post_comment_likes'   => 'Like komentar',
     'posts'                => 'Postingan Kita',
     'post_comments'        => 'Komentar Kita',
+    'member_logs'          => 'Log member baru',
 ];
 foreach ($check as $tbl => $label) {
     $exists = tableExists($conn, $dbname, $tbl);
