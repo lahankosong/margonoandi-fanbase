@@ -248,3 +248,43 @@ Urutan eksekusi: **edit → index → settings → ai-agent → create**.
 - Semua fitur Tier 1 wajib tanpa biaya API (pendekatan template/hardcoded yang bisa di-customize).
 - Ikuti konvensi teknis di bagian atas (fillable, cast integer, try-catch NotifHelper, CSS variables, dll.).
 - Test di lokal → deploy via `deploy.php` + `fixdb.php` → verifikasi mobile (TWA) & desktop.
+
+---
+
+# 🌐 Visi Jangka Panjang: Margonoandi Ecosystem (Fase 2–12)
+
+> Ide baru (15 Juni 2026): setelah fanbase kuat, berkembang dari "fanbase" menjadi
+> **platform ekosistem musisi Indonesia** — dari penemuan → kolaborasi → monetisasi.
+> Status: **visi/rencana**, belum dimulai. Mulai setelah fanbase (Tier 1–2) stabil &
+> metrik tercapai (≈20K pengunjung/bln, 1K subscriber, 50+ DAU, 200+ member aktif).
+
+## Strategi Dua Fase
+- **Fase A — Fanbase (Bulan 0–2)**: jadikan margonoandi.my.id hub distribusi konten +
+  komunitas (Tier 1 sebagian besar SELESAI: admin cleanup, content calendar, promo
+  templates, AI Agent v2). Biaya Rp 0.
+- **Fase B — Ecosystem (Bulan 2–12)**: pivot ke platform musisi. Investasi bertahap,
+  mulai dari free-tier, naik sesuai traksi.
+
+## Roadmap Ecosystem
+| Fase | Perkiraan | Fitur inti |
+|------|-----------|------------|
+| **Fase 1** | Bulan 2–5 | **Direktori musisi** + **pembentukan band** ("cari personil": post, lamaran, bentuk band, pesan antar-musisi) |
+| **Fase 2** | Bulan 5–8 | **Direktori studio** + **booking** (kalender, review, pembayaran) |
+| **Fase 3** | Bulan 8–10 | **Marketplace gear/alat musik** (listing, transaksi/escrow) |
+| **Fase 4** | Bulan 10–12+ | **Kolaborasi audio**, API pihak ketiga, ekspansi regional (SEA) |
+
+## Entitas Data Utama (rencana)
+- **Fase 1**: `musician_profiles` (role, skill, genre, lokasi, sample audio, portofolio),
+  `band_posts` (cari personil), `band_applications`, `bands`, `band_members`, `musician_messages`.
+- **Fase 2**: `studios`, `bookings`, `reviews`, `payment_transactions`.
+- **Fase 3**: `listings` (gear), `marketplace_reviews`, `escrow_transactions`.
+
+## Catatan Arsitektur & Anggaran
+- Fase 1 masih muat di cPanel + MySQL; Fase 2+ kemungkinan butuh VPS, storage audio
+  (S3-like), dan search (MySQL fulltext → Elasticsearch/Algolia bila perlu).
+- Estimasi biaya hemat: Rp 0 (Fanbase) → Rp 5–10 jt/bln (Ecosystem, opsional/bertahap).
+- **Validasi dulu**: bangun MVP Fase 1 minimal, uji ke 50–100 musisi sebelum lanjut Fase 2.
+
+## Keunggulan
+Jaringan musisi Indonesia + brand Margonoandi + founder seorang artis (kredibel ke musisi)
++ kontrol teknis penuh. Target jangka panjang: **platform #1 musisi indie Indonesia**.

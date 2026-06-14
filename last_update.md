@@ -2,6 +2,33 @@
 
 ---
 
+## 2026-06-15 — AI Agent v2 lanjutan (pipeline konten lengkap) + Calendar
+**Commit**: `05f92a1` (simpan hasil), `3afaf66` (9:16 + video panjang), `bbe7324` (pisah tipe), `df91ef6` (mode + umum), `9cd332d` (umum panjang), `0a093ac` (fix prompt→jadwal), `5fae63a` (catatan lipat), `e5c05dd` (sumber + gaya gambar)
+
+### AI Agent v2 — penyempurnaan
+- **Hasil tersimpan**: generasi terakhir dimuat ulang saat buka halaman / pilih lagu (per lagu, kolom `topics`/`scripts`/`visual_sequences` di `ai_generations`). Tidak hilang saat pindah tab.
+- **Image prompt 9:16** default untuk konten short.
+- **Video panjang 3–5 menit**: judul + naskah narasi ~500–750 kata + 6–8 image prompt.
+- **Pemisahan tipe konten**: section terpisah 📱 Short / 🎬 Video panjang / 🌐 Umum.
+- **Pilihan mode generate** (short / long / umum / semua) → hemat token, hanya generate yang dipilih, mode lain tetap tersimpan.
+- **Kategori Umum** (ide Andi): lagu jadi *backsound* tema/cerita (cerita rakyat, sejarah, film). Format panjang: 3 tema × narasi 500–700 kata + 5–6 image prompt. Contoh: "Bersamamu" → Roro Jonggrang.
+- **Sumber eksternal**: input teks atau **link Wikipedia** (di-fetch + strip tags server-side, maks 4000 char) sebagai bahan — terutama untuk Umum.
+- **Pengaturan gaya gambar manual**: orientasi (9:16/16:9/1:1), gaya, jumlah orang, gender, usia, waktu, pencahayaan → jadi "ATURAN GAMBAR" di semua image prompt.
+- **Fix**: image prompt video panjang/umum kini ikut terbawa ke catatan jadwal Calendar.
+
+### Content Calendar — penyempurnaan
+- Kolom `content_type` (short/long/umum) + badge tipe + **filter chip** (Semua/Short/Panjang/Umum) + pilihan tipe di form manual.
+- Catatan panjang **bisa dilipat** ("selengkapnya"/"tutup") + tombol **salin**.
+- Penjadwalan dari AI Agent: 1 konten/hari, narasi+prompt masuk ke catatan sesuai tipe.
+
+### Catatan teknis
+- `fixdb.php` diperluas: `content_plans`, kolom `content_type`, `ai_providers`.
+- Provider AI: format OpenAI-compatible (Gemini/Groq/OpenRouter/OpenAI/DeepSeek) + Anthropic; key terenkripsi (cast `encrypted`).
+- Hindari `@json()` dgn closure multi-line (penyebab 500 promo) → pakai `@php`+`json_encode`.
+- Tip: mode Umum berat → pakai provider cepat (Gemini/Groq) agar tak timeout.
+
+---
+
 ## 2026-06-14 — AI Agent v2 (Multi-Provider) + Fix 500 Promo
 **Commit**: `d943500` (fix promo @json), `8efd3b8` (AI Agent v2)
 
