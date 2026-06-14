@@ -178,3 +178,73 @@ routes/web.php
 4. `NotifHelper::send()` harus selalu di dalam `try-catch` sebelum `return response()->json()`
 5. Di `GoogleController::callback()`, `MemberLog::create()` diisolasi dalam try-catch sendiri agar kegagalan log tidak memblokir login. Outer catch harus `\Throwable` (bukan `\Exception`) karena `\Error` (class not found) tidak ter-catch oleh `\Exception`.
 6. `KitaController` selalu kirim `$posts` (paginated) dan `$memberLogs` (Collection) terpisah ke view — interleaving dilakukan di Blade dengan `$shownLogIds` untuk menghindari duplikat.
+
+---
+
+# 🎵 Roadmap Pengembangan & Strategi Pertumbuhan
+
+> Rencana pengembangan web ke depan (growth + admin cleanup). Bagian di atas = kerangka teknis;
+> bagian ini = arah & prioritas kerja. Status: WIP (fase Tier 1).
+
+## Kondisi & Kendala
+- **Budget**: ⚠️ Kredit Claude API habis → hindari fitur yang butuh API harian; pakai pendekatan template (tanpa API).
+- **Hosting**: shared cPanel (shell_exec terbatas, Imunify360) → hindari tugas level-sistem, pakai web API.
+- **Waktu**: Andi ~10–15 jam/minggu. **Skill**: Andi = lirik + story; Claude = teknis + strategi.
+- **Aset**: 15 lagu (Spotify `4UKrlbmAOePUkl5YAdwlDa`), Android app maftune, komunitas Discord + tab Kita.
+
+## Target 3 Bulan (KPI)
+| Metrik | Sekarang | Target 3 bln | Strategi |
+|--------|----------|--------------|----------|
+| Pengunjung/bulan | ~500 | 20.000 | Content calendar + promosi sosial |
+| DAU | ~5–10 | 50+ | Engagement komunitas + leaderboard |
+| Subscriber newsletter | 0 | 1.000+ | Email capture di Spotify/YouTube |
+| Member Discord | ~20 | 200+ | Bot + kontes |
+| Durasi sesi | ~2 mnt | 5+ mnt | UX lebih baik + fitur interaktif |
+
+## Roadmap 3 Tier
+
+### TIER 1 — Kritis (Minggu 1–2, TANPA biaya)
+1. **Content Calendar** — `ContentCalendarController` + `calendar.blade.php`; UI mirip spreadsheet (tanggal, lagu, platform, status); tampil ringkas di dashboard admin.
+2. **Promo Templates (tanpa API)** — `PromoTemplateController`; 5 template per lagu (TikTok hook, IG caption ×3, YouTube desc, Spotify pitch, Discord announcement); tombol copy-to-clipboard; editor template.
+3. **Admin Dashboard Redesign** — panel Quick Actions di atas (Create, AI Agent, Settings, Analytics); tabel responsif mobile; search + filter (judul, key, era, status); stats yang actionable.
+4. **Edit Form Cleanup** — hapus Chord Detector (over-engineered); reorganisasi section (Basic Info → Chord & Nada → Lirik → Media); tab Preview; collapse section.
+
+### TIER 2 — Penting (Minggu 3–4, hemat biaya)
+1. **Email Newsletter** — Mailchimp free tier (500 email/bln); form signup; 2× kirim/minggu.
+2. **Analytics Dashboard** — koneksi Google Analytics (read-only); sumber trafik, halaman teratas, growth.
+3. **Multi-Platform Posting Scheduler** — 1 caption → auto-format IG/TikTok/Twitter/Discord; jadwal.
+4. **Fan Engagement** — leaderboard mingguan, milestone member, form kontes (fan art/cover).
+
+### TIER 3 — Nice-to-have (Bulan 2+, tergantung budget)
+1. **AI Agent v2** (budget-aware) — hanya 1×/bulan saat rilis lagu; SUSPEND sampai budget ada.
+2. **Spotify Playlist Pitching Helper** — generate template pitch + tracking (biaya Rp 0, ROI tinggi).
+3. **Discord Bot** — auto-greet, lyric of the day, leaderboard, voting.
+
+## Prioritas Channel Pertumbuhan
+1. **TikTok/IG Shorts** (ROI tertinggi) — 3×/minggu, hook + lirik.
+2. **Email Newsletter** — 2×/minggu.
+3. **YouTube Shorts** — 3×/minggu (reuse konten TikTok).
+4. **Spotify Editorial** — pitch per rilis (impact besar).
+5. **Discord** — retensi komunitas.
+6. **Cross-promotion** — kolaborasi musisi indie, 1×/bulan.
+
+## Pembagian Tugas
+- **Andi**: tulis lirik/story/hook, rencana content calendar, moderasi komunitas, pitch curator. JANGAN: coding, pakai AI Agent harian.
+- **Claude**: bangun semua tool (calendar, templates, dashboard, newsletter, analytics, scheduler, engagement). JANGAN: tulis lirik, moderasi.
+
+## Audit Admin Panel & Rencana Cleanup
+Urutan eksekusi: **edit → index → settings → ai-agent → create**.
+
+| File | Prioritas | Masalah | Rencana |
+|------|-----------|---------|---------|
+| `admin/edit.blade.php` | 🔴 HIGH | 500+ baris; Chord Detector over-engineered (~200 baris JS, akurasi rendah); audio upload di tengah; tak ada preview | Hapus chord detector; reorganisasi + collapse section; tambah tab Preview; input key manual |
+| `admin/index.blade.php` | 🔴 HIGH | Tabel tak responsif mobile; tak ada search/filter/bulk; Quick Actions tersembunyi; stats tak actionable | Tabel responsif (stack di mobile); search + filter; bulk actions; panel Quick Actions; stats yang bisa diklik |
+| `admin/settings.blade.php` | 🟡 MEDIUM | Quill editor berat (~180KB); form panjang; tak ada validasi visual/undo | Ganti Quill → textarea (markdown); validasi realtime; feedback tombol Save; opsi discard |
+| `admin/ai-agent.blade.php` | 🟢 LOW | Generate = panggil Claude API (biaya); hasil sulit di-copy | SUSPEND fitur sampai budget ada; perbaiki UI (loading state, copy feedback) tanpa biaya |
+| `admin/create.blade.php` | 🟢 LOW | Sudah rapi | (Opsional) share partial form dengan edit (DRY) |
+
+## Catatan Saat Mulai Coding
+- Sebelum mengerjakan tiap item, konfirmasi prioritas + rencana langkah ke Andi dulu.
+- Semua fitur Tier 1 wajib tanpa biaya API (pendekatan template/hardcoded yang bisa di-customize).
+- Ikuti konvensi teknis di bagian atas (fillable, cast integer, try-catch NotifHelper, CSS variables, dll.).
+- Test di lokal → deploy via `deploy.php` + `fixdb.php` → verifikasi mobile (TWA) & desktop.
