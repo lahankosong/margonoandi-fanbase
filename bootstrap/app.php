@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'isAdmin' => \App\Http\Middleware\IsAdmin::class,
         ]);
+        // Guest yang akses route ber-auth diarahkan ke login Google
+        // (project tidak punya route bernama "login" → tanpa ini akan 500)
+        $middleware->redirectGuestsTo(fn () => route('google.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
