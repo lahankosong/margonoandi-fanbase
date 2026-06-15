@@ -23,8 +23,8 @@ use App\Http\Controllers\NotificationController;
 
 
 
-// Halaman utama
-Route::get('/', [HomeController::class, 'index'])->name('home');
+// Halaman utama — track kunjungan landing page
+Route::get('/', [HomeController::class, 'index'])->name('home')->middleware('trackvisit:homepage');
 
 // Google Auth
 Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('google.login');
@@ -80,16 +80,16 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
 });
 
 Route::middleware(['auth'])->group(function () {
-    // Fanbase routes
-    Route::get('/aku', [AkuController::class, 'index'])->name('aku');
+    // Fanbase routes — track entry pertama ke fanbase per sesi
+    Route::get('/aku', [AkuController::class, 'index'])->name('aku')->middleware('trackvisit:fanbase');
     Route::post('/aku', [AkuController::class, 'store'])->name('aku.store');
     Route::delete('/aku/{id}', [AkuController::class, 'destroy'])->name('aku.destroy');
     Route::post('/aku/{id}/like', [AkuController::class, 'like'])->name('aku.like');
     Route::post('/aku/{id}/comment', [AkuController::class, 'comment'])->name('aku.comment');
 
-    Route::get('/kamu', [KamuController::class, 'index'])->name('kamu');
+    Route::get('/kamu', [KamuController::class, 'index'])->name('kamu')->middleware('trackvisit:fanbase');
 
-    Route::get('/kita', [KitaController::class, 'index'])->name('kita');
+    Route::get('/kita', [KitaController::class, 'index'])->name('kita')->middleware('trackvisit:fanbase');
     Route::post('/kita', [KitaController::class, 'store'])->name('kita.store');
     Route::delete('/kita/{id}', [KitaController::class, 'destroy'])->name('kita.destroy');
     Route::post('/kita/{id}/like', [KitaController::class, 'like'])->name('kita.like');
@@ -104,7 +104,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/follow/{userId}', [MusicianController::class, 'toggleFollow'])->whereNumber('userId')->name('follow.toggle');
     Route::get('/musisi/{id}', [MusicianController::class, 'show'])->whereNumber('id')->name('musisi.show');
 
-    Route::get('/dia', [DiaController::class, 'index'])->name('dia');
+    Route::get('/dia', [DiaController::class, 'index'])->name('dia')->middleware('trackvisit:fanbase');
     Route::get('/dia/conversation/{id}', [DiaController::class, 'conversation'])->name('dia.conversation');
     Route::post('/dia/start/{userId}', [DiaController::class, 'start'])->name('dia.start');
     Route::post('/dia/conversation/{id}/send', [DiaController::class, 'send'])->name('dia.send');

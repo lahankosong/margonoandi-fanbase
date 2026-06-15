@@ -327,6 +327,71 @@
     </div>
 </div>
 
+{{-- TRAFFIC SECTION --}}
+@php
+    $todayHp  = $traffic['today_hp'] ?? 0;
+    $todayFb  = $traffic['today_fb'] ?? 0;
+    $totalHp  = $traffic['total_hp'] ?? 0;
+    $totalFb  = $traffic['total_fb'] ?? 0;
+    $convRate = $totalHp > 0 ? round(($totalFb / $totalHp) * 100, 1) : 0;
+    $trend    = $traffic['trend'] ?? [];
+    $maxBar   = collect($trend)->max(fn($d) => max($d['hp'], $d['fb'])) ?: 1;
+@endphp
+<div class="dash-card" style="margin-bottom:1.25rem;">
+    <div class="dash-card-head">
+        <div class="dash-card-title">📈 Lalu Lintas Trafik</div>
+        <span style="font-size:11px;color:var(--text-4);">Per sesi unik · reset saat browser ditutup</span>
+    </div>
+    <div style="padding:1rem 1.25rem;">
+        {{-- Funnel cards --}}
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.25rem;">
+            <div style="background:var(--sky-lt);border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;">
+                <div style="font-size:1.6rem;font-weight:700;color:var(--sky-dk);font-family:'Sora',sans-serif;">{{ $todayHp }}</div>
+                <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-top:2px;">Landing Page Hari Ini</div>
+                <div style="font-size:10px;color:var(--text-4);margin-top:1px;">Total all-time: {{ number_format($totalHp) }}</div>
+            </div>
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:1rem 1.1rem;">
+                <div style="font-size:1.6rem;font-weight:700;color:#15803d;font-family:'Sora',sans-serif;">{{ $todayFb }}</div>
+                <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-top:2px;">Masuk Fanbase Hari Ini</div>
+                <div style="font-size:10px;color:var(--text-4);margin-top:1px;">Total all-time: {{ number_format($totalFb) }}</div>
+            </div>
+            <div style="background:#fdf4ff;border:1px solid #e9d5ff;border-radius:12px;padding:1rem 1.1rem;">
+                <div style="font-size:1.6rem;font-weight:700;color:#9333ea;font-family:'Sora',sans-serif;">{{ $convRate }}%</div>
+                <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-top:2px;">Conversion Rate</div>
+                <div style="font-size:10px;color:var(--text-4);margin-top:1px;">Landing → masuk fanbase</div>
+            </div>
+        </div>
+
+        {{-- Bar chart 7 hari --}}
+        @if(!empty($trend))
+        <div style="font-size:11px;font-weight:600;color:var(--text-3);margin-bottom:8px;letter-spacing:0.04em;">7 HARI TERAKHIR</div>
+        <div style="display:flex;gap:6px;align-items:flex-end;height:80px;">
+            @foreach($trend as $day)
+            @php
+                $hpH = $maxBar > 0 ? round(($day['hp'] / $maxBar) * 70) : 0;
+                $fbH = $maxBar > 0 ? round(($day['fb'] / $maxBar) * 70) : 0;
+            @endphp
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+                <div style="width:100%;display:flex;gap:2px;align-items:flex-end;height:70px;">
+                    <div style="flex:1;height:{{ $hpH }}px;background:var(--sky);border-radius:3px 3px 0 0;min-height:{{ $day['hp'] > 0 ? 3 : 0 }}px;" title="Landing: {{ $day['hp'] }}"></div>
+                    <div style="flex:1;height:{{ $fbH }}px;background:#22c55e;border-radius:3px 3px 0 0;min-height:{{ $day['fb'] > 0 ? 3 : 0 }}px;" title="Fanbase: {{ $day['fb'] }}"></div>
+                </div>
+                <div style="font-size:9px;color:var(--text-4);white-space:nowrap;">{{ $day['label'] }}</div>
+            </div>
+            @endforeach
+        </div>
+        <div style="display:flex;gap:12px;margin-top:8px;">
+            <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-3);">
+                <div style="width:10px;height:10px;background:var(--sky);border-radius:2px;"></div> Landing Page
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-3);">
+                <div style="width:10px;height:10px;background:#22c55e;border-radius:2px;"></div> Fanbase
+            </div>
+        </div>
+        @endif
+    </div>
+</div>
+
 {{-- DASHBOARD BODY: 2 cols --}}
 <div class="dash-body">
 

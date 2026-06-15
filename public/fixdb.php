@@ -342,6 +342,29 @@ if (!tableExists($conn, $dbname, 'follows')) {
     markMigration($conn, '2026_06_15_000002_create_follows_table');
 }
 
+// ── 6g. Tabel page_visits ─────────────────────────────────────────────────────
+echo '<h2>6g. Tabel page_visits</h2>';
+if (!tableExists($conn, $dbname, 'page_visits')) {
+    runSQL($conn, 'CREATE TABLE page_visits', "
+        CREATE TABLE `page_visits` (
+            `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            `page` varchar(20) NOT NULL,
+            `session_id` varchar(64) DEFAULT NULL,
+            `ip` varchar(45) DEFAULT NULL,
+            `user_id` bigint(20) UNSIGNED DEFAULT NULL,
+            `created_at` timestamp NULL DEFAULT NULL,
+            PRIMARY KEY (`id`),
+            KEY `page_visits_page_created_at_index` (`page`, `created_at`),
+            KEY `page_visits_user_id_foreign` (`user_id`),
+            CONSTRAINT `page_visits_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
+    markMigration($conn, '2026_06_15_000003_create_page_visits_table');
+} else {
+    echo '<pre class="info">&#8212; Tabel page_visits sudah ada</pre>';
+    markMigration($conn, '2026_06_15_000003_create_page_visits_table');
+}
+
 // ── 7. Mark remaining pending migrations ─────────────────────────────────────
 echo '<h2>7. Tandai migration yang pending sebagai selesai</h2>';
 $toMark = [

@@ -6,6 +6,7 @@ use App\Models\Song;
 use App\Models\User;
 use App\Models\Post;
 use App\Models\MemberLog;
+use App\Models\PageVisit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -58,10 +59,36 @@ class AdminController extends Controller
         $topSongs = $songs->where('is_active', 1)
             ->sortByDesc('featured')->take(6)->values();
 
+        // Traffic: landing page vs masuk fanbase
+        $traffic = ['homepage' => [], 'fanbase' => [], 'today_hp' => 0, 'today_fb' => 0, 'total_hp' => 0, 'total_fb' => 0];
+        try {
+            $traffic['today_hp'] = PageVisit::where('page', 'homepage')->whereDate('created_at', today())->count();
+            $traffic['today_fb'] = PageVisit::where('page', 'fanbase')->whereDate('created_at', today())->count();
+            $traffic['total_hp'] = PageVisit::where('page', 'homepage')->count();
+            $traffic['total_fb'] = PageVisit::where('page', 'fanbase')->count();
+
+            // Tren 7 hari: array ['date' => 'dd Mon', 'hp' => n, 'fb' => n]
+            $days = collect(range(6, 0))->map(fn($d) => now()->subDays($d));
+            $hpByDay = PageVisit::where('page', 'homepage')
+                ->where('created_at', '>=', now()->subDays(6)->startOfDay())
+                ->selectRaw('DATE(created_at) as date, COUNT(*) as total')
+                ->groupBy('date')->pluck('total', 'date');
+            $fbByDay = PageVisit::where('page', 'fanbase')
+                ->where('created_at', '>=', now()->subDays(6)->startOfDay())
+                ->selectRaw('DATE(created_at) as date, COUNT(*) as total')
+                ->groupBy('date')->pluck('total', 'date');
+
+            $traffic['trend'] = $days->map(fn($d) => [
+                'label' => $d->locale('id')->isoFormat('D MMM'),
+                'hp'    => $hpByDay[$d->toDateString()] ?? 0,
+                'fb'    => $fbByDay[$d->toDateString()] ?? 0,
+            ])->values()->toArray();
+        } catch (\Throwable $e) {}
+
         return view('admin.index', compact(
             'songs', 'totalSongs', 'activeSongs',
             'totalMembers', 'dau', 'totalPosts',
-            'recentActivity', 'topSongs'
+            'recentActivity', 'topSongs', 'traffic'
         ));
     }
 
