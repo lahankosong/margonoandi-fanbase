@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MusicianProfile;
 use App\Models\Follow;
 use App\Models\User;
+use App\Helpers\NotifHelper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -112,6 +113,11 @@ class MusicianController extends Controller
         } else {
             Follow::create(['follower_id' => Auth::id(), 'following_id' => $userId]);
             $following = true;
+            try {
+                NotifHelper::send($userId, Auth::id(), 'follow',
+                    (Auth::user()->name ?? 'Seseorang') . ' mulai mengikutimu',
+                    null, route('musisi.index'));
+            } catch (\Throwable $e) {}
         }
         $followers = Follow::where('following_id', $userId)->count();
         return response()->json(['following' => $following, 'followers' => $followers]);

@@ -14,6 +14,7 @@ use App\Http\Controllers\AiAgentController;
 use App\Http\Controllers\PromoTemplateController;
 use App\Http\Controllers\ContentCalendarController;
 use App\Http\Controllers\MusicianController;
+use App\Http\Controllers\BandPostController;
 use App\Http\Controllers\AkuController;
 use App\Http\Controllers\KamuController;
 use App\Http\Controllers\KitaController;
@@ -103,6 +104,14 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/musisi/card/{userId}', [MusicianController::class, 'card'])->whereNumber('userId')->name('musisi.card');
     Route::post('/follow/{userId}', [MusicianController::class, 'toggleFollow'])->whereNumber('userId')->name('follow.toggle');
     Route::get('/musisi/{id}', [MusicianController::class, 'show'])->whereNumber('id')->name('musisi.show');
+
+    // Cari Personil (band posts)
+    Route::get('/band', [BandPostController::class, 'index'])->name('band.index');
+    Route::get('/band/create', [BandPostController::class, 'create'])->name('band.create');
+    Route::post('/band', [BandPostController::class, 'store'])->name('band.store');
+    Route::get('/band/{id}', [BandPostController::class, 'show'])->whereNumber('id')->name('band.show');
+    Route::put('/band/{id}/status', [BandPostController::class, 'toggleStatus'])->whereNumber('id')->name('band.status');
+    Route::delete('/band/{id}', [BandPostController::class, 'destroy'])->whereNumber('id')->name('band.destroy');
 
     Route::get('/dia', [DiaController::class, 'index'])->name('dia')->middleware('trackvisit:fanbase');
     Route::get('/dia/conversation/{id}', [DiaController::class, 'conversation'])->name('dia.conversation');

@@ -61,7 +61,24 @@ class KitaController extends Controller
                 ->pluck('comment_id')->toArray();
         } catch (\Throwable $e) {}
 
-        return view('fanbase.kita', compact('posts', 'memberLogs', 'likedIds', 'likersByPost', 'likedCommentIds'));
+        // Peta musisi (level) untuk badge berwarna di tiap penulis
+        $musicianMap = [];
+        try {
+            $authorIds = $posts->pluck('user_id')->all();
+            foreach ($posts as $p) {
+                foreach ($p->comments as $c) {
+                    $authorIds[] = $c->user_id;
+                    foreach ($c->replies as $r) $authorIds[] = $r->user_id;
+                }
+            }
+            $musicianMap = \App\Models\MusicianProfile::whereIn('user_id', array_values(array_unique($authorIds)))
+                ->get(['id', 'user_id', 'skill_level'])
+                ->keyBy('user_id')
+                ->map(fn($m) => ['level' => $m->skill_level, 'profile_id' => $m->id])
+                ->toArray();
+        } catch (\Throwable $e) {}
+
+        return view('fanbase.kita', compact('posts', 'memberLogs', 'likedIds', 'likersByPost', 'likedCommentIds', 'musicianMap'));
     }
 
     public function store(Request $request)

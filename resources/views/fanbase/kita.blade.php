@@ -97,7 +97,11 @@
         display: inline-flex; align-items: center; gap: 5px;
     }
     .mus-badge { border: none; background: var(--sky-lt); color: var(--sky-dk); cursor: pointer; font-size: 11px; line-height: 1; padding: 2px 5px; border-radius: 20px; transition: 0.15s; }
-    .mus-badge:hover { background: var(--sky); color: #fff; transform: scale(1.1); }
+    .mus-badge:hover { transform: scale(1.15); }
+    .mus-badge.lv-pemula { background: #facc15; color: #5a3e00; }
+    .mus-badge.lv-menengah { background: #38bdf8; color: #062b3a; }
+    .mus-badge.lv-mahir { background: #4ade80; color: #053a1a; }
+    .mus-badge.lv-profesional { background: #c084fc; color: #2e0a4a; }
     .kita-post-date { font-size: 11px; color: var(--text-4); margin-top: 2px; }
 
     /* POPUP MUSISI */
@@ -388,8 +392,9 @@
             <img src="{{ $post->user->avatar ?? 'https://www.google.com/favicon.ico' }}"
                  class="kita-post-avatar" alt="">
             <div class="kita-post-meta">
+                @php $mlv = $musicianMap[$post->user_id]['level'] ?? null; @endphp
                 <div class="kita-post-name">{{ $post->user->name }}
-                    <button type="button" class="mus-badge" onclick="openMusCard({{ $post->user_id }})" title="Lihat profil">&#127925;</button>
+                    <button type="button" class="mus-badge {{ $mlv ? 'lv-'.$mlv : '' }}" onclick="openMusCard({{ $post->user_id }})" title="{{ $mlv ? 'Musisi · '.ucfirst($mlv) : 'Lihat profil' }}">&#127925;</button>
                 </div>
                 <div class="kita-post-date">{{ $post->created_at->diffForHumans() }}</div>
                 @if(isset($post->location) && $post->location)

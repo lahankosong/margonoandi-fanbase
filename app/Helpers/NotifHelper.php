@@ -18,6 +18,7 @@ class NotifHelper
             'message' => '📩',
             'post'    => '📝',
             'invite'  => '🤝',
+            'follow'  => '➕',
         ];
 
         AppNotification::create([

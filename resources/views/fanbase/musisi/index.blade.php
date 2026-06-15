@@ -41,10 +41,11 @@
     <div class="mus-hero-actions">
         @if($myProfile)
         <a href="{{ route('musisi.edit') }}" class="btn-w btn-w-ghost">Edit profilku</a>
-        <a href="{{ route('musisi.show', $myProfile->id) }}" class="btn-w btn-w-solid">Lihat profilku</a>
+        <a href="{{ route('musisi.show', $myProfile->id) }}" class="btn-w btn-w-ghost">Lihat profilku</a>
         @else
         <a href="{{ route('musisi.edit') }}" class="btn-w btn-w-solid">+ Lengkapi profil musisimu</a>
         @endif
+        <a href="{{ route('band.index') }}" class="btn-w btn-w-solid">🎯 Cari Personil</a>
     </div>
 </div>
 

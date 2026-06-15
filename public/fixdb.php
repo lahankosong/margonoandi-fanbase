@@ -365,6 +365,33 @@ if (!tableExists($conn, $dbname, 'page_visits')) {
     markMigration($conn, '2026_06_15_000003_create_page_visits_table');
 }
 
+// ── 6g. Tabel band_posts ──────────────────────────────────────────────────────
+echo '<h2>6g. Tabel band_posts</h2>';
+if (!tableExists($conn, $dbname, 'band_posts')) {
+    runSQL($conn, 'CREATE TABLE band_posts', "
+        CREATE TABLE `band_posts` (
+            `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+            `user_id` bigint(20) UNSIGNED NOT NULL,
+            `title` varchar(255) NOT NULL,
+            `description` text DEFAULT NULL,
+            `roles_needed` varchar(255) DEFAULT NULL,
+            `genres` varchar(255) DEFAULT NULL,
+            `location` varchar(255) DEFAULT NULL,
+            `status` varchar(255) NOT NULL DEFAULT 'open',
+            `urgent` tinyint(1) NOT NULL DEFAULT 0,
+            `created_at` timestamp NULL DEFAULT NULL,
+            `updated_at` timestamp NULL DEFAULT NULL,
+            PRIMARY KEY (`id`),
+            KEY `band_posts_status_index` (`status`),
+            CONSTRAINT `band_posts_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    ");
+    markMigration($conn, '2026_06_15_000004_create_band_posts_table');
+} else {
+    echo '<pre class="info">&#8212; Tabel band_posts sudah ada</pre>';
+    markMigration($conn, '2026_06_15_000004_create_band_posts_table');
+}
+
 // ── 7. Mark remaining pending migrations ─────────────────────────────────────
 echo '<h2>7. Tandai migration yang pending sebagai selesai</h2>';
 $toMark = [
@@ -419,6 +446,8 @@ $check = [
     'content_plans'        => 'Content Calendar',
     'ai_providers'         => 'AI Agent providers',
     'musician_profiles'    => 'Direktori Musisi (ekosistem)',
+    'follows'              => 'Sistem Follow',
+    'band_posts'           => 'Cari Personil (band)',
 ];
 foreach ($check as $tbl => $label) {
     $exists = tableExists($conn, $dbname, $tbl);
