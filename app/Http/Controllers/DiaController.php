@@ -94,14 +94,16 @@ class DiaController extends Controller
 
         $this->resolveConversationAccess($conversation, $userId);
 
+        $clean = \App\Helpers\WordFilter::clean($request->body);
+
         $message = Message::create([
             'conversation_id' => $id,
             'user_id'         => $userId,
-            'body'            => $request->body,
+            'body'            => $clean,
         ]);
 
         $conversation->update([
-            'last_message'    => $request->body,
+            'last_message'    => $clean,
             'last_message_at' => now(),
         ]);
 
@@ -112,7 +114,7 @@ class DiaController extends Controller
                 NotifHelper::send(
                     $recipId, $userId,
                     'message', Auth::user()->name . ' mengirim pesan',
-                    $request->body,
+                    $clean,
                     url('/dia/conversation/' . $id)
                 );
             } catch (\Throwable $e) {}
@@ -277,14 +279,16 @@ class DiaController extends Controller
 
         if (!$group->isMember($userId)) abort(403);
 
+        $clean = \App\Helpers\WordFilter::clean($request->body);
+
         $message = GroupMessage::create([
             'group_id' => $id,
             'user_id'  => $userId,
-            'body'     => $request->body,
+            'body'     => $clean,
         ]);
 
         $group->update([
-            'last_message'    => $request->body,
+            'last_message'    => $clean,
             'last_message_at' => now(),
         ]);
 
@@ -295,7 +299,7 @@ class DiaController extends Controller
                 NotifHelper::send(
                     $gm->user_id, $userId,
                     'message', Auth::user()->name . ' di grup ' . $group->name,
-                    $request->body,
+                    $clean,
                     url('/dia/group/' . $id)
                 );
             } catch (\Throwable $e) {}
