@@ -44,8 +44,16 @@ class DiaController extends Controller
             ]);
         } catch (\Throwable $e) {}
 
-        $this->captureCity($request);
+        return response()->json(['ok' => true]);
+    }
 
+    // Simpan kota dari GPS (akurat) yang dikirim klien saat kirim pesan
+    public function locate(Request $request)
+    {
+        $data = $request->validate(['city' => 'required|string|max:120']);
+        try {
+            User::where('id', Auth::id())->update(['city' => trim($data['city'])]);
+        } catch (\Throwable $e) {}
         return response()->json(['ok' => true]);
     }
 
@@ -121,7 +129,6 @@ class DiaController extends Controller
         $conversation = Conversation::findOrFail($id);
 
         $this->resolveConversationAccess($conversation, $userId);
-        $this->captureCity($request);   // perbarui lokasi jaringan saat kirim pesan
 
         $clean = \App\Helpers\WordFilter::clean($request->body);
 
@@ -307,7 +314,6 @@ class DiaController extends Controller
         $group  = Group::findOrFail($id);
 
         if (!$group->isMember($userId)) abort(403);
-        $this->captureCity($request);
 
         $clean = \App\Helpers\WordFilter::clean($request->body);
 

@@ -376,12 +376,12 @@
     <div class="dia-loc-popup" id="diaLocPopup" onclick="event.stopPropagation()">
         <div class="dia-loc-title">📍 Lokasi {{ $other->name }}</div>
         @if($other->city)
-        <div class="dia-loc-city">~{{ $other->city }}</div>
-        <div class="dia-loc-note">Perkiraan wilayah dari jaringan (IP) saat terakhir aktif · {{ $other->lastSeenLabel() }}</div>
+        <div class="dia-loc-city">{{ $other->city }}</div>
+        <div class="dia-loc-note">Lokasi GPS saat terakhir kirim pesan · {{ $other->lastSeenLabel() }}</div>
         @else
-        <div class="dia-loc-note">Belum ada data lokasi — lawan bicara belum aktif/kirim pesan sejak fitur ini aktif.</div>
+        <div class="dia-loc-note">Belum ada data lokasi — lawan bicara belum mengizinkan GPS / belum kirim pesan sejak fitur ini aktif.</div>
         @endif
-        <div class="dia-loc-disc">⚠️ Perkiraan kasar (bisa meleset puluhan km). Sinyal anti-penipuan, bukan lokasi pasti. Tetap waspada.</div>
+        <div class="dia-loc-disc">ℹ️ Dari GPS (akurat ~kecamatan), terisi saat lawan bicara mengirim pesan & mengizinkan lokasi. Sinyal anti-penipuan — tetap waspada.</div>
     </div>
 </div>
 
@@ -489,6 +489,34 @@ document.addEventListener('click', function(){
     var p = document.getElementById('diaLocPopup');
     if (p) p.classList.remove('open');
 });
+
+/* Tangkap lokasi GPS (akurat) sekali per sesi, dipanggil saat kirim pesan */
+var diaLocSent = false;
+function diaCaptureGps() {
+    if (diaLocSent || !navigator.geolocation) return;
+    diaLocSent = true;
+    navigator.geolocation.getCurrentPosition(
+        function(pos) {
+            fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=12&lat=' + pos.coords.latitude + '&lon=' + pos.coords.longitude,
+                  { headers: { 'Accept-Language': 'id' } })
+                .then(function(r){ return r.json(); })
+                .then(function(d){
+                    var a = d.address || {};
+                    var city = a.city || a.town || a.village || a.suburb || a.municipality || a.county || a.state || '';
+                    if (city) {
+                        fetch('{{ route('dia.locate') }}', {
+                            method: 'POST',
+                            headers: { 'X-CSRF-TOKEN': csrfToken, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify({ city: city })
+                        }).catch(function(){});
+                    }
+                })
+                .catch(function(){});
+        },
+        function(){ diaLocSent = false; },   // ditolak/gagal → biar bisa coba lagi nanti
+        { enableHighAccuracy: true, timeout: 9000, maximumAge: 300000 }
+    );
+}
 @php
 try {
     $_diaUsersArr = $users->map(function($u) {
@@ -568,6 +596,7 @@ function diaSend() {
     var body  = input ? input.value.trim() : '';
     if (!body || typeof convId === 'undefined') return;
 
+    diaCaptureGps();
     diaSending = true;
     input.value = '';
     input.style.height = 'auto';
@@ -596,6 +625,7 @@ function diaSendGroup() {
     var body  = input ? input.value.trim() : '';
     if (!body || typeof groupId === 'undefined') return;
 
+    diaCaptureGps();
     diaSending = true;
     input.value = '';
     input.style.height = 'auto';
