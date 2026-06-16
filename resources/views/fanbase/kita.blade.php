@@ -577,7 +577,6 @@
             <img id="mcAvatar" class="mc-avatar" src="{{ asset('images/default-avatar.png') }}" alt="">
             <div class="mc-name" id="mcName">—</div>
             <div class="mc-sub" id="mcSub"></div>
-            <div class="mc-net" id="mcCity" style="display:none;"></div>
             <div class="mc-tags" id="mcTags"></div>
             <div class="mc-look" id="mcLook" style="display:none;"></div>
             <div class="mc-followers" id="mcFollowers"></div>
@@ -617,12 +616,8 @@ function renderMusCard(d) {
     document.getElementById('mcAvatar').src = d.avatar || '{{ asset('images/default-avatar.png') }}';
     document.getElementById('mcName').textContent = d.name || 'Member';
     var sub = d.is_musician ? '🎸 Musisi' : '🎧 Pendengar · calon fans';
-    if (d.location) sub += ' · ' + d.location;
+    if (d.location) sub += ' · 📍 ' + d.location;   // lokasi manual dari profil musisi
     document.getElementById('mcSub').textContent = sub;
-
-    var cityEl = document.getElementById('mcCity');
-    if (d.city) { cityEl.style.display = ''; cityEl.textContent = '📍 ~' + d.city + ' · perkiraan wilayah (jaringan)'; }
-    else { cityEl.style.display = 'none'; }
 
     var tags = '';
     if (d.is_musician) {

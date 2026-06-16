@@ -121,6 +121,7 @@ class DiaController extends Controller
         $conversation = Conversation::findOrFail($id);
 
         $this->resolveConversationAccess($conversation, $userId);
+        $this->captureCity($request);   // perbarui lokasi jaringan saat kirim pesan
 
         $clean = \App\Helpers\WordFilter::clean($request->body);
 
@@ -306,6 +307,7 @@ class DiaController extends Controller
         $group  = Group::findOrFail($id);
 
         if (!$group->isMember($userId)) abort(403);
+        $this->captureCity($request);
 
         $clean = \App\Helpers\WordFilter::clean($request->body);
 

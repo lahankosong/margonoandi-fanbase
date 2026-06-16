@@ -39,7 +39,16 @@
         background:#d1d5db; border:2px solid var(--card);
     }
     .dia-header-dot.online { background:#10b981; }
+    .dia-header { position:relative; }
     .dia-header-name { font-size:13px; font-weight:600; color:var(--text-1); }
+    .dia-info-btn { margin-left:auto; background:transparent; border:none; color:var(--text-3); cursor:pointer; padding:6px; border-radius:50%; display:flex; align-items:center; }
+    .dia-info-btn:hover { background:var(--surface); color:var(--sky-dk); }
+    .dia-loc-popup { position:absolute; top:calc(100% + 6px); right:12px; width:260px; background:var(--card); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow-lg); padding:14px; z-index:50; display:none; }
+    .dia-loc-popup.open { display:block; }
+    .dia-loc-title { font-size:12px; font-weight:700; color:var(--text-1); margin-bottom:6px; }
+    .dia-loc-city { font-size:17px; font-weight:700; color:var(--sky-dk); }
+    .dia-loc-note { font-size:12px; color:var(--text-2); margin-top:3px; line-height:1.5; }
+    .dia-loc-disc { font-size:10px; color:var(--text-3); margin-top:9px; line-height:1.45; border-top:1px solid var(--border-lt); padding-top:7px; }
     .dia-header-sub  {
         font-size:11px; color:var(--text-3);
         display:flex; align-items:center; gap:4px;
@@ -360,6 +369,20 @@
             {{ $other->lastSeenLabel() }}
         </div>
     </div>
+
+    <button class="dia-info-btn" onclick="diaToggleLocInfo(event)" title="Info lokasi lawan bicara">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+    </button>
+    <div class="dia-loc-popup" id="diaLocPopup" onclick="event.stopPropagation()">
+        <div class="dia-loc-title">📍 Lokasi {{ $other->name }}</div>
+        @if($other->city)
+        <div class="dia-loc-city">~{{ $other->city }}</div>
+        <div class="dia-loc-note">Perkiraan wilayah dari jaringan (IP) saat terakhir aktif · {{ $other->lastSeenLabel() }}</div>
+        @else
+        <div class="dia-loc-note">Belum ada data lokasi — lawan bicara belum aktif/kirim pesan sejak fitur ini aktif.</div>
+        @endif
+        <div class="dia-loc-disc">⚠️ Perkiraan kasar (bisa meleset puluhan km). Sinyal anti-penipuan, bukan lokasi pasti. Tetap waspada.</div>
+    </div>
 </div>
 
 <div class="dia-messages" id="diaMessages">
@@ -455,6 +478,17 @@
 @push('scripts')
 <script>
 var csrfToken = '{{ csrf_token() }}';
+
+/* Popup info lokasi lawan bicara */
+function diaToggleLocInfo(e) {
+    if (e) e.stopPropagation();
+    var p = document.getElementById('diaLocPopup');
+    if (p) p.classList.toggle('open');
+}
+document.addEventListener('click', function(){
+    var p = document.getElementById('diaLocPopup');
+    if (p) p.classList.remove('open');
+});
 @php
 try {
     $_diaUsersArr = $users->map(function($u) {
