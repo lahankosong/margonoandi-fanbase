@@ -104,18 +104,58 @@ App Android langsung menampilkan versi terbaru.
 
 ---
 
-## 📍 Izin Lokasi (untuk auto-deteksi kota di Kita)
+## 📍 Geolocation di TWA (auto-deteksi kota di Kita)
 
-Geolocation di **TWA** hanya jalan kalau APK punya izin lokasi di manifest.
-Kalau auto-deteksi lokasi "minta izin tapi tidak terdeteksi", pastikan
-`AndroidManifest.xml` (app maftune) berisi:
+> maftune = TWA **Android Studio** (`androidbrowserhelper`, BUKAN Bubblewrap).
+> Di TWA, izin lokasi saja **TIDAK cukup** — `navigator.geolocation` baru jalan
+> kalau aplikasi **mendelegasikan** izin lokasi ke web via `DelegationService`.
+> **3 langkah di bawah SUDAH diterapkan di project** (2026-06-16). Tinggal **rebuild + reinstall APK**.
 
+### 1. Izin di `AndroidManifest.xml`
 ```xml
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 ```
 
-Lalu **rebuild + reinstall APK** (perubahan manifest = wajib rebuild).
-Saat dipakai: pastikan **GPS/Location HP menyala**. Sisi web sudah retry
-otomatis (akurasi rendah → tinggi) + timeout panjang, jadi setelah izin &
-GPS aktif, kota akan terisi sendiri. Desktop tidak butuh izin manifest ini.
+### 2. Daftarkan `DelegationService` di `AndroidManifest.xml` (dalam `<application>`)
+```xml
+<service
+    android:name=".DelegationService"
+    android:enabled="true"
+    android:exported="true">
+    <intent-filter>
+        <action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE" />
+        <category android:name="android.intent.category.DEFAULT" />
+    </intent-filter>
+</service>
+```
+
+### 3. Kelas `DelegationService.kt` (`app/src/main/java/com/maftune/app/`)
+```kotlin
+package com.maftune.app
+
+import com.google.androidbrowserhelper.locationdelegation.LocationDelegationExtraCommandHandler
+
+class DelegationService : com.google.androidbrowserhelper.trusted.DelegationService() {
+    override fun onCreate() {
+        super.onCreate()
+        registerExtraCommandHandler(LocationDelegationExtraCommandHandler())
+    }
+}
+```
+
+### 4. Dependency di `app/build.gradle`
+```gradle
+implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
+implementation 'com.google.androidbrowserhelper:locationdelegation:1.1.0'
+```
+
+### 5. Rebuild & reinstall
+`Build → Clean Project → Rebuild Project → Build APK`, lalu install ke HP.
+Saat pertama dipakai, Android minta izin lokasi (sekali). Setelah diizinkan +
+GPS HP menyala, auto-deteksi kota di Kita berfungsi seperti di browser
+(sampai tingkat kecamatan). Desktop tidak butuh ini.
+
+> Jika build gagal karena bentrok versi, samakan versi `locationdelegation`
+> dengan `androidbrowserhelper`. Pasangan 2.5.0 + 1.1.0 umum dipakai; cek rilis
+> di github.com/GoogleChrome/android-browser-helper bila perlu.
