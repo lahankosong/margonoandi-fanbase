@@ -147,8 +147,10 @@ class DelegationService : com.google.androidbrowserhelper.trusted.DelegationServ
 ### 4. Dependency di `app/build.gradle`
 ```gradle
 implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
-implementation 'com.google.androidbrowserhelper:locationdelegation:1.1.0'
+implementation 'com.google.androidbrowserhelper:locationdelegation:1.1.2'
 ```
+> Versi `locationdelegation` yang ADA di Google Maven: 1.0.0, 1.0.1, 1.1.1, 1.1.2.
+> (1.1.0 TIDAK ada — itu menyebabkan error "Could not find ...locationdelegation:1.1.0".)
 
 ### 5. Rebuild & reinstall
 `Build → Clean Project → Rebuild Project → Build APK`, lalu install ke HP.
