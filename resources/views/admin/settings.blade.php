@@ -11,7 +11,7 @@
     .settings-header p  { font-size: 12px; color: var(--text-3); margin-top: 2px; }
 
     .settings-nav {
-        display: flex; gap: 4px; margin-bottom: 2rem;
+        display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 2rem;
         border-bottom: 1px solid var(--border); padding-bottom: 0;
     }
     .settings-tab {
@@ -126,7 +126,6 @@
     <button class="settings-tab" onclick="showTab('hero')">Hero & Tagline</button>
     <button class="settings-tab" onclick="showTab('bio')">Bio & Project</button>
     <button class="settings-tab" onclick="showTab('social')">Platform & Sosial</button>
-    <button class="settings-tab" onclick="showTab('community')">Komunitas</button>
 </div>
 
 <form method="POST" action="{{ route('admin.settings.update') }}" enctype="multipart/form-data">
@@ -276,21 +275,6 @@
                         value="{{ $settings['apple_music_url']->value ?? '' }}"
                         placeholder="https://music.apple.com/...">
                 </div>
-            </div>
-        </div>
-        <div class="form-actions">
-            <button type="submit" class="btn-save">Simpan</button>
-        </div>
-    </div>
-
-    {{-- TAB: KOMUNITAS --}}
-    <div class="tab-panel" id="tab-community">
-        <div class="form-section">
-            <p class="form-section-title">Ajakan Bergabung Komunitas</p>
-            <div class="form-group">
-                <label class="form-label">Tagline Komunitas</label>
-                <textarea name="community_tagline" class="form-textarea">{{ $settings['community_tagline']->value ?? '' }}</textarea>
-                <span class="form-hint">Tampil sebagai CTA ajakan bergabung di halaman utama.</span>
             </div>
         </div>
         <div class="form-actions">

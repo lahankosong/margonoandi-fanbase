@@ -19,7 +19,7 @@ class SiteSettingController extends Controller
             'artist_name', 'artist_role', 'artist_project',
             'tagline_1', 'tagline_2', 'tagline_3',
             'hero_story', 'bio', 'spotify_url',
-            'youtube_url', 'apple_music_url', 'community_tagline',
+            'youtube_url', 'apple_music_url',
         ];
 
         foreach ($fields as $field) {
