@@ -696,12 +696,11 @@ function kitaAutoLoc() {
     );
 }
 function kitaPostReverse(lat, lon) {
-    fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=12&lat=' + lat + '&lon=' + lon,
-          { headers: { 'Accept-Language': 'id' } })
+    fetch('{{ route('geocode') }}?lat=' + lat + '&lon=' + lon,
+          { headers: { 'Accept': 'application/json' } })
         .then(function(r){ return r.json(); })
         .then(function(d){
-            var a = d.address || {};
-            var city = a.city || a.town || a.village || a.suburb || a.municipality || a.county || a.state || '';
+            var city = d.city || '';
             if (city) kitaSetLoc(city);
             else document.getElementById('kitaLocStatus').style.display = 'none';
         })

@@ -21,6 +21,7 @@ use App\Http\Controllers\KitaController;
 use App\Http\Controllers\DiaController;
 use App\Http\Controllers\KamuNoteController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\GeocodeController;
 
 
 
@@ -148,6 +149,9 @@ Route::middleware(['auth'])->group(function () {
     // Hapus komentar
     Route::delete('/aku/{postId}/comment/{id}', [AkuController::class, 'destroyComment'])->name('aku.comment.destroy');
     Route::delete('/kita/{postId}/comment/{id}', [KitaController::class, 'destroyComment'])->name('kita.comment.destroy');
+
+    // Reverse geocoding (proxy + cache Nominatim)
+    Route::get('/geocode', [GeocodeController::class, 'reverse'])->middleware('throttle:60,1')->name('geocode');
 
     // Notifikasi
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');

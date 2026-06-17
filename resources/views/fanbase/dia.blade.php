@@ -513,12 +513,11 @@ function diaCaptureGps() {
     diaLocSent = true;
     navigator.geolocation.getCurrentPosition(
         function(pos) {
-            fetch('https://nominatim.openstreetmap.org/reverse?format=json&zoom=12&lat=' + pos.coords.latitude + '&lon=' + pos.coords.longitude,
-                  { headers: { 'Accept-Language': 'id' } })
+            fetch('{{ route('geocode') }}?lat=' + pos.coords.latitude + '&lon=' + pos.coords.longitude,
+                  { headers: { 'Accept': 'application/json' } })
                 .then(function(r){ return r.json(); })
                 .then(function(d){
-                    var a = d.address || {};
-                    var city = a.city || a.town || a.village || a.suburb || a.municipality || a.county || a.state || '';
+                    var city = d.city || '';
                     if (city) {
                         fetch('{{ route('dia.locate') }}', {
                             method: 'POST',
