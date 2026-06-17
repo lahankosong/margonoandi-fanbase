@@ -215,7 +215,7 @@ Urutan cek (berdasarkan riwayat bug nyata):
 ### Deploy changes
 ```
 git add … && git commit -m "…" && git push origin main
-→ buka https://margonoandi.my.id/deploy.php?key=margono2026&run=1   # tarik ZIP GitHub, copy file, artisan
+→ buka https://margonoandi.my.id/deploy.php?key=<DEPLOY_KEY>&run=1   # tarik ZIP GitHub, copy file, artisan
 → buka https://margonoandi.my.id/fixdb.php                          # migrate + bersihkan cache + diagnostik
 ```
 - Dipreserve saat deploy: `vendor`, `.env`, `storage` (+ `node_modules`, `.git`).
@@ -283,7 +283,7 @@ Tuner pakai status warna: hijau `#22c55e` (pas), oranye `#fb923c` (♭ rendah), 
 - Data PHP→JS error parse → ganti `@json()` dengan `json_encode(..., JSON_HEX_*)` di blok `@php`.
 
 ### Deploy failures
-- `deploy.php` butuh query `?key=margono2026&run=1`. Pastikan `run=1` ada.
+- `deploy.php` butuh query `?key=<DEPLOY_KEY>&run=1`. Pastikan `run=1` ada.
 - Jika file tak ter-update → cek output “File di-copy: N” dan jalankan `fixdb.php` untuk hapus view cache lama.
 - 500 setelah deploy → biasanya view/route/config cache basi → `fixdb.php`; atau migrasi belum jalan → `php artisan migrate` (fixdb juga menjalankannya).
 - **Disk penuh di mesin dev** (gejala: timeout berulang, OneDrive/VSCode I/O error, “mengulang dari awal”) → cek `Get-PSDrive C`; bersihkan temp/cache/installer. Pernah terjadi C: = 0 MB.

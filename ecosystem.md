@@ -11,7 +11,7 @@
 - **Manfaatkan yang sudah ada** — jangan bangun ulang:
   - User = akun Google OAuth yang sudah ada (musisi = user dengan profil musisi).
   - **Kontak antar-musisi pakai DM "Dia"** yang sudah jalan (`/dia/start/{userId}`), bukan tabel pesan baru.
-  - Deploy: `deploy.php?key=margono2026` + `fixdb.php` (tambah tabel via SQL mentah).
+  - Deploy: `deploy.php?key=<DEPLOY_KEY>` + `fixdb.php` (tambah tabel via SQL mentah).
   - Ikuti konvensi: `$fillable`, cast integer/bool, CSS variables fanbase, layout `layouts.fanbase`.
 - **Validasi dulu** — MVP minimal, uji ke 50–100 musisi sebelum lanjut fase berikutnya.
 - **Hemat biaya** — masih di cPanel + MySQL; fitur berat (storage audio, search) ditunda.

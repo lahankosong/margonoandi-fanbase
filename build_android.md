@@ -64,7 +64,7 @@ Tidak perlu rebuild APK. Cukup:
 
 1. Edit kode di VSCode
 2. `git push origin main`
-3. Deploy: `https://margonoandi.my.id/deploy.php?key=margono2026`
+3. Deploy: `https://margonoandi.my.id/deploy.php?key=<DEPLOY_KEY>`
 4. Fix cache: `https://margonoandi.my.id/fixdb.php`
 
 App Android langsung menampilkan versi terbaru.

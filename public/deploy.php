@@ -1,10 +1,10 @@
 <?php
 /**
  * Deploy script — download ZIP dari GitHub dan update file project
- * Akses: https://margonoandi.my.id/deploy.php?key=margono2026
+ * Akses: https://margonoandi.my.id/deploy.php?key=<DEPLOY_KEY>&run=1
+ * Kunci dibaca dari .env (DEPLOY_KEY), TIDAK di-hardcode di sini.
  */
 
-$secret  = 'margono2026';
 $github  = 'https://github.com/lahankosong/margonoandi-fanbase/archive/refs/heads/main.zip';
 $base    = realpath(__DIR__ . '/../');
 $tmp_zip = sys_get_temp_dir() . '/fanbase_deploy.zip';
@@ -12,8 +12,19 @@ $tmp_dir = sys_get_temp_dir() . '/fanbase_extracted';
 
 $preserve = ['vendor', '.env', 'storage', 'node_modules', '.git', 'public/deploy.php'];
 
-if (($_GET['key'] ?? '') !== $secret) {
-    http_response_code(403); die('403 Forbidden');
+// Kunci deploy dibaca dari .env (DEPLOY_KEY) — tolak jika belum diset / salah
+$secret = '';
+$envFile = $base . '/.env';
+if (is_file($envFile)) {
+    foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#') continue;
+        if (strncmp($line, 'DEPLOY_KEY=', 11) === 0) { $secret = trim(substr($line, 11), " \t\"'"); break; }
+    }
+}
+if ($secret === '' || !hash_equals($secret, (string) ($_GET['key'] ?? ''))) {
+    http_response_code(403);
+    die('403 Forbidden — DEPLOY_KEY belum diset di .env atau kunci salah.');
 }
 
 echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Deploy</title>

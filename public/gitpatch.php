@@ -1,10 +1,22 @@
 <?php
-$secret = 'margono2026';
-if (($_GET['key'] ?? '') !== $secret) { http_response_code(403); die('403'); }
-
 // Auto-detect: naik dari public/ ke root project
 $base = realpath(__DIR__ . '/../');
 $git  = $base . '/.git';
+
+// Kunci dibaca dari .env (DEPLOY_KEY) — tidak di-hardcode di repo publik
+$secret = '';
+$envFile = $base . '/.env';
+if (is_file($envFile)) {
+    foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#') continue;
+        if (strncmp($line, 'DEPLOY_KEY=', 11) === 0) { $secret = trim(substr($line, 11), " \t\"'"); break; }
+    }
+}
+if ($secret === '' || !hash_equals($secret, (string) ($_GET['key'] ?? ''))) {
+    http_response_code(403);
+    die('403 — DEPLOY_KEY belum diset di .env atau kunci salah.');
+}
 
 echo '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Git Patch</title>
 <style>
@@ -117,7 +129,7 @@ if ($hash && isset($_GET['fix'])) {
         : "❌ Gagal tulis ke .git/ — coba chmod .git/ menjadi 0755 dulu";
     echo '</pre>';
 } elseif ($hash) {
-    echo '<br><a href="?key=margono2026&fix=1">▶ Klik di sini untuk jalankan Fix (checkout main)</a>';
+    echo '<br><a href="?key=' . urlencode($_GET['key'] ?? '') . '&fix=1">▶ Klik di sini untuk jalankan Fix (checkout main)</a>';
 }
 
 echo '<div class="warn">⚠️ Hapus file ini setelah selesai: <strong>public/gitpatch.php</strong></div>';

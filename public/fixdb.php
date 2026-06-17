@@ -1,21 +1,27 @@
 <?php
 /**
  * FixDB — Buat tabel yang hilang langsung via SQL
- * Akses: https://margonoandi.my.id/fixdb.php?key=margono2026
- * HAPUS setelah selesai.
+ * Akses: https://margonoandi.my.id/fixdb.php?key=<DEPLOY_KEY>
+ * Kunci dibaca dari .env (DEPLOY_KEY), TIDAK di-hardcode.
  */
 
-$secret = 'margono2026';
-if (($_GET['key'] ?? '') !== $secret) { http_response_code(403); die('403'); }
-
-// Baca .env
+// Baca .env (termasuk DEPLOY_KEY untuk autentikasi)
 $base    = realpath(__DIR__ . '/../');
 $envFile = $base . '/.env';
 $env = [];
-foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
-    if (str_starts_with(trim($line), '#') || strpos($line, '=') === false) continue;
-    [$k, $v] = explode('=', $line, 2);
-    $env[trim($k)] = trim($v, " \t\"'");
+if (is_file($envFile)) {
+    foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        if (str_starts_with(trim($line), '#') || strpos($line, '=') === false) continue;
+        [$k, $v] = explode('=', $line, 2);
+        $env[trim($k)] = trim($v, " \t\"'");
+    }
+}
+
+// Kunci dibaca dari .env (DEPLOY_KEY) — tolak jika belum diset / salah
+$secret = $env['DEPLOY_KEY'] ?? '';
+if ($secret === '' || !hash_equals($secret, (string) ($_GET['key'] ?? ''))) {
+    http_response_code(403);
+    die('403 — DEPLOY_KEY belum diset di .env atau kunci salah.');
 }
 
 $host   = $env['DB_HOST']     ?? '127.0.0.1';

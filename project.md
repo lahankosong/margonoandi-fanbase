@@ -188,7 +188,7 @@ routes/web.php
 - **AI Agent — Pipeline Konten** (`/admin/ai-agent`): topik → caption + image_prompt → **generate gambar** (Pollinations gratis / DALL-E / Gemini Imagen) → simpan ke **Cloudinary** (DB hanya URL, tabel `ai_images`). Pengaturan provider + Cloudinary terpisah di `/admin/ai-settings`. Catatan: gambar Gemini/Imagen butuh **billing** (free tier limit 0); Pollinations gratis tanpa key.
 - **Pemotong Lagu** (`/admin/audio-cut`): ambil part lagu (mis. verse) untuk video; potong via **ffmpeg.wasm 100% di browser** (server 0 beban), hasil di IndexedDB `mafAudioClips`. ffmpeg di-host sendiri di `/public/ffmpeg/` (jangan oper `classWorkerURL` → memaksa module worker; biarkan classic worker auto-load supaya `importScripts` jalan).
 - **Community**: thread diskusi + chat publik (pakai `layouts/app`, terpisah dari fanbase)
-- **Deploy**: `deploy.php?key=margono2026` (tarik ZIP GitHub) + `fixdb.php` (bersihkan cache; section 6i media chat, 6j ai_images)
+- **Deploy**: `deploy.php?key=<DEPLOY_KEY>` (tarik ZIP GitHub) + `fixdb.php` (bersihkan cache; section 6i media chat, 6j ai_images)
 
 ---
 
