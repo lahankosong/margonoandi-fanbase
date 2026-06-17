@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Dashboard')
+@section('title', 'Production Dashboard')
 
 @push('styles')
 <style>
@@ -294,12 +294,44 @@
 {{-- PAGE HEADER --}}
 <div class="dash-header">
     <div>
-        <div class="dash-title">Dashboard Admin</div>
+        <div class="dash-title">Production Dashboard</div>
         <div class="dash-date">{{ now()->locale('id')->isoFormat('dddd, D MMMM YYYY') }}</div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
         <a href="{{ route('admin.ai-agent') }}" class="btn-ghost">✨ AI Agent</a>
         <a href="{{ route('admin.create') }}" class="btn-primary">+ Tambah Lagu</a>
+    </div>
+</div>
+
+{{-- PIPELINE PRODUKSI --}}
+<div class="dash-card" style="margin-bottom:1.25rem;">
+    <div class="dash-card-head">
+        <div class="dash-card-title">🎬 Pipeline Produksi Konten</div>
+        <span style="font-size:11px;color:var(--text-4);">Lagu → Generate → Audio → Jadwal</span>
+    </div>
+    @php
+        $pipeline = [
+            ['n'=>1,'ic'=>'🎵','t'=>'Lagu','d'=>'kelola lagu','u'=>route('admin.index').'#songs'],
+            ['n'=>2,'ic'=>'✨','t'=>'Content Generator','d'=>'niche → narasi → prompt','u'=>route('admin.ai-agent')],
+            ['n'=>3,'ic'=>'✂️','t'=>'Pemotong Lagu','d'=>'ambil part lagu','u'=>route('admin.audio-cut')],
+            ['n'=>4,'ic'=>'🔊','t'=>'Buat Aset','d'=>'gambar & suara narasi','u'=>route('admin.ai-agent')],
+            ['n'=>5,'ic'=>'📅','t'=>'Jadwal Posting','d'=>'rencana & status','u'=>route('admin.calendar')],
+        ];
+    @endphp
+    <div style="padding:1rem 1.25rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;">
+        @foreach($pipeline as $s)
+        <a href="{{ $s['u'] }}" style="display:block;background:var(--bg-3);border:1px solid var(--border);border-radius:12px;padding:0.9rem;text-decoration:none;transition:0.15s;"
+           onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+            <div style="font-size:11px;color:var(--text-4);font-weight:700;">Langkah {{ $s['n'] }}</div>
+            <div style="font-size:1.35rem;line-height:1.2;margin:3px 0;">{{ $s['ic'] }}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);">{{ $s['t'] }}</div>
+            <div style="font-size:11px;color:var(--text-3);margin-top:1px;">{{ $s['d'] }}</div>
+        </a>
+        @endforeach
+    </div>
+    <div style="padding:0 1.25rem 1rem;font-size:11px;color:var(--text-4);">
+        ⚙️ <a href="{{ route('admin.ai-settings') }}" style="color:var(--accent);">Pengaturan AI</a> (provider teks/gambar/suara) ·
+        🎬 Video Builder <span style="opacity:0.7;">segera (Fase C)</span> — gabung aset jadi video
     </div>
 </div>
 
