@@ -83,6 +83,32 @@
             border:1px solid rgba(255,255,255,0.12); border-radius:16px; transition:0.2s;
         }
         .adm-logout:hover { color:rgba(255,255,255,0.85); border-color:rgba(255,255,255,0.3); }
+        .adm-avatar { cursor:pointer; transition:0.2s; }
+        .adm-avatar:hover { border-color:#fff; transform:scale(1.05); }
+
+        /* Menu akun admin (foto profil → Profil / Fanbase / Keluar) */
+        .adm-profile-menu { position:relative; }
+        .adm-profile-dropdown {
+            display:none; position:absolute; top:calc(100% + 10px); right:0;
+            width:230px; background:#fff; border:1px solid var(--border);
+            border-radius:10px; box-shadow:0 10px 30px rgba(0,0,0,0.25);
+            z-index:300; overflow:hidden;
+        }
+        .adm-profile-dropdown.open { display:block; }
+        .adm-profile-dd-head {
+            display:flex; align-items:center; gap:10px; padding:12px 14px;
+            border-bottom:1px solid var(--border);
+        }
+        .adm-profile-dd-head img { width:38px; height:38px; border-radius:50%; object-fit:cover; flex-shrink:0; }
+        .adm-profile-dd-name { font-size:13px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .adm-profile-dd-email { font-size:11px; color:var(--text-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .adm-profile-dd-item {
+            display:block; padding:11px 14px; font-size:13px;
+            color:var(--text); text-decoration:none; transition:0.15s;
+        }
+        .adm-profile-dd-item:hover { background:var(--bg-3); }
+        .adm-profile-dd-item.danger { color:#e11d48; border-top:1px solid var(--border); }
+        .adm-profile-dd-item.danger:hover { background:#fef2f2; }
 
         /* ===== LAYOUT ===== */
         .adm-layout {
@@ -174,20 +200,38 @@
         MARGONOANDI <span>ADMIN</span>
     </a>
     <div class="adm-topbar-right">
-        <a href="{{ route('aku') }}" class="adm-back">
-            ← Fanbase
-        </a>
-        <img class="adm-avatar"
-             src="{{ Auth::user()->avatar ?? asset('images/default-avatar.png') }}"
-             alt="{{ Auth::user()->name }}"
-             onerror="this.src='{{ asset('images/default-avatar.png') }}'">
-        <a href="{{ route('logout') }}" class="adm-logout"
-           onclick="event.preventDefault(); document.getElementById('adm-logout-form').submit();">
-            Keluar
-        </a>
-        <form id="adm-logout-form" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form>
+        <a href="{{ route('aku') }}" class="adm-back">← Fanbase</a>
+        <div class="adm-profile-menu">
+            <img class="adm-avatar" id="admProfileBtn" role="button" tabindex="0" title="Menu akun"
+                 src="{{ Auth::user()->avatar ?? asset('images/default-avatar.png') }}"
+                 alt="{{ Auth::user()->name }}"
+                 onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+            <div class="adm-profile-dropdown" id="admProfileDropdown">
+                <div class="adm-profile-dd-head">
+                    <img src="{{ Auth::user()->avatar ?? asset('images/default-avatar.png') }}" alt=""
+                         onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                    <div style="min-width:0;">
+                        <div class="adm-profile-dd-name">{{ Auth::user()->name }}</div>
+                        <div class="adm-profile-dd-email">{{ Auth::user()->email }}</div>
+                    </div>
+                </div>
+                <a href="{{ route('profile') }}" class="adm-profile-dd-item">👤 Profil</a>
+                <a href="{{ route('aku') }}" class="adm-profile-dd-item">← Kembali ke Fanbase</a>
+                <a href="{{ route('logout') }}" class="adm-profile-dd-item danger">🚪 Keluar</a>
+            </div>
+        </div>
     </div>
 </header>
+
+<script>
+(function(){
+    var b = document.getElementById('admProfileBtn');
+    var d = document.getElementById('admProfileDropdown');
+    if (!b || !d) return;
+    b.addEventListener('click', function(e){ e.stopPropagation(); d.classList.toggle('open'); });
+    document.addEventListener('click', function(e){ if (!d.contains(e.target) && e.target !== b) d.classList.remove('open'); });
+})();
+</script>
 
 <!-- LAYOUT -->
 <div class="adm-layout">
