@@ -116,6 +116,10 @@
             <span class="ratio-btn" data-t="neon"    onclick="pickTpl(this)">Neon</span>
             <span class="ratio-btn" data-t="tulis"   onclick="pickTpl(this)">Tulisan tangan</span>
         </div>
+        <div style="margin-top:12px;">
+            <label class="muted">Preview <span style="opacity:0.7;">(narasi & gong ditampilkan bersamaan; di video aslinya gong muncul di akhir)</span></label>
+            <div style="margin-top:6px;"><canvas id="capPreview" style="border:1px solid var(--border);border-radius:8px;max-width:100%;display:block;"></canvas></div>
+        </div>
     </div>
 </div>
 
@@ -173,6 +177,7 @@ var CAP_TEMPLATES = {
 function pickTpl(el){
     document.querySelectorAll('#tplOpt .ratio-btn').forEach(function(x){ x.classList.remove('sel'); });
     el.classList.add('sel'); selTpl = el.dataset.t;
+    renderPreview();
 }
 
 function setStatus(h){ document.getElementById('status').innerHTML = h || ''; }
@@ -230,10 +235,16 @@ document.getElementById('audUpload').addEventListener('change', function(){
 });
 loadAudio();
 
+// Preview caption: update saat ketik / ganti template / rasio
+['capNarasi','capGong'].forEach(function(id){ var el=document.getElementById(id); if(el) el.addEventListener('input', renderPreview); });
+window.addEventListener('load', renderPreview);
+renderPreview();
+
 // ===== Ratio =====
 function pickRatio(el){
     document.querySelectorAll('#ratioOpt .ratio-btn').forEach(function(x){ x.classList.remove('sel'); });
     el.classList.add('sel'); ratio = el.dataset.r;
+    renderPreview();
 }
 function ratioDims(){
     if (ratio === '16:9') return [1280,720];
@@ -266,11 +277,8 @@ function wrapText(ctx, text, maxW){
 }
 function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 
-async function captionPng(text, tpl, W, H, region, sizeFactor){
+function drawCaptionOn(x, text, tpl, W, H, region, sizeFactor){
     var fpx = Math.round(H * sizeFactor);
-    try { await document.fonts.load(tpl.weight + ' ' + fpx + "px '" + tpl.family + "'"); } catch(e){}
-    var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-    var x = cv.getContext('2d');
     x.font = tpl.weight + ' ' + fpx + "px '" + tpl.family + "', sans-serif";
     x.textAlign = 'center'; x.textBaseline = 'middle';
     var lines = wrapText(x, text, W * 0.86), lineH = fpx * 1.22, totalH = lines.length * lineH;
@@ -280,14 +288,38 @@ async function captionPng(text, tpl, W, H, region, sizeFactor){
         if (tpl.box){
             var tw = x.measureText(ln).width;
             x.fillStyle = tpl.box;
-            roundRect(x, (W-tw)/2 - fpx*0.32, yy - lineH*0.48, tw + fpx*0.64, lineH*0.96, 10); x.fill();
+            roundRect(x, (W-tw)/2 - fpx*0.32, yy - lineH*0.48, tw + fpx*0.64, lineH*0.96, Math.max(4, fpx*0.16)); x.fill();
         }
         if (tpl.shadow){ x.shadowColor = tpl.shadow; x.shadowBlur = fpx*0.28; x.shadowOffsetY = fpx*0.05; }
         if (tpl.stroke){ x.lineWidth = Math.max(2, fpx*0.13); x.strokeStyle = tpl.stroke; x.lineJoin='round'; x.strokeText(ln, W/2, yy); }
         x.fillStyle = tpl.color; x.fillText(ln, W/2, yy);
         x.shadowColor = 'transparent'; x.shadowBlur = 0; x.shadowOffsetY = 0;
     });
+}
+async function captionPng(text, tpl, W, H, region, sizeFactor){
+    try { await document.fonts.load(tpl.weight + ' ' + Math.round(H*sizeFactor) + "px '" + tpl.family + "'"); } catch(e){}
+    var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    drawCaptionOn(cv.getContext('2d'), text, tpl, W, H, region, sizeFactor);
     return await new Promise(function(res){ cv.toBlob(function(b){ b.arrayBuffer().then(function(ab){ res(new Uint8Array(ab)); }); }, 'image/png'); });
+}
+
+var previewSeq = 0;
+async function renderPreview(){
+    var cv = document.getElementById('capPreview'); if (!cv) return;
+    var seq = ++previewSeq;
+    var dims = ratioDims(), AR = dims[0]/dims[1];
+    var PH = 250, PW = Math.round(PH * AR);
+    cv.width = PW; cv.height = PH;
+    var x = cv.getContext('2d');
+    var g = x.createLinearGradient(0,0,0,PH); g.addColorStop(0,'#3a4a57'); g.addColorStop(1,'#1b2630');
+    x.fillStyle = g; x.fillRect(0,0,PW,PH);
+    var tpl = CAP_TEMPLATES[selTpl] || CAP_TEMPLATES.impact;
+    var nar = (document.getElementById('capNarasi').value||'').trim() || 'contoh narasi build-up di sini';
+    var gng = (document.getElementById('capGong').value||'').trim() || 'gong pamungkas';
+    try { await document.fonts.load(tpl.weight + " 40px '" + tpl.family + "'"); } catch(e){}
+    if (seq !== previewSeq) return;  // sudah ada render preview lebih baru
+    drawCaptionOn(x, nar, tpl, PW, PH, 'lower', 0.052);
+    drawCaptionOn(x, gng, tpl, PW, PH, 'center', 0.085);
 }
 function probeDuration(blob){
     return new Promise(function(res){
@@ -331,12 +363,12 @@ async function doRender(){
         var fc = '[0:v]scale=' + W + ':' + H + ':force_original_aspect_ratio=decrease,pad=' + W + ':' + H + ':(ow-iw)/2:(oh-ih)/2:black,setsar=1,format=yuv420p[bg]';
         var last = '[bg]', idx = 2, inputs = ['-loop','1','-i',imgName,'-i',audName];
         if (hasN){
-            inputs.push('-i','cap_n.png');
+            inputs.push('-loop','1','-i','cap_n.png');   // -loop 1: PNG jangan jadi input terpendek (-shortest)
             var enN = (hasG && T>0) ? ":enable='lt(t," + T.toFixed(2) + ")'" : '';
             fc += ';' + last + '[' + idx + ':v]overlay=0:0' + enN + '[v' + idx + ']'; last = '[v'+idx+']'; idx++;
         }
         if (hasG){
-            inputs.push('-i','cap_g.png');
+            inputs.push('-loop','1','-i','cap_g.png');
             var enG = (hasN && T>0) ? ":enable='gte(t," + T.toFixed(2) + ")'" : '';
             fc += ';' + last + '[' + idx + ':v]overlay=0:0' + enG + '[v' + idx + ']'; last = '[v'+idx+']'; idx++;
         }
