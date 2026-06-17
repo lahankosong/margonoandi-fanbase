@@ -419,6 +419,44 @@ class AiAgentController extends Controller
         return $body;
     }
 
+    public function updateProvider(Request $request, $id)
+    {
+        $provider = AiProvider::findOrFail($id);
+        $kind = $provider->kind ?: 'text';
+
+        if ($kind === 'image') {
+            $data = $request->validate([
+                'name'     => 'required|string|max:100',
+                'format'   => 'required|in:pollinations,dalle,imagen',
+                'base_url' => 'nullable|string|max:255',
+                'model'    => 'nullable|string|max:120',
+                'api_key'  => 'nullable|string|max:300',
+            ]);
+            $data['base_url'] = $data['base_url'] ?? '';
+            $data['model']    = $data['model'] ?? '';
+        } elseif ($kind === 'tts') {
+            $data = $request->validate([
+                'name'    => 'required|string|max:100',
+                'model'   => 'required|string|max:120',
+                'api_key' => 'nullable|string|max:300',
+            ]);
+        } else {
+            $data = $request->validate([
+                'name'     => 'required|string|max:100',
+                'base_url' => 'required|string|max:255',
+                'model'    => 'required|string|max:120',
+                'format'   => 'required|in:openai,anthropic',
+                'api_key'  => 'nullable|string|max:300',
+            ]);
+        }
+
+        // Jangan timpa API key lama bila field dikosongkan saat edit
+        if (empty($data['api_key'])) unset($data['api_key']);
+
+        $provider->update($data);
+        return back()->with('success', 'Provider "' . $provider->name . '" diperbarui.');
+    }
+
     public function destroyProvider($id)
     {
         AiProvider::findOrFail($id)->delete();

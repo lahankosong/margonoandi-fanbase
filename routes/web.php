@@ -79,6 +79,7 @@ Route::middleware(['auth', 'isAdmin'])->prefix('admin')->name('admin.')->group(f
     Route::get('/audio-cut', [AiAgentController::class, 'audioCut'])->name('audio-cut');
     Route::post('/ai-agent/generate/{id}', [AiAgentController::class, 'generate'])->name('ai-agent.generate');
     Route::post('/ai-agent/provider', [AiAgentController::class, 'storeProvider'])->name('ai-agent.provider.store');
+    Route::put('/ai-agent/provider/{id}', [AiAgentController::class, 'updateProvider'])->name('ai-agent.provider.update');
     Route::delete('/ai-agent/provider/{id}', [AiAgentController::class, 'destroyProvider'])->name('ai-agent.provider.destroy');
     Route::post('/ai-agent/schedule', [AiAgentController::class, 'scheduleToCalendar'])->name('ai-agent.schedule');
     Route::post('/ai-agent/settings', [AiAgentController::class, 'saveSettings'])->name('ai-agent.settings');
