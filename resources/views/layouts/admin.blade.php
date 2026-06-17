@@ -32,6 +32,16 @@
             --shadow-lg:  0 8px 32px rgba(56,168,204,0.18);
             --radius-sm:  10px;
             --radius:     16px;
+
+            /* Alias token untuk halaman AI (ai-agent, audio-cut, ai-settings, calendar)
+               — agar background solid, tidak transparan */
+            --bg:         #FFFFFF;
+            --bg-2:       #FFFFFF;
+            --bg-3:       #EEF7FB;
+            --text:       #162030;
+            --border-2:   #EBF5F9;
+            --accent:     #1E7FA8;
+            --accent-dim: #E6F4FA;
         }
 
         * { margin:0; padding:0; box-sizing:border-box; }
