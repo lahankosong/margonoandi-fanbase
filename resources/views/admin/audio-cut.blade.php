@@ -152,15 +152,10 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd/ffmpeg.js"></script>
+<script src="{{ asset('ffmpeg/ffmpeg.js') }}"></script>
 <script>
-// Helper pengganti @ffmpeg/util (hindari ketergantungan path CDN)
-async function toBlobURL(url, mime){
-    var resp = await fetch(url);
-    if (!resp.ok) throw new Error('Unduh gagal (' + resp.status + '): ' + url);
-    var buf = await resp.arrayBuffer();
-    return URL.createObjectURL(new Blob([buf], { type: mime }));
-}
+var FFMPEG_BASE = '{{ asset('ffmpeg') }}';   // file ffmpeg di-host sendiri (same-origin)
+// Helper pengganti @ffmpeg/util
 async function fetchFile(input){
     var data;
     if (typeof input === 'string') data = await (await fetch(input)).arrayBuffer();
@@ -289,13 +284,11 @@ async function loadFfmpeg(){
         ffmpeg.on('progress', function(p){
             if (p && p.progress >= 0 && p.progress <= 1) setStatus('✂️ Memproses… ' + Math.round(p.progress*100) + '%');
         });
-        var base = 'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd';
-        var ffBase = 'https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/umd';
+        // Semua same-origin (di-host di /public/ffmpeg) → tak perlu blob, worker & importScripts lancar
         await ffmpeg.load({
-            // worker di-blob-kan agar same-origin (worker lintas-origin diblokir browser)
-            classWorkerURL: await toBlobURL(ffBase + '/814.ffmpeg.js', 'text/javascript'),
-            coreURL: await toBlobURL(base + '/ffmpeg-core.js', 'text/javascript'),
-            wasmURL: await toBlobURL(base + '/ffmpeg-core.wasm', 'application/wasm'),
+            classWorkerURL: FFMPEG_BASE + '/814.ffmpeg.js',
+            coreURL: FFMPEG_BASE + '/ffmpeg-core.js',
+            wasmURL: FFMPEG_BASE + '/ffmpeg-core.wasm',
         });
         ffmpegLoaded = true;
         btn.style.display = 'none';
