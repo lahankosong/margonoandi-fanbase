@@ -109,6 +109,12 @@
             <label class="muted">🎯 Gong (pamungkas)</label>
             <input type="text" class="fi" id="capGong" style="width:100%;margin-top:4px;" placeholder="overthinking emang gratis ya">
         </div>
+        <label class="muted">Posisi narasi</label>
+        <div class="ratio-opt" id="posOpt" style="margin:6px 0 12px;">
+            <span class="ratio-btn" data-p="upper"  onclick="pickPos(this)">⬆️ Atas</span>
+            <span class="ratio-btn" data-p="center" onclick="pickPos(this)">⏺️ Tengah</span>
+            <span class="ratio-btn sel" data-p="lower" onclick="pickPos(this)">⬇️ Bawah</span>
+        </div>
         <label class="muted">Template</label>
         <div class="ratio-opt" id="tplOpt" style="margin-top:6px;">
             <span class="ratio-btn sel" data-t="impact"  onclick="pickTpl(this)">Impact</span>
@@ -142,9 +148,18 @@
             <video class="result-video" id="resultVideo" controls></video>
             <div class="row" style="margin-top:10px;">
                 <a class="btn btn-accent" id="dlBtn" download="video.mp4">⬇️ Unduh MP4</a>
+                <button class="btn btn-soft" onclick="saveVideo()">💾 Simpan ke perangkat</button>
                 <span class="muted" id="resultMeta"></span>
             </div>
         </div>
+    </div>
+</div>
+
+{{-- 5. VIDEO TERSIMPAN --}}
+<div class="card">
+    <div class="card-head"><span>📁 Video Tersimpan</span><span class="muted">di perangkat ini (IndexedDB)</span></div>
+    <div class="card-body">
+        <div id="vidList"><div class="empty-row">Belum ada video tersimpan.</div></div>
     </div>
 </div>
 
@@ -165,7 +180,8 @@ var selImage = null;   // {kind:'url'|'file', src|file, ext}
 var selAudio = null;   // {kind:'idb'|'file', blob, ext, name}
 var ratio = '9:16';
 var selTpl = 'impact';
-var ffmpeg = null, ffmpegLoaded = false, busy = false, lastUrl = null;
+var narPos = 'lower';
+var ffmpeg = null, ffmpegLoaded = false, busy = false, lastUrl = null, lastBlob = null;
 
 // Template caption: family (font web), warna, stroke, shadow, box
 var CAP_TEMPLATES = {
@@ -177,6 +193,11 @@ var CAP_TEMPLATES = {
 function pickTpl(el){
     document.querySelectorAll('#tplOpt .ratio-btn').forEach(function(x){ x.classList.remove('sel'); });
     el.classList.add('sel'); selTpl = el.dataset.t;
+    renderPreview();
+}
+function pickPos(el){
+    document.querySelectorAll('#posOpt .ratio-btn').forEach(function(x){ x.classList.remove('sel'); });
+    el.classList.add('sel'); narPos = el.dataset.p;
     renderPreview();
 }
 
@@ -282,7 +303,8 @@ function drawCaptionOn(x, text, tpl, W, H, region, sizeFactor){
     x.font = tpl.weight + ' ' + fpx + "px '" + tpl.family + "', sans-serif";
     x.textAlign = 'center'; x.textBaseline = 'middle';
     var lines = wrapText(x, text, W * 0.86), lineH = fpx * 1.22, totalH = lines.length * lineH;
-    var cy = region === 'center' ? H/2 : H - totalH/2 - H*0.12;
+    var cy = region === 'center' ? H/2
+           : (region === 'upper' ? (totalH/2 + H*0.13) : (H - totalH/2 - H*0.12));
     lines.forEach(function(ln, i){
         var yy = cy - totalH/2 + lineH/2 + i*lineH;
         if (tpl.box){
@@ -317,7 +339,9 @@ async function frameJpeg(im, W, H, caps, tpl){
     for (var i=0;i<caps.length;i++){
         var c = caps[i]; if (!c.text) continue;
         try { await document.fonts.load(tpl.weight + ' ' + Math.round(H*c.size) + "px '" + tpl.family + "'"); } catch(e){}
+        x.globalAlpha = (c.alpha != null) ? c.alpha : 1;
         drawCaptionOn(x, c.text, tpl, W, H, c.region, c.size);
+        x.globalAlpha = 1;
     }
     return await new Promise(function(res){ cv.toBlob(function(b){ b.arrayBuffer().then(function(ab){ res(new Uint8Array(ab)); }); }, 'image/jpeg', 0.92); });
 }
@@ -337,7 +361,7 @@ async function renderPreview(){
     var gng = (document.getElementById('capGong').value||'').trim() || 'gong pamungkas';
     try { await document.fonts.load(tpl.weight + " 40px '" + tpl.family + "'"); } catch(e){}
     if (seq !== previewSeq) return;  // sudah ada render preview lebih baru
-    drawCaptionOn(x, nar, tpl, PW, PH, 'lower', 0.052);
+    drawCaptionOn(x, nar, tpl, PW, PH, narPos, 0.052);
     drawCaptionOn(x, gng, tpl, PW, PH, 'center', 0.085);
 }
 function probeDuration(blob){
@@ -375,22 +399,30 @@ async function doRender(){
         var dur = (hasN && hasG) ? await probeDuration(selAudio.blob) : 0;
         var args;
 
+        var vCount = 0;
         if (hasN && hasG && dur > 1.5){
-            // 2 segmen: frame narasi (build-up) → frame gong (pamungkas) di detik akhir, lalu concat
+            // narasi (build-up) → gong masuk dgn animasi fade+zoom, lalu hold; semua di-concat
             setStatus('<span class="spinner"></span> Menyiapkan caption…');
-            var gongSec = Math.min(2.6, dur * 0.4), T = Math.max(0.5, dur - gongSec);
-            await ffmpeg.writeFile('fa.jpg', await frameJpeg(im, W, H, [{text:narasi, region:'lower',  size:0.052}], tpl));
-            await ffmpeg.writeFile('fb.jpg', await frameJpeg(im, W, H, [{text:gong,   region:'center', size:0.085}], tpl));
+            var gongSec = Math.min(2.8, Math.max(1.2, dur * 0.4)), T = Math.max(0.5, dur - gongSec);
+            var specs = [ {a:0.35,s:0.80,d:0.07}, {a:0.7,s:0.97,d:0.07}, {a:1.0,s:1.10,d:0.07}, {a:1.0,s:1.0,d:Math.max(0.4, gongSec-0.21)} ];
+            await ffmpeg.writeFile('v0.jpg', await frameJpeg(im, W, H, [{text:narasi, region:narPos, size:0.052}], tpl));
+            for (var gi=0; gi<specs.length; gi++){
+                await ffmpeg.writeFile('v'+(gi+1)+'.jpg', await frameJpeg(im, W, H, [{text:gong, region:'center', size:0.085*specs[gi].s, alpha:specs[gi].a}], tpl));
+            }
+            vCount = 1 + specs.length;
             args = function(codec){
                 var v = codec === 'libx264' ? ['-c:v','libx264','-preset','ultrafast','-pix_fmt','yuv420p'] : ['-c:v','mpeg4','-q:v','4'];
-                return ['-loop','1','-t',T.toFixed(2),'-i','fa.jpg','-loop','1','-t',gongSec.toFixed(2),'-i','fb.jpg','-i',audName,
-                    '-filter_complex','[0:v][1:v]concat=n=2:v=1:a=0,format=yuv420p[v]','-map','[v]','-map','2:a','-r','25']
-                    .concat(v, ['-c:a','aac','-b:a','160k','-shortest','-movflags','+faststart','out.mp4']);
+                var ins = ['-loop','1','-t',T.toFixed(2),'-i','v0.jpg'], lbl = '[0:v]';
+                for (var k=0;k<specs.length;k++){ ins.push('-loop','1','-t',specs[k].d.toFixed(2),'-i','v'+(k+1)+'.jpg'); lbl += '['+(k+1)+':v]'; }
+                ins.push('-i',audName);
+                return ins.concat(['-filter_complex', lbl + 'concat=n='+vCount+':v=1:a=0,format=yuv420p[v]',
+                    '-map','[v]','-map',vCount+':a','-r','25'], v,
+                    ['-c:a','aac','-b:a','160k','-shortest','-movflags','+faststart','out.mp4']);
             };
         } else {
             // 1 frame: caption (kalau ada) di-bake ke gambar
             var caps = [];
-            if (hasN) caps.push({text:narasi, region:'lower',  size:0.052});
+            if (hasN) caps.push({text:narasi, region:narPos, size:0.052});
             if (hasG) caps.push({text:gong,   region:'center', size:0.085});
             await ffmpeg.writeFile('frame.jpg', await frameJpeg(im, W, H, caps, tpl));
             args = function(codec){
@@ -410,10 +442,11 @@ async function doRender(){
         if (rc !== 0) throw new Error('Render gagal (kode ' + rc + '). Coba audio/gambar lain.');
 
         var data = await ffmpeg.readFile('out.mp4');
-        ['fa.jpg','fb.jpg','frame.jpg', audName, 'out.mp4'].forEach(function(f){ try{ ffmpeg.deleteFile(f); }catch(e){} });
+        ['v0.jpg','v1.jpg','v2.jpg','v3.jpg','v4.jpg','frame.jpg', audName, 'out.mp4'].forEach(function(f){ try{ ffmpeg.deleteFile(f); }catch(e){} });
 
         if (lastUrl) URL.revokeObjectURL(lastUrl);
         var blob = new Blob([data.buffer], { type:'video/mp4' });
+        lastBlob = blob;
         lastUrl = URL.createObjectURL(blob);
         document.getElementById('resultVideo').src = lastUrl;
         var dl = document.getElementById('dlBtn'); dl.href = lastUrl;
@@ -429,6 +462,51 @@ async function doRender(){
         busy = false; btn.disabled = false;
     }
 }
+
+// ===== Video library (IndexedDB 'mafVideos') =====
+function vidOpen(){
+    return new Promise(function(res, rej){
+        var r = indexedDB.open('mafVideos', 1);
+        r.onupgradeneeded = function(){ r.result.createObjectStore('vids', { keyPath:'id', autoIncrement:true }); };
+        r.onsuccess = function(){ res(r.result); };
+        r.onerror = function(){ rej(r.error); };
+    });
+}
+async function vidAll(){ var db = await vidOpen(); return new Promise(function(res){ var t=db.transaction('vids').objectStore('vids').getAll(); t.onsuccess=function(){res(t.result||[]);}; t.onerror=function(){res([]);}; }); }
+async function vidAdd(rec){ var db = await vidOpen(); return new Promise(function(res){ db.transaction('vids','readwrite').objectStore('vids').add(rec).onsuccess=function(){res();}; }); }
+async function vidDel(id){ var db = await vidOpen(); return new Promise(function(res){ db.transaction('vids','readwrite').objectStore('vids').delete(id).onsuccess=function(){res();}; }); }
+
+async function saveVideo(){
+    if (!lastBlob){ alert('Belum ada video.'); return; }
+    var name = prompt('Nama video:', 'maftune ' + new Date().toLocaleString('id'));
+    if (name === null) return;
+    await vidAdd({ name: (name||'video').trim(), ratio: ratio, blob: lastBlob, size: lastBlob.size, createdAt: Date.now() });
+    setStatus('✓ Video tersimpan di perangkat.');
+    renderVideoList();
+}
+async function renderVideoList(){
+    var list = document.getElementById('vidList'); if (!list) return;
+    var all = await vidAll();
+    if (!all.length){ list.innerHTML = '<div class="empty-row">Belum ada video tersimpan.</div>'; return; }
+    list.innerHTML = '';
+    all.sort(function(a,b){ return b.createdAt - a.createdAt; }).forEach(function(c){
+        var url = URL.createObjectURL(c.blob), mb = (c.size/1048576).toFixed(1);
+        var d = document.createElement('div');
+        d.className = 'aud-item'; d.style.cursor = 'default'; d.style.alignItems = 'flex-start';
+        d.innerHTML =
+            '<video controls src="' + url + '" style="width:120px;border-radius:6px;flex-shrink:0;"></video>' +
+            '<div style="flex:1;min-width:0;"><div class="aud-name">' + (c.name||'Video').replace(/</g,'&lt;') + '</div>' +
+            '<div class="aud-meta">' + c.ratio + ' · ' + mb + ' MB</div>' +
+            '<div class="row" style="margin-top:6px;"><a class="btn btn-accent" href="' + url + '" download="' + (c.name||'video') + '.mp4" style="font-size:11px;padding:5px 11px;">⬇️ Unduh</a>' +
+            '<button class="btn btn-soft" data-del="' + c.id + '" style="font-size:11px;padding:5px 11px;">Hapus</button></div></div>';
+        d.querySelector('[data-del]').addEventListener('click', async function(){
+            if (!confirm('Hapus video ini?')) return;
+            await vidDel(c.id); renderVideoList();
+        });
+        list.appendChild(d);
+    });
+}
+renderVideoList();
 </script>
 
 @endsection
