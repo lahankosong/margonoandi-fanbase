@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @push('styles')
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Caveat:wght@700&family=Poppins:wght@800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Caveat:wght@700&family=Poppins:wght@700;800&family=Montserrat:wght@700&family=Oswald:wght@600&family=Playfair+Display:wght@700&family=Lobster&display=swap" rel="stylesheet">
 <style>
     .ai-header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:1rem; padding-bottom:1rem; border-bottom:1px solid var(--border); }
     .ai-header h2 { font-size:1rem; font-weight:500; color:var(--text); }
@@ -109,13 +109,32 @@
             <label class="muted">🎯 Gong (pamungkas)</label>
             <input type="text" class="fi" id="capGong" style="width:100%;margin-top:4px;" placeholder="overthinking emang gratis ya">
         </div>
-        <label class="muted">Posisi narasi</label>
-        <div class="ratio-opt" id="posOpt" style="margin:6px 0 12px;">
-            <span class="ratio-btn" data-p="upper"  onclick="pickPos(this)">⬆️ Atas</span>
-            <span class="ratio-btn" data-p="center" onclick="pickPos(this)">⏺️ Tengah</span>
-            <span class="ratio-btn sel" data-p="lower" onclick="pickPos(this)">⬇️ Bawah</span>
+        <div class="row" style="gap:12px;margin-bottom:10px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:130px;">
+                <label class="muted">Font</label>
+                <select class="fi" id="capFontSel" onchange="onFontChange()" style="width:100%;margin-top:4px;">
+                    <option value="">(ikut template)</option>
+                    <option>Anton</option><option>Bebas Neue</option><option>Poppins</option>
+                    <option>Montserrat</option><option>Oswald</option><option>Playfair Display</option>
+                    <option>Lobster</option><option>Caveat</option>
+                </select>
+            </div>
+            <div style="width:70px;">
+                <label class="muted">Warna</label>
+                <input type="color" id="capColorSel" value="#ffffff" oninput="onColorChange()" style="width:100%;height:38px;margin-top:4px;border:1px solid var(--border);border-radius:8px;background:var(--bg-3);cursor:pointer;">
+            </div>
         </div>
-        <label class="muted">Template</label>
+        <div class="row" style="gap:14px;margin-bottom:12px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:130px;">
+                <label class="muted">Ukuran narasi: <span id="narSizeLbl">5.2</span></label>
+                <input type="range" id="narSizeRange" min="3" max="9" step="0.2" value="5.2" oninput="onSizeChange()" style="width:100%;accent-color:var(--accent);">
+            </div>
+            <div style="flex:1;min-width:130px;">
+                <label class="muted">Ukuran gong: <span id="gongSizeLbl">8.5</span></label>
+                <input type="range" id="gongSizeRange" min="5" max="14" step="0.2" value="8.5" oninput="onSizeChange()" style="width:100%;accent-color:var(--accent);">
+            </div>
+        </div>
+        <label class="muted">Template (preset font + warna + efek)</label>
         <div class="ratio-opt" id="tplOpt" style="margin-top:6px;">
             <span class="ratio-btn sel" data-t="impact"  onclick="pickTpl(this)">Impact</span>
             <span class="ratio-btn" data-t="boxbold" onclick="pickTpl(this)">Bold Box</span>
@@ -123,8 +142,8 @@
             <span class="ratio-btn" data-t="tulis"   onclick="pickTpl(this)">Tulisan tangan</span>
         </div>
         <div style="margin-top:12px;">
-            <label class="muted">Preview <span style="opacity:0.7;">(narasi & gong ditampilkan bersamaan; di video aslinya gong muncul di akhir)</span></label>
-            <div style="margin-top:6px;"><canvas id="capPreview" style="border:1px solid var(--border);border-radius:8px;max-width:100%;display:block;"></canvas></div>
+            <label class="muted">Preview — <b>seret teks</b> untuk atur posisi (narasi &amp; gong)</label>
+            <div style="margin-top:6px;"><canvas id="capPreview" style="border:1px solid var(--border);border-radius:8px;max-width:100%;display:block;cursor:grab;touch-action:none;"></canvas></div>
         </div>
     </div>
 </div>
@@ -180,7 +199,9 @@ var selImage = null;   // {kind:'url'|'file', src|file, ext}
 var selAudio = null;   // {kind:'idb'|'file', blob, ext, name}
 var ratio = '9:16';
 var selTpl = 'impact';
-var narPos = 'lower';
+var capFont = '', capColor = '';                       // '' = ikut template
+var narSize = 0.052, gongSize = 0.085;                 // sizeFactor (×H)
+var posN = {x:0.5, y:0.84}, posG = {x:0.5, y:0.5};     // posisi caption (normalized, bisa di-seret)
 var ffmpeg = null, ffmpegLoaded = false, busy = false, lastUrl = null, lastBlob = null;
 
 // Template caption: family (font web), warna, stroke, shadow, box
@@ -193,11 +214,19 @@ var CAP_TEMPLATES = {
 function pickTpl(el){
     document.querySelectorAll('#tplOpt .ratio-btn').forEach(function(x){ x.classList.remove('sel'); });
     el.classList.add('sel'); selTpl = el.dataset.t;
+    var tpl = CAP_TEMPLATES[selTpl];
+    capFont = ''; document.getElementById('capFontSel').value = '';            // ikut template
+    capColor = ''; document.getElementById('capColorSel').value = tpl.color;   // tampilkan warna template
     renderPreview();
 }
-function pickPos(el){
-    document.querySelectorAll('#posOpt .ratio-btn').forEach(function(x){ x.classList.remove('sel'); });
-    el.classList.add('sel'); narPos = el.dataset.p;
+function onFontChange(){ capFont = document.getElementById('capFontSel').value; renderPreview(); }
+function onColorChange(){ capColor = document.getElementById('capColorSel').value; renderPreview(); }
+function onSizeChange(){
+    var n = parseFloat(document.getElementById('narSizeRange').value);
+    var g = parseFloat(document.getElementById('gongSizeRange').value);
+    narSize = n/100; gongSize = g/100;
+    document.getElementById('narSizeLbl').textContent = n.toFixed(1);
+    document.getElementById('gongSizeLbl').textContent = g.toFixed(1);
     renderPreview();
 }
 
@@ -298,25 +327,30 @@ function wrapText(ctx, text, maxW){
 }
 function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 
-function drawCaptionOn(x, text, tpl, W, H, region, sizeFactor){
-    var fpx = Math.round(H * sizeFactor);
-    x.font = tpl.weight + ' ' + fpx + "px '" + tpl.family + "', sans-serif";
+// o: {size, cx, cy(center px), family, color}. Mengembalikan bounding box utk drag.
+function drawCaptionOn(x, text, tpl, W, H, o){
+    var fpx = Math.round(H * o.size);
+    var family = o.family || tpl.family;
+    var weight = o.family ? '700' : tpl.weight;
+    var color  = o.color  || tpl.color;
+    x.font = weight + ' ' + fpx + "px '" + family + "', sans-serif";
     x.textAlign = 'center'; x.textBaseline = 'middle';
-    var lines = wrapText(x, text, W * 0.86), lineH = fpx * 1.22, totalH = lines.length * lineH;
-    var cy = region === 'center' ? H/2
-           : (region === 'upper' ? (totalH/2 + H*0.13) : (H - totalH/2 - H*0.12));
+    var lines = wrapText(x, text, W * 0.9), lineH = fpx * 1.22, totalH = lines.length * lineH;
+    var maxW = 0; lines.forEach(function(ln){ maxW = Math.max(maxW, x.measureText(ln).width); });
+    var cx = o.cx, cyC = o.cy;
     lines.forEach(function(ln, i){
-        var yy = cy - totalH/2 + lineH/2 + i*lineH;
+        var yy = cyC - totalH/2 + lineH/2 + i*lineH;
         if (tpl.box){
             var tw = x.measureText(ln).width;
             x.fillStyle = tpl.box;
-            roundRect(x, (W-tw)/2 - fpx*0.32, yy - lineH*0.48, tw + fpx*0.64, lineH*0.96, Math.max(4, fpx*0.16)); x.fill();
+            roundRect(x, cx - tw/2 - fpx*0.32, yy - lineH*0.48, tw + fpx*0.64, lineH*0.96, Math.max(4, fpx*0.16)); x.fill();
         }
         if (tpl.shadow){ x.shadowColor = tpl.shadow; x.shadowBlur = fpx*0.28; x.shadowOffsetY = fpx*0.05; }
-        if (tpl.stroke){ x.lineWidth = Math.max(2, fpx*0.13); x.strokeStyle = tpl.stroke; x.lineJoin='round'; x.strokeText(ln, W/2, yy); }
-        x.fillStyle = tpl.color; x.fillText(ln, W/2, yy);
+        if (tpl.stroke){ x.lineWidth = Math.max(2, fpx*0.13); x.strokeStyle = tpl.stroke; x.lineJoin='round'; x.strokeText(ln, cx, yy); }
+        x.fillStyle = color; x.fillText(ln, cx, yy);
         x.shadowColor = 'transparent'; x.shadowBlur = 0; x.shadowOffsetY = 0;
     });
+    return { x: cx - maxW/2, y: cyC - totalH/2, w: maxW, h: totalH };
 }
 function loadImageEl(src){
     return new Promise(function(res, rej){
@@ -338,15 +372,16 @@ async function frameJpeg(im, W, H, caps, tpl){
     coverDraw(x, im, W, H);
     for (var i=0;i<caps.length;i++){
         var c = caps[i]; if (!c.text) continue;
-        try { await document.fonts.load(tpl.weight + ' ' + Math.round(H*c.size) + "px '" + tpl.family + "'"); } catch(e){}
+        var fam = c.family || tpl.family;
+        try { await document.fonts.load('700 ' + Math.round(H*c.size) + "px '" + fam + "'"); } catch(e){}
         x.globalAlpha = (c.alpha != null) ? c.alpha : 1;
-        drawCaptionOn(x, c.text, tpl, W, H, c.region, c.size);
+        drawCaptionOn(x, c.text, tpl, W, H, { size:c.size, cx:c.cx, cy:c.cy, family:c.family, color:c.color });
         x.globalAlpha = 1;
     }
     return await new Promise(function(res){ cv.toBlob(function(b){ b.arrayBuffer().then(function(ab){ res(new Uint8Array(ab)); }); }, 'image/jpeg', 0.92); });
 }
 
-var previewSeq = 0;
+var previewSeq = 0, boxN = null, boxG = null;
 async function renderPreview(){
     var cv = document.getElementById('capPreview'); if (!cv) return;
     var seq = ++previewSeq;
@@ -357,13 +392,35 @@ async function renderPreview(){
     var g = x.createLinearGradient(0,0,0,PH); g.addColorStop(0,'#3a4a57'); g.addColorStop(1,'#1b2630');
     x.fillStyle = g; x.fillRect(0,0,PW,PH);
     var tpl = CAP_TEMPLATES[selTpl] || CAP_TEMPLATES.impact;
-    var nar = (document.getElementById('capNarasi').value||'').trim() || 'contoh narasi build-up di sini';
+    var nar = (document.getElementById('capNarasi').value||'').trim() || 'contoh narasi build-up';
     var gng = (document.getElementById('capGong').value||'').trim() || 'gong pamungkas';
-    try { await document.fonts.load(tpl.weight + " 40px '" + tpl.family + "'"); } catch(e){}
-    if (seq !== previewSeq) return;  // sudah ada render preview lebih baru
-    drawCaptionOn(x, nar, tpl, PW, PH, narPos, 0.052);
-    drawCaptionOn(x, gng, tpl, PW, PH, 'center', 0.085);
+    var fam = capFont || tpl.family;
+    try { await document.fonts.load("700 40px '" + fam + "'"); await document.fonts.load(tpl.weight + " 40px '" + tpl.family + "'"); } catch(e){}
+    if (seq !== previewSeq) return;
+    boxN = drawCaptionOn(x, nar, tpl, PW, PH, { size:narSize,  cx:posN.x*PW, cy:posN.y*PH, family:capFont, color:capColor });
+    boxG = drawCaptionOn(x, gng, tpl, PW, PH, { size:gongSize, cx:posG.x*PW, cy:posG.y*PH, family:capFont, color:capColor });
 }
+// Seret caption di preview untuk atur posisi
+(function(){
+    var cv = document.getElementById('capPreview'); if (!cv) return;
+    var drag = null;
+    function toCv(ev){ var r = cv.getBoundingClientRect(); return { x:(ev.clientX-r.left)*(cv.width/r.width), y:(ev.clientY-r.top)*(cv.height/r.height) }; }
+    function hit(b,p){ return b && p.x>=b.x-12 && p.x<=b.x+b.w+12 && p.y>=b.y-12 && p.y<=b.y+b.h+12; }
+    cv.addEventListener('pointerdown', function(ev){
+        var p = toCv(ev);
+        if (hit(boxG,p)) drag='G'; else if (hit(boxN,p)) drag='N';
+        if (drag){ try{ cv.setPointerCapture(ev.pointerId); }catch(e){} cv.style.cursor='grabbing'; ev.preventDefault(); }
+    });
+    cv.addEventListener('pointermove', function(ev){
+        if (!drag) return;
+        var p = toCv(ev), t = (drag==='G') ? posG : posN;
+        t.x = Math.min(0.99, Math.max(0.01, p.x/cv.width));
+        t.y = Math.min(0.97, Math.max(0.03, p.y/cv.height));
+        renderPreview();
+    });
+    function end(){ drag = null; cv.style.cursor='grab'; }
+    cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+})();
 function probeDuration(blob){
     return new Promise(function(res){
         var a = new Audio(); a.preload = 'metadata';
@@ -405,9 +462,10 @@ async function doRender(){
             setStatus('<span class="spinner"></span> Menyiapkan caption…');
             var gongSec = Math.min(2.8, Math.max(1.2, dur * 0.4)), T = Math.max(0.5, dur - gongSec);
             var specs = [ {a:0.35,s:0.80,d:0.07}, {a:0.7,s:0.97,d:0.07}, {a:1.0,s:1.10,d:0.07}, {a:1.0,s:1.0,d:Math.max(0.4, gongSec-0.21)} ];
-            await ffmpeg.writeFile('v0.jpg', await frameJpeg(im, W, H, [{text:narasi, region:narPos, size:0.052}], tpl));
+            var cN = {text:narasi, cx:posN.x*W, cy:posN.y*H, size:narSize, family:capFont, color:capColor};
+            await ffmpeg.writeFile('v0.jpg', await frameJpeg(im, W, H, [cN], tpl));
             for (var gi=0; gi<specs.length; gi++){
-                await ffmpeg.writeFile('v'+(gi+1)+'.jpg', await frameJpeg(im, W, H, [{text:gong, region:'center', size:0.085*specs[gi].s, alpha:specs[gi].a}], tpl));
+                await ffmpeg.writeFile('v'+(gi+1)+'.jpg', await frameJpeg(im, W, H, [{text:gong, cx:posG.x*W, cy:posG.y*H, size:gongSize*specs[gi].s, alpha:specs[gi].a, family:capFont, color:capColor}], tpl));
             }
             vCount = 1 + specs.length;
             args = function(codec){
@@ -422,8 +480,8 @@ async function doRender(){
         } else {
             // 1 frame: caption (kalau ada) di-bake ke gambar
             var caps = [];
-            if (hasN) caps.push({text:narasi, region:narPos, size:0.052});
-            if (hasG) caps.push({text:gong,   region:'center', size:0.085});
+            if (hasN) caps.push({text:narasi, cx:posN.x*W, cy:posN.y*H, size:narSize,  family:capFont, color:capColor});
+            if (hasG) caps.push({text:gong,   cx:posG.x*W, cy:posG.y*H, size:gongSize, family:capFont, color:capColor});
             await ffmpeg.writeFile('frame.jpg', await frameJpeg(im, W, H, caps, tpl));
             args = function(codec){
                 var v = codec === 'libx264' ? ['-c:v','libx264','-preset','ultrafast','-tune','stillimage','-pix_fmt','yuv420p'] : ['-c:v','mpeg4','-q:v','4'];
