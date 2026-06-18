@@ -126,6 +126,26 @@
         </div>
         <div class="muted" style="margin-bottom:5px;">Preview — seret teks untuk atur posisi</div>
         <canvas id="capPreview" style="border:1px solid var(--border);border-radius:8px;max-width:100%;display:block;cursor:grab;touch-action:none;"></canvas>
+
+        <div class="sec"><span>Efek &amp; Transisi</span></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;">
+            <span class="muted">Warna</span>
+            <select class="fi" id="vfxSel" onchange="onEffectChange()" style="width:auto;">
+                <option value="">Tanpa efek</option>
+                <option value="cinematic">Sinematik</option>
+                <option value="warm">Hangat</option>
+                <option value="cool">Dingin</option>
+                <option value="vintage">Vintage</option>
+                <option value="bw">Hitam-putih</option>
+                <option value="vivid">Vivid</option>
+            </select>
+            <span class="muted">Transisi scene</span>
+            <select class="fi" id="transSel" style="width:auto;">
+                <option value="none">Tanpa</option>
+                <option value="fade">Fade</option>
+            </select>
+            <span class="muted" style="opacity:0.7;">(transisi aktif jika ≥2 gambar)</span>
+        </div>
     </div>
 </div>
 
@@ -181,6 +201,17 @@ var selTpl = 'impact';
 var capFont = '', capColor = '';                       // '' = ikut template
 var narSize = 0.05, gongSize = 0.09;                   // sizeFactor (×H)
 var posN = {x:0.5, y:0.84}, posG = {x:0.5, y:0.5};     // posisi caption (normalized, bisa di-seret)
+var vfFilter = 'none';                                 // efek warna (canvas filter)
+var VFX = {
+    '':          'none',
+    cinematic:   'contrast(1.15) saturate(1.12) brightness(0.97)',
+    warm:        'sepia(0.28) saturate(1.2) brightness(1.04)',
+    cool:        'saturate(1.12) hue-rotate(-12deg) brightness(1.02) contrast(1.06)',
+    vintage:     'sepia(0.45) contrast(0.95) brightness(1.06) saturate(0.85)',
+    bw:          'grayscale(1) contrast(1.12)',
+    vivid:       'saturate(1.45) contrast(1.1)'
+};
+function onEffectChange(){ vfFilter = VFX[document.getElementById('vfxSel').value] || 'none'; }
 var ffmpeg = null, ffmpegLoaded = false, busy = false, lastUrl = null, lastBlob = null;
 
 // Template caption: family (font web), warna, stroke, shadow, box
@@ -379,13 +410,16 @@ function loadImageEl(src){
 function coverDraw(ctx, im, W, H){
     var iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
     var s = Math.max(W/iw, H/ih), dw = iw*s, dh = ih*s;
+    ctx.filter = vfFilter || 'none';
     ctx.drawImage(im, (W-dw)/2, (H-dh)/2, dw, dh);
+    ctx.filter = 'none';
 }
-// Bake caption LANGSUNG ke frame gambar → JPEG bytes (tanpa overlay filter ffmpeg)
-async function frameJpeg(im, W, H, caps, tpl){
+// Bake caption LANGSUNG ke frame gambar → JPEG bytes. im2/blend = crossfade transisi.
+async function frameJpeg(im, W, H, caps, tpl, im2, blend){
     var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     var x = cv.getContext('2d');
     coverDraw(x, im, W, H);
+    if (im2){ x.globalAlpha = blend; coverDraw(x, im2, W, H); x.globalAlpha = 1; }
     for (var i=0;i<caps.length;i++){
         var c = caps[i]; if (!c.text) continue;
         var fam = c.family || tpl.family;
@@ -496,20 +530,27 @@ async function doRender(){
                 segments.push({ im:ims[0], caps:caps, dur: 0 });   // dur 0 → loop + shortest
             }
         } else {
-            // ===== MULTI-SCENE: tiap gambar = 1 scene bergantian; narasi di build-up, gong di akhir =====
+            // ===== MULTI-SCENE: tiap gambar = 1 scene bergantian; opsional crossfade =====
             if (!dur || dur < 1) dur = N * 2;
-            var segLen = dur / N, gSec = hasG ? Math.min(2.6, Math.max(1.0, Math.min(segLen, dur*0.3))) : 0, gStart = dur - gSec;
+            var trans = document.getElementById('transSel').value;        // none | fade
+            var segLen = dur / N;
+            var tDur = (trans === 'fade' && N >= 2) ? Math.min(0.5, segLen*0.5) : 0;
+            var nF = 5;
+            var gSec = hasG ? Math.min(2.6, Math.max(1.0, Math.min(segLen, dur*0.3))) : 0, gStart = dur - gSec;
+            var t = 0, blocks = [];
             for (var i=0; i<N; i++){
-                var s0 = i*segLen, s1 = (i+1)*segLen;
-                if (!hasG || s1 <= gStart + 0.02){
-                    segments.push({ im:ims[i], caps: hasN?[narCap()]:[], dur: segLen });
-                } else if (s0 >= gStart){
-                    segments.push({ im:ims[i], caps: [gongCap(1,1)], dur: segLen });
-                } else {
-                    if (hasN) segments.push({ im:ims[i], caps:[narCap()], dur: gStart - s0 });
-                    segments.push({ im:ims[i], caps:[gongCap(1,1)], dur: s1 - gStart });
+                var isLast = (i === N-1);
+                var hold = isLast ? segLen : Math.max(0.25, segLen - tDur);
+                blocks.push({ im:ims[i], dur:hold, t0:t }); t += hold;
+                if (!isLast && tDur > 0){
+                    for (var f=1; f<=nF; f++){ blocks.push({ im:ims[i], im2:ims[i+1], blend:f/(nF+1), dur:tDur/nF, t0:t }); t += tDur/nF; }
                 }
             }
+            blocks.forEach(function(b){
+                var mid = b.t0 + b.dur/2;
+                b.caps = (hasG && mid >= gStart) ? [gongCap(1,1)] : (hasN ? [narCap()] : []);
+            });
+            segments = blocks;
         }
 
         // ===== Tulis frame per segmen =====
@@ -517,7 +558,7 @@ async function doRender(){
         var written = [];
         for (var k=0; k<segments.length; k++){
             var fn = 'v'+k+'.jpg';
-            await ffmpeg.writeFile(fn, await frameJpeg(segments[k].im, W, H, segments[k].caps, tpl));
+            await ffmpeg.writeFile(fn, await frameJpeg(segments[k].im, W, H, segments[k].caps, tpl, segments[k].im2, segments[k].blend));
             written.push(fn);
         }
 
