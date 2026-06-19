@@ -298,6 +298,16 @@ var LAST_SONG = {{ $lastSongId ?? 'null' }};   // generasi terakhir
 
 function esc(s){ return (s||'').replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
 
+// Kirim narasi + gong + gambar (bila sudah dibuat) ke Video Builder
+function toVideo(btn){
+    var narasi = decodeURIComponent(btn.dataset.narasi || '');
+    var gong   = decodeURIComponent(btn.dataset.gong || '');
+    var img = null, body = btn.closest('.narr-body');
+    if (body){ var im = body.querySelector('.gen-img-wrap img'); if (im) img = im.src; }
+    try { sessionStorage.setItem('vb_prefill', JSON.stringify({ narasi: narasi, gong: gong, image: img })); } catch(e){}
+    window.location = '{{ route('admin.video-builder') }}';
+}
+
 // ===== Generator gambar (Fase A) =====
 function imgTools(promptStr){
     var enc = encodeURIComponent(promptStr || '');
@@ -484,6 +494,7 @@ function renderResults(d) {
                     (n.gong ? '<div class="narr-gong">🎯 ' + esc(n.gong) + '</div>' : '') +
                     '<div class="narr-prompt">🎨 ' + esc(n.image_prompt) + imgTools(n.image_prompt) +
                     '</div>' +
+                    '<div style="margin-top:5px;"><span class="narr-img-btn" onclick="toVideo(this)" data-narasi="' + encodeURIComponent(n.text||'') + '" data-gong="' + encodeURIComponent(n.gong||'') + '">🎬 buat video</span></div>' +
                 '</div></div>';
         });
         html += '</div>';

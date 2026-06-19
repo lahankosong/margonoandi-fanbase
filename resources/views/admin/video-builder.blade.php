@@ -857,6 +857,23 @@ async function renderProjects(){
     });
 }
 renderProjects();
+
+// ===== Prefill dari AI Agent (sessionStorage 'vb_prefill') =====
+(function(){
+    var raw; try { raw = sessionStorage.getItem('vb_prefill'); } catch(e){}
+    if (!raw) return;
+    try { sessionStorage.removeItem('vb_prefill'); } catch(e){}
+    var p; try { p = JSON.parse(raw); } catch(e){ return; }
+    if (p.narasi != null) document.getElementById('capNarasi').value = p.narasi;
+    if (p.gong != null) document.getElementById('capGong').value = p.gong;
+    if (p.image){
+        var found = null;
+        document.querySelectorAll('.img-pick').forEach(function(x){ if (x.dataset.src === p.image) found = x; });
+        if (found) pickImage(found);
+    }
+    renderPreview();
+    setStatus('✓ Narasi/gong dari AI Agent dimuat. Pilih audio lalu Rakit.');
+})();
 </script>
 
 @endsection
