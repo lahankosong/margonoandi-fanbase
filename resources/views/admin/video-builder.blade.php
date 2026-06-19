@@ -146,6 +146,17 @@
             </select>
             <span class="muted" style="opacity:0.7;">(transisi aktif jika ≥2 gambar)</span>
         </div>
+
+        <div class="sec"><span>Timing caption (detik)</span></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center;">
+            <span class="muted">Narasi</span>
+            <input type="number" class="fi" id="narStart" min="0" step="0.5" placeholder="muncul" style="width:70px;" title="narasi muncul detik">
+            <input type="number" class="fi" id="narEnd" min="0" step="0.5" placeholder="hilang" style="width:70px;" title="narasi hilang detik">
+            <span class="muted">Gong</span>
+            <input type="number" class="fi" id="gongStart" min="0" step="0.5" placeholder="muncul" style="width:70px;" title="gong muncul detik">
+            <input type="number" class="fi" id="gongEnd" min="0" step="0.5" placeholder="hilang" style="width:70px;" title="gong hilang detik">
+        </div>
+        <div class="muted" style="margin-top:4px;">Kosong = otomatis (narasi build-up, gong di akhir).</div>
     </div>
 </div>
 
@@ -156,9 +167,13 @@
         <div class="row" style="align-items:center;">
             <span class="muted">Format</span>
             <select class="fi" id="ratioSel" onchange="onRatioChange()" style="width:auto;">
-                <option value="9:16">📱 9:16 Short</option>
-                <option value="1:1">⬛ 1:1</option>
-                <option value="16:9">🖥️ 16:9</option>
+                <option value="9:16">📱 9:16 (TikTok/Reels/Shorts)</option>
+                <option value="1:1">⬛ 1:1 (Feed)</option>
+                <option value="16:9">🖥️ 16:9 (YouTube)</option>
+            </select>
+            <select class="fi" id="qualitySel" onchange="onQualityChange()" style="width:auto;" title="Resolusi">
+                <option value="720" selected>720p</option>
+                <option value="1080">1080p HD</option>
             </select>
             <button class="btn btn-primary" id="renderBtn" onclick="doRender()">🎬 Rakit</button>
         </div>
@@ -172,6 +187,11 @@
                 <span class="muted" id="resultMeta"></span>
             </div>
         </div>
+
+        <div class="sec"><span>Proyek</span>
+            <button class="btn btn-soft" style="font-size:11px;padding:4px 10px;" onclick="saveProject()">💾 Simpan proyek</button>
+        </div>
+        <div id="projList"><div class="empty-row">Belum ada proyek tersimpan.</div></div>
 
         <div class="sec"><span>Video Tersimpan</span></div>
         <div id="vidList"><div class="empty-row">Belum ada video tersimpan.</div></div>
@@ -197,6 +217,7 @@ async function fetchBytes(input){
 var selImages = [];    // urutan scene: [{kind:'url'|'file', src|file, ext, el}]
 var selAudio = null;   // {kind:'idb'|'file', blob, ext, name}
 var ratio = '9:16';
+var quality = 720;
 var selTpl = 'impact';
 var capFont = '', capColor = '';                       // '' = ikut template
 var narSize = 0.05, gongSize = 0.09;                   // sizeFactor (×H)
@@ -237,6 +258,7 @@ function onSizeChange(){
     renderPreview();
 }
 
+function clamp(v,a,b){ return Math.min(b, Math.max(a, v)); }
 function setStatus(h){ document.getElementById('status').innerHTML = h || ''; }
 function extFromType(t, fallback){ if(!t) return fallback; var m=t.split('/')[1]; return m ? m.replace('jpeg','jpg').split(';')[0] : fallback; }
 
@@ -339,14 +361,13 @@ window.addEventListener('load', renderPreview);
 renderPreview();
 
 // ===== Ratio =====
-function onRatioChange(){
-    ratio = document.getElementById('ratioSel').value;
-    renderPreview();
-}
+function onRatioChange(){ ratio = document.getElementById('ratioSel').value; renderPreview(); }
+function onQualityChange(){ quality = parseInt(document.getElementById('qualitySel').value,10) || 720; }
 function ratioDims(){
-    if (ratio === '16:9') return [1280,720];
-    if (ratio === '1:1')  return [720,720];
-    return [720,1280];
+    var q = quality, e = function(n){ return Math.round(n/2)*2; };  // genap
+    if (ratio === '16:9') return [e(q*16/9), q];
+    if (ratio === '1:1')  return [q, q];
+    return [q, e(q*16/9)];   // 9:16
 }
 
 // ===== ffmpeg =====
@@ -516,41 +537,57 @@ async function doRender(){
         function narCap(){ return {text:narasi, cx:posN.x*W, cy:posN.y*H, size:narSize, family:capFont, color:capColor}; }
         function gongCap(sc, al){ return {text:gong, cx:posG.x*W, cy:posG.y*H, size:gongSize*(sc||1), alpha:al, family:capFont, color:capColor}; }
 
-        // ===== Bangun daftar segmen {im, caps, dur} =====
+        // ===== Timing caption (manual detik, kosong = otomatis) =====
+        if (!dur || dur < 1) dur = N>1 ? N*2 : 6;
+        function pf(id){ var v = parseFloat(document.getElementById(id).value); return isNaN(v) ? null : v; }
+        var autoGong = Math.min(2.6, Math.max(1.0, dur*0.3));
+        var gS = pf('gongStart'); if (gS===null) gS = Math.max(0, dur - autoGong);
+        var gE = pf('gongEnd');   if (gE===null) gE = dur;
+        var nS = pf('narStart');  if (nS===null) nS = 0;
+        var nE = pf('narEnd');    if (nE===null) nE = gS;
+        nS=clamp(nS,0,dur); nE=clamp(nE,nS,dur); gS=clamp(gS,0,dur); gE=clamp(gE,gS,dur);
+        function capsAt(t){ var c=[]; if(hasN && t>=nS && t<nE) c.push(narCap()); if(hasG && t>=gS && t<gE) c.push(gongCap(1,1)); return c; }
+
+        // ===== Bangun blok gambar (scene + crossfade) lalu pecah di batas timing caption =====
         var segments = [];
-        if (N === 1){
-            if (hasN && hasG && dur > 1.5){
-                // 1 gambar: narasi → gong masuk (animasi fade+zoom) → hold
-                var gongSec = Math.min(2.8, Math.max(1.2, dur*0.4)), T = Math.max(0.5, dur - gongSec);
-                var specs = [ {a:0.35,s:0.80,d:0.07}, {a:0.7,s:0.97,d:0.07}, {a:1.0,s:1.10,d:0.07}, {a:1.0,s:1.0,d:Math.max(0.4, gongSec-0.21)} ];
-                segments.push({ im:ims[0], caps:[narCap()], dur:T });
-                specs.forEach(function(sp){ segments.push({ im:ims[0], caps:[gongCap(sp.s, sp.a)], dur:sp.d }); });
-            } else {
-                var caps = []; if (hasN) caps.push(narCap()); if (hasG) caps.push(gongCap(1,1));
-                segments.push({ im:ims[0], caps:caps, dur: 0 });   // dur 0 → loop + shortest
-            }
+        if (N === 1 && !hasN && !hasG){
+            segments = [{ im:ims[0], caps:[], dur:0 }];   // diam, loop + shortest
         } else {
-            // ===== MULTI-SCENE: tiap gambar = 1 scene bergantian; opsional crossfade =====
-            if (!dur || dur < 1) dur = N * 2;
-            var trans = document.getElementById('transSel').value;        // none | fade
-            var segLen = dur / N;
-            var tDur = (trans === 'fade' && N >= 2) ? Math.min(0.5, segLen*0.5) : 0;
-            var nF = 5;
-            var gSec = hasG ? Math.min(2.6, Math.max(1.0, Math.min(segLen, dur*0.3))) : 0, gStart = dur - gSec;
-            var t = 0, blocks = [];
-            for (var i=0; i<N; i++){
-                var isLast = (i === N-1);
-                var hold = isLast ? segLen : Math.max(0.25, segLen - tDur);
-                blocks.push({ im:ims[i], dur:hold, t0:t }); t += hold;
-                if (!isLast && tDur > 0){
-                    for (var f=1; f<=nF; f++){ blocks.push({ im:ims[i], im2:ims[i+1], blend:f/(nF+1), dur:tDur/nF, t0:t }); t += tDur/nF; }
+            var blocks = [];
+            if (N === 1){
+                blocks = [{ im:ims[0], dur:dur, t0:0 }];
+            } else {
+                var trans = document.getElementById('transSel').value, segLen = dur / N;
+                var tDur = (trans === 'fade' && N >= 2) ? Math.min(0.5, segLen*0.5) : 0, nF = 5, t = 0;
+                for (var i=0; i<N; i++){
+                    var isLast = (i === N-1), hold = isLast ? segLen : Math.max(0.25, segLen - tDur);
+                    blocks.push({ im:ims[i], dur:hold, t0:t }); t += hold;
+                    if (!isLast && tDur > 0){
+                        for (var f=1; f<=nF; f++){ blocks.push({ im:ims[i], im2:ims[i+1], blend:f/(nF+1), dur:tDur/nF, t0:t }); t += tDur/nF; }
+                    }
                 }
             }
             blocks.forEach(function(b){
-                var mid = b.t0 + b.dur/2;
-                b.caps = (hasG && mid >= gStart) ? [gongCap(1,1)] : (hasN ? [narCap()] : []);
+                if (b.im2){ b.caps = capsAt(b.t0 + b.dur/2); segments.push(b); return; }   // crossfade: utuh
+                var edges = [b.t0, b.t0 + b.dur];
+                [nS,nE,gS,gE].forEach(function(e){ if (e > b.t0 + 0.02 && e < b.t0 + b.dur - 0.02) edges.push(e); });
+                edges.sort(function(a,b2){ return a-b2; });
+                var ue = []; edges.forEach(function(e){ if (!ue.length || e - ue[ue.length-1] > 0.02) ue.push(e); });
+                for (var s=0; s<ue.length-1; s++){
+                    var a = ue[s], bb = ue[s+1], len = bb - a, mid = (a+bb)/2;
+                    var curN = hasN && mid>=nS && mid<nE, curG = hasG && mid>=gS && mid<gE;
+                    var caps = []; if (curN) caps.push(narCap());
+                    if (curG && Math.abs(a - gS) < 0.05 && len > 0.3){   // onset gong → animasi pop
+                        var fade = [{a:0.4,s:0.82,d:0.07},{a:0.7,s:0.97,d:0.07},{a:1.0,s:1.08,d:0.07}];
+                        fade.forEach(function(fp){ var c = caps.slice(); c.push(gongCap(fp.s, fp.a)); segments.push({ im:b.im, caps:c, dur:fp.d }); });
+                        var rest = len - 0.21; if (rest > 0.03){ var c2 = caps.slice(); c2.push(gongCap(1,1)); segments.push({ im:b.im, caps:c2, dur:rest }); }
+                    } else {
+                        if (curG) caps.push(gongCap(1,1));
+                        segments.push({ im:b.im, caps:caps, dur:len });
+                    }
+                }
             });
-            segments = blocks;
+            if (!segments.length) segments.push({ im:ims[0], caps:[], dur:dur });
         }
 
         // ===== Tulis frame per segmen =====
@@ -649,6 +686,70 @@ async function renderVideoList(){
     });
 }
 renderVideoList();
+
+// ===== Proyek (simpan/muat konfigurasi) — IndexedDB 'mafProjects' =====
+function getConfig(){
+    return {
+        narasi: document.getElementById('capNarasi').value, gong: document.getElementById('capGong').value,
+        font: document.getElementById('capFontSel').value, color: document.getElementById('capColorSel').value,
+        narN: document.getElementById('narSizeRange').value, gongN: document.getElementById('gongSizeRange').value,
+        tpl: selTpl, posN: {x:posN.x,y:posN.y}, posG: {x:posG.x,y:posG.y},
+        vfx: document.getElementById('vfxSel').value, trans: document.getElementById('transSel').value,
+        narStart: document.getElementById('narStart').value, narEnd: document.getElementById('narEnd').value,
+        gongStart: document.getElementById('gongStart').value, gongEnd: document.getElementById('gongEnd').value,
+        ratio: document.getElementById('ratioSel').value, quality: document.getElementById('qualitySel').value,
+        imgs: selImages.map(function(s){ return s.kind==='url'?s.src:null; }).filter(Boolean),
+        audio: selAudio ? selAudio.name : null
+    };
+}
+function applyConfig(c){
+    document.getElementById('capNarasi').value = c.narasi||'';
+    document.getElementById('capGong').value = c.gong||'';
+    document.getElementById('narSizeRange').value = c.narN||'5'; document.getElementById('gongSizeRange').value = c.gongN||'9'; onSizeChange();
+    document.getElementById('vfxSel').value = c.vfx||''; onEffectChange();
+    document.getElementById('transSel').value = c.trans||'none';
+    ['narStart','narEnd','gongStart','gongEnd'].forEach(function(id){ document.getElementById(id).value = c[id]||''; });
+    document.getElementById('ratioSel').value = c.ratio||'9:16'; ratio = c.ratio||'9:16';
+    document.getElementById('qualitySel').value = c.quality||'720'; quality = parseInt(c.quality||'720',10);
+    var tb = document.querySelector('#tplOpt .ratio-btn[data-t="'+(c.tpl||'impact')+'"]'); if (tb) pickTpl(tb);
+    document.getElementById('capFontSel').value = c.font||''; capFont = c.font||'';
+    if (c.color){ document.getElementById('capColorSel').value = c.color; capColor = c.color; }
+    if (c.posN) posN = {x:c.posN.x, y:c.posN.y}; if (c.posG) posG = {x:c.posG.x, y:c.posG.y};
+    // pilih ulang gambar (cocokkan src) — hanya yg dari stok
+    selImages = [];
+    document.querySelectorAll('.img-pick').forEach(function(x){ x.classList.remove('sel'); x.removeAttribute('data-ord'); });
+    (c.imgs||[]).forEach(function(src){ var found=null; document.querySelectorAll('.img-pick').forEach(function(x){ if(x.dataset.src===src) found=x; }); if(found) pickImage(found); });
+    // pilih ulang audio (cocokkan nama)
+    if (c.audio){ document.querySelectorAll('.aud-item').forEach(function(d){ var nm=d.querySelector('.aud-name'); if(nm && nm.textContent===c.audio) d.click(); }); }
+    renderPreview();
+}
+function projOpen(){ return new Promise(function(res,rej){ var r=indexedDB.open('mafProjects',1); r.onupgradeneeded=function(){ r.result.createObjectStore('proj',{keyPath:'id',autoIncrement:true}); }; r.onsuccess=function(){res(r.result);}; r.onerror=function(){rej(r.error);}; }); }
+async function projAll(){ var db=await projOpen(); return new Promise(function(res){ var t=db.transaction('proj').objectStore('proj').getAll(); t.onsuccess=function(){res(t.result||[]);}; t.onerror=function(){res([]);}; }); }
+async function projAdd(rec){ var db=await projOpen(); return new Promise(function(res){ db.transaction('proj','readwrite').objectStore('proj').add(rec).onsuccess=function(){res();}; }); }
+async function projDel(id){ var db=await projOpen(); return new Promise(function(res){ db.transaction('proj','readwrite').objectStore('proj').delete(id).onsuccess=function(){res();}; }); }
+async function saveProject(){
+    var name = prompt('Nama proyek:', 'Proyek ' + new Date().toLocaleString('id'));
+    if (name === null) return;
+    await projAdd({ name:(name||'Proyek').trim(), config:getConfig(), createdAt:Date.now() });
+    setStatus('✓ Proyek tersimpan.'); renderProjects();
+}
+async function renderProjects(){
+    var list=document.getElementById('projList'); if(!list) return;
+    var all=await projAll();
+    if(!all.length){ list.innerHTML='<div class="empty-row">Belum ada proyek tersimpan.</div>'; return; }
+    list.innerHTML='';
+    all.sort(function(a,b){ return b.createdAt-a.createdAt; }).forEach(function(p){
+        var d=document.createElement('div'); d.className='aud-item';
+        d.innerHTML='<div style="flex:1;min-width:0;"><div class="aud-name">'+(p.name||'Proyek').replace(/</g,'&lt;')+'</div>'+
+            '<div class="aud-meta">'+((p.config&&p.config.imgs)?p.config.imgs.length:0)+' gambar · '+((p.config&&p.config.ratio)||'9:16')+'</div></div>'+
+            '<button class="btn btn-accent" data-load="'+p.id+'" style="font-size:11px;padding:5px 11px;">Muat</button>'+
+            '<button class="btn-del" data-del="'+p.id+'">Hapus</button>';
+        d.querySelector('[data-load]').addEventListener('click', function(){ applyConfig(p.config||{}); });
+        d.querySelector('[data-del]').addEventListener('click', async function(){ if(!confirm('Hapus proyek?'))return; await projDel(p.id); renderProjects(); });
+        list.appendChild(d);
+    });
+}
+renderProjects();
 </script>
 
 @endsection
