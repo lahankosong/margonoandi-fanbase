@@ -53,6 +53,10 @@
     .empty-row { font-size:12px; color:var(--text-3); padding:8px 0; }
     .sec { display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:11px; font-weight:600; color:var(--text-2); text-transform:uppercase; letter-spacing:0.04em; margin:16px 0 8px; padding-top:12px; border-top:1px solid var(--border-2); }
     .sec:first-child { border-top:none; padding-top:0; margin-top:0; }
+    .modal-ov { position:fixed; inset:0; background:rgba(0,0,0,0.6); display:none; align-items:center; justify-content:center; z-index:1000; padding:16px; }
+    .modal-ov.open { display:flex; }
+    .modal-bx { background:var(--bg-2); border:1px solid var(--border); border-radius:12px; padding:16px; max-width:360px; width:100%; }
+    .modal-bx h4 { font-size:13px; font-weight:600; color:var(--text); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
 </style>
 @endpush
 
@@ -76,7 +80,10 @@
     <div class="card-body">
         {{-- Gambar --}}
         <div class="sec"><span>Gambar</span>
-            <label class="btn btn-soft" style="font-size:11px;padding:4px 10px;cursor:pointer;">+ Upload<input type="file" id="imgUpload" accept="image/*" hidden></label>
+            <span style="display:flex;gap:6px;">
+                <button class="btn btn-soft" style="font-size:11px;padding:4px 10px;" onclick="openCrop()">✂️ Crop</button>
+                <label class="btn btn-soft" style="font-size:11px;padding:4px 10px;cursor:pointer;">+ Upload<input type="file" id="imgUpload" accept="image/*" hidden></label>
+            </span>
         </div>
         <div class="img-grid" id="imgGrid">
             @forelse($images as $img)
@@ -199,6 +206,29 @@
 </div>
 </div>{{-- /vb-grid --}}
 
+{{-- MODAL CROP --}}
+<div class="modal-ov" id="cropModal">
+    <div class="modal-bx">
+        <h4><span>✂️ Crop Gambar <span id="cropIdx" class="muted"></span></span>
+            <button onclick="closeCrop()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-3);line-height:1;">&times;</button>
+        </h4>
+        <canvas id="cropCanvas" style="width:100%;border-radius:8px;border:1px solid var(--border);cursor:grab;touch-action:none;display:block;background:#000;"></canvas>
+        <div class="muted" style="margin-top:6px;">Seret untuk geser · slider untuk zoom</div>
+        <div class="row" style="gap:8px;align-items:center;margin-top:6px;">
+            <span class="muted">Zoom</span>
+            <input type="range" id="cropZoom" min="1" max="3" step="0.05" value="1" oninput="onCropZoom()" style="flex:1;accent-color:var(--accent);">
+            <button class="btn btn-soft" style="font-size:11px;padding:4px 8px;" onclick="cropReset()">Reset</button>
+        </div>
+        <div class="row" style="gap:8px;margin-top:12px;justify-content:space-between;">
+            <span class="row" style="gap:6px;">
+                <button class="btn btn-soft" style="font-size:11px;padding:5px 10px;" onclick="cropNav(-1)">‹</button>
+                <button class="btn btn-soft" style="font-size:11px;padding:5px 10px;" onclick="cropNav(1)">›</button>
+            </span>
+            <button class="btn btn-primary" style="font-size:12px;" onclick="closeCrop()">Selesai</button>
+        </div>
+    </div>
+</div>
+
 <script src="{{ asset('ffmpeg/ffmpeg.js') }}"></script>
 <script>
 var FFMPEG_BASE = '{{ asset('ffmpeg') }}';
@@ -276,8 +306,8 @@ function pickImage(el){
     if (i >= 0){ selImages.splice(i,1); el.classList.remove('sel'); }
     else {
         var isUp = el.dataset.upload === '1';
-        selImages.push(isUp ? {kind:'file', file:el._file, ext:el._ext||'jpg', el:el}
-                            : {kind:'url', src:el.dataset.src, ext:'jpg', el:el});
+        selImages.push(isUp ? {kind:'file', file:el._file, ext:el._ext||'jpg', el:el, crop:{z:1,ox:0.5,oy:0.5}}
+                            : {kind:'url', src:el.dataset.src, ext:'jpg', el:el, crop:{z:1,ox:0.5,oy:0.5}});
         el.classList.add('sel');
     }
     renumberImages();
@@ -441,19 +471,24 @@ function loadImageEl(src){
         im.src = src;
     });
 }
-function coverDraw(ctx, im, W, H){
+// crop: {z(zoom>=1), ox, oy(fokus 0..1)}. Default = cover tengah.
+function coverDraw(ctx, im, W, H, crop){
     var iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
-    var s = Math.max(W/iw, H/ih), dw = iw*s, dh = ih*s;
+    var z = (crop && crop.z) ? crop.z : 1;
+    var s = Math.max(W/iw, H/ih) * z, dw = iw*s, dh = ih*s;
+    var ox = crop ? crop.ox : 0.5, oy = crop ? crop.oy : 0.5;
+    var oxMin = (W/2)/dw, oyMin = (H/2)/dh;
+    ox = clamp(ox, oxMin, 1-oxMin); oy = clamp(oy, oyMin, 1-oyMin);
     ctx.filter = vfFilter || 'none';
-    ctx.drawImage(im, (W-dw)/2, (H-dh)/2, dw, dh);
+    ctx.drawImage(im, W/2 - ox*dw, H/2 - oy*dh, dw, dh);
     ctx.filter = 'none';
 }
 // Bake caption LANGSUNG ke frame gambar → JPEG bytes. im2/blend = crossfade transisi.
-async function frameJpeg(im, W, H, caps, tpl, im2, blend){
+async function frameJpeg(im, W, H, caps, tpl, im2, blend, crop, crop2){
     var cv = document.createElement('canvas'); cv.width = W; cv.height = H;
     var x = cv.getContext('2d');
-    coverDraw(x, im, W, H);
-    if (im2){ x.globalAlpha = blend; coverDraw(x, im2, W, H); x.globalAlpha = 1; }
+    coverDraw(x, im, W, H, crop);
+    if (im2){ x.globalAlpha = blend; coverDraw(x, im2, W, H, crop2); x.globalAlpha = 1; }
     for (var i=0;i<caps.length;i++){
         var c = caps[i]; if (!c.text) continue;
         var fam = c.family || tpl.family;
@@ -486,7 +521,7 @@ async function renderPreview(){
     var PH = 250, PW = Math.round(PH * AR);
     cv.width = PW; cv.height = PH;
     var x = cv.getContext('2d');
-    if (previewImg){ coverDraw(x, previewImg, PW, PH); }
+    if (previewImg){ coverDraw(x, previewImg, PW, PH, selImages[0] && selImages[0].crop); }
     else { var g = x.createLinearGradient(0,0,0,PH); g.addColorStop(0,'#3a4a57'); g.addColorStop(1,'#1b2630'); x.fillStyle = g; x.fillRect(0,0,PW,PH); }
     var tpl = CAP_TEMPLATES[selTpl] || CAP_TEMPLATES.impact;
     var nar = (document.getElementById('capNarasi').value||'').trim() || 'contoh narasi build-up';
@@ -551,6 +586,7 @@ async function doRender(){
             var u = URL.createObjectURL(new Blob([bytes])); tmpUrls.push(u);
             ims.push(await loadImageEl(u));
         }
+        var crops = selImages.map(function(s){ return s.crop || {z:1,ox:0.5,oy:0.5}; });
         await ffmpeg.writeFile(audName, await fetchBytes(selAudio.blob));
 
         var narasi = (document.getElementById('capNarasi').value || '').trim();
@@ -577,19 +613,19 @@ async function doRender(){
         // ===== Bangun blok gambar (scene + crossfade) lalu pecah di batas timing caption =====
         var segments = [];
         if (N === 1 && !hasN && !hasG){
-            segments = [{ im:ims[0], caps:[], dur:0 }];   // diam, loop + shortest
+            segments = [{ im:ims[0], crop:crops[0], caps:[], dur:0 }];   // diam, loop + shortest
         } else {
             var blocks = [];
             if (N === 1){
-                blocks = [{ im:ims[0], dur:dur, t0:0 }];
+                blocks = [{ im:ims[0], crop:crops[0], dur:dur, t0:0 }];
             } else {
                 var trans = document.getElementById('transSel').value, segLen = dur / N;
                 var tDur = (trans === 'fade' && N >= 2) ? Math.min(0.5, segLen*0.5) : 0, nF = 5, t = 0;
                 for (var i=0; i<N; i++){
                     var isLast = (i === N-1), hold = isLast ? segLen : Math.max(0.25, segLen - tDur);
-                    blocks.push({ im:ims[i], dur:hold, t0:t }); t += hold;
+                    blocks.push({ im:ims[i], crop:crops[i], dur:hold, t0:t }); t += hold;
                     if (!isLast && tDur > 0){
-                        for (var f=1; f<=nF; f++){ blocks.push({ im:ims[i], im2:ims[i+1], blend:f/(nF+1), dur:tDur/nF, t0:t }); t += tDur/nF; }
+                        for (var f=1; f<=nF; f++){ blocks.push({ im:ims[i], crop:crops[i], im2:ims[i+1], crop2:crops[i+1], blend:f/(nF+1), dur:tDur/nF, t0:t }); t += tDur/nF; }
                     }
                 }
             }
@@ -605,15 +641,15 @@ async function doRender(){
                     var caps = []; if (curN) caps.push(narCap());
                     if (curG && Math.abs(a - gS) < 0.05 && len > 0.3){   // onset gong → animasi pop
                         var fade = [{a:0.4,s:0.82,d:0.07},{a:0.7,s:0.97,d:0.07},{a:1.0,s:1.08,d:0.07}];
-                        fade.forEach(function(fp){ var c = caps.slice(); c.push(gongCap(fp.s, fp.a)); segments.push({ im:b.im, caps:c, dur:fp.d }); });
-                        var rest = len - 0.21; if (rest > 0.03){ var c2 = caps.slice(); c2.push(gongCap(1,1)); segments.push({ im:b.im, caps:c2, dur:rest }); }
+                        fade.forEach(function(fp){ var c = caps.slice(); c.push(gongCap(fp.s, fp.a)); segments.push({ im:b.im, crop:b.crop, caps:c, dur:fp.d }); });
+                        var rest = len - 0.21; if (rest > 0.03){ var c2 = caps.slice(); c2.push(gongCap(1,1)); segments.push({ im:b.im, crop:b.crop, caps:c2, dur:rest }); }
                     } else {
                         if (curG) caps.push(gongCap(1,1));
-                        segments.push({ im:b.im, caps:caps, dur:len });
+                        segments.push({ im:b.im, crop:b.crop, caps:caps, dur:len });
                     }
                 }
             });
-            if (!segments.length) segments.push({ im:ims[0], caps:[], dur:dur });
+            if (!segments.length) segments.push({ im:ims[0], crop:crops[0], caps:[], dur:dur });
         }
 
         // ===== Tulis frame per segmen =====
@@ -621,7 +657,7 @@ async function doRender(){
         var written = [];
         for (var k=0; k<segments.length; k++){
             var fn = 'v'+k+'.jpg';
-            await ffmpeg.writeFile(fn, await frameJpeg(segments[k].im, W, H, segments[k].caps, tpl, segments[k].im2, segments[k].blend));
+            await ffmpeg.writeFile(fn, await frameJpeg(segments[k].im, W, H, segments[k].caps, tpl, segments[k].im2, segments[k].blend, segments[k].crop, segments[k].crop2));
             written.push(fn);
         }
 
@@ -713,6 +749,47 @@ async function renderVideoList(){
 }
 renderVideoList();
 
+// ===== Crop gambar (per-gambar: geser + zoom) =====
+var cropIdx = 0, cropImg = null;
+function openCrop(){
+    if (!selImages.length){ alert('Pilih gambar dulu (klik thumbnail).'); return; }
+    cropIdx = 0; document.getElementById('cropModal').classList.add('open'); cropLoad();
+}
+function closeCrop(){ document.getElementById('cropModal').classList.remove('open'); renderPreview(); }
+function cropNav(d){ cropIdx = (cropIdx + d + selImages.length) % selImages.length; cropLoad(); }
+function cropDims(){ var dm = ratioDims(), AR = dm[0]/dm[1], W = 300, H = Math.round(W/AR); return [W,H]; }
+async function cropLoad(){
+    var s = selImages[cropIdx]; if (!s) return;
+    if (!s.crop) s.crop = {z:1,ox:0.5,oy:0.5};
+    document.getElementById('cropIdx').textContent = (cropIdx+1) + '/' + selImages.length;
+    document.getElementById('cropZoom').value = s.crop.z;
+    try { var bytes = await fetchBytes(s.kind==='url'?s.src:s.file); var u = URL.createObjectURL(new Blob([bytes])); cropImg = await loadImageEl(u); URL.revokeObjectURL(u); }
+    catch(e){ cropImg = null; }
+    cropDraw();
+}
+function cropDraw(){
+    var cv = document.getElementById('cropCanvas'); var dm = cropDims(); cv.width = dm[0]; cv.height = dm[1];
+    var x = cv.getContext('2d'); x.fillStyle='#000'; x.fillRect(0,0,cv.width,cv.height);
+    if (cropImg) coverDraw(x, cropImg, cv.width, cv.height, selImages[cropIdx] && selImages[cropIdx].crop);
+}
+function onCropZoom(){ if(selImages[cropIdx]){ selImages[cropIdx].crop.z = parseFloat(document.getElementById('cropZoom').value); cropDraw(); } }
+function cropReset(){ if(selImages[cropIdx]){ selImages[cropIdx].crop = {z:1,ox:0.5,oy:0.5}; document.getElementById('cropZoom').value=1; cropDraw(); } }
+(function(){
+    var cv = document.getElementById('cropCanvas'); if (!cv) return;
+    var dr=false, lx=0, ly=0;
+    function tc(ev){ var r=cv.getBoundingClientRect(); return {x:(ev.clientX-r.left)*(cv.width/r.width), y:(ev.clientY-r.top)*(cv.height/r.height)}; }
+    cv.addEventListener('pointerdown', function(ev){ if(!cropImg) return; dr=true; var p=tc(ev); lx=p.x; ly=p.y; try{cv.setPointerCapture(ev.pointerId);}catch(e){} cv.style.cursor='grabbing'; ev.preventDefault(); });
+    cv.addEventListener('pointermove', function(ev){
+        if (!dr || !cropImg) return; var p=tc(ev), dx=p.x-lx, dy=p.y-ly; lx=p.x; ly=p.y;
+        var crop = selImages[cropIdx].crop, iw=cropImg.naturalWidth, ih=cropImg.naturalHeight;
+        var s = Math.max(cv.width/iw, cv.height/ih)*crop.z, dw=iw*s, dh=ih*s;
+        crop.ox = clamp(crop.ox - dx/dw, 0, 1); crop.oy = clamp(crop.oy - dy/dh, 0, 1);
+        cropDraw();
+    });
+    function end(){ dr=false; cv.style.cursor='grab'; }
+    cv.addEventListener('pointerup', end); cv.addEventListener('pointercancel', end);
+})();
+
 // ===== Proyek (simpan/muat konfigurasi) — IndexedDB 'mafProjects' =====
 function getConfig(){
     return {
@@ -724,7 +801,7 @@ function getConfig(){
         narStart: document.getElementById('narStart').value, narEnd: document.getElementById('narEnd').value,
         gongStart: document.getElementById('gongStart').value, gongEnd: document.getElementById('gongEnd').value,
         ratio: document.getElementById('ratioSel').value, quality: document.getElementById('qualitySel').value,
-        imgs: selImages.map(function(s){ return s.kind==='url'?s.src:null; }).filter(Boolean),
+        imgs: selImages.filter(function(s){ return s.kind==='url'; }).map(function(s){ return {src:s.src, crop:s.crop||null}; }),
         audio: selAudio ? selAudio.name : null
     };
 }
@@ -744,7 +821,11 @@ function applyConfig(c){
     // pilih ulang gambar (cocokkan src) — hanya yg dari stok
     selImages = [];
     document.querySelectorAll('.img-pick').forEach(function(x){ x.classList.remove('sel'); x.removeAttribute('data-ord'); });
-    (c.imgs||[]).forEach(function(src){ var found=null; document.querySelectorAll('.img-pick').forEach(function(x){ if(x.dataset.src===src) found=x; }); if(found) pickImage(found); });
+    (c.imgs||[]).forEach(function(it){
+        var src = (typeof it==='string') ? it : it.src, found=null;
+        document.querySelectorAll('.img-pick').forEach(function(x){ if(x.dataset.src===src) found=x; });
+        if (found){ pickImage(found); var ent=selImages[selImages.length-1]; if(ent && it && it.crop) ent.crop=it.crop; }
+    });
     // pilih ulang audio (cocokkan nama)
     if (c.audio){ document.querySelectorAll('.aud-item').forEach(function(d){ var nm=d.querySelector('.aud-name'); if(nm && nm.textContent===c.audio) d.click(); }); }
     renderPreview();
