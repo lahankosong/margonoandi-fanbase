@@ -118,6 +118,9 @@
     .kamu-tab-content.active { display: block; }
 
     /* ===== CHORD ===== */
+    .chord-inst { display:flex; gap:8px; margin-bottom:14px; }
+    .chord-instbtn { font-size:13px; padding:8px 18px; border-radius:20px; background:var(--surface); border:1px solid var(--border); color:var(--text-2); cursor:pointer; font-weight:600; }
+    .chord-instbtn.active { background:var(--sky); color:#fff; border-color:var(--sky); }
     .chord-head { margin-bottom: 1rem; }
     .chord-title { font-family:'Sora',sans-serif; font-size:1rem; font-weight:600; color:var(--text-1); }
     .chord-sub { font-size:12px; color:var(--text-3); margin-top:4px; line-height:1.5; }
@@ -535,7 +538,7 @@
         &#127928; Tuner
     </button>
     <button class="kamu-tab" onclick="kamuTab('Chord', this)">
-        &#127928; Chord
+        &#127932; Chord
     </button>
 </div>
 
@@ -682,6 +685,12 @@
 
 {{-- TAB: CHORD --}}
 <div class="kamu-tab-content" id="kamuTabChord">
+    <div class="chord-inst" id="chordInst">
+        <span class="chord-instbtn active" data-i="gitar" onclick="chordInst('gitar',this)">&#127928; Gitar</span>
+        <span class="chord-instbtn" data-i="piano" onclick="chordInst('piano',this)">&#127929; Piano</span>
+    </div>
+
+    <div id="chordGitar">
     <div class="chord-head">
         <div class="chord-title">&#127928; Chord Gitar untuk Pemula</div>
         <p class="chord-sub">Kunci dasar yang paling sering dipakai di lagu pop/indie — termasuk lagu Margonoandi. Senar tebal di kiri = E rendah (senar 6).</p>
@@ -734,6 +743,50 @@
     </div>
 
     <div class="chord-tip">&#128161; Tekan senar tepat di belakang garis fret (bukan di atasnya). Petik satu-satu dulu untuk cek tiap senar bunyi bersih, baru strum. Latih perpindahan <b>C &harr; G &harr; D &harr; Em</b> pelan-pelan tiap hari.</div>
+    </div>{{-- /chordGitar --}}
+
+    {{-- ===== PIANO ===== --}}
+    <div id="chordPiano" style="display:none;">
+        <div class="chord-head">
+            <div class="chord-title">&#127929; Chord Piano untuk Pemula</div>
+            <p class="chord-sub">Tiap chord = beberapa tuts ditekan bersamaan. Tuts <b style="color:#2186A8;">biru</b> = nada chord, <b style="color:#0f5a78;">biru tua</b> = nada dasar (root). Ketuk kartu untuk dengar.</p>
+            <div class="chord-filter" id="pianoFilter">
+                <span class="chord-chip active" data-c="all" onclick="pianoFilter('all',this)">Semua</span>
+                <span class="chord-chip" data-c="mayor" onclick="pianoFilter('mayor',this)">Mayor</span>
+                <span class="chord-chip" data-c="minor" onclick="pianoFilter('minor',this)">Minor</span>
+                <span class="chord-chip" data-c="seven" onclick="pianoFilter('seven',this)">Septim (7)</span>
+            </div>
+        </div>
+        <div class="chord-grid" id="pianoGrid"></div>
+
+        <div class="chord-head" style="margin-top:1.5rem;">
+            <div class="chord-title">&#127899; Chord Geser (Transpose)</div>
+            <p class="chord-sub">Satu bentuk, geser nada dasar naik/turun = chord baru. Konsep sama dengan gitar.</p>
+        </div>
+        <div class="chord-filter" id="pianoQual">
+            <span class="chord-chip active" data-q="maj" onclick="pianoQual('maj',this)">Mayor</span>
+            <span class="chord-chip" data-q="min" onclick="pianoQual('min',this)">Minor</span>
+            <span class="chord-chip" data-q="dom7" onclick="pianoQual('dom7',this)">7</span>
+            <span class="chord-chip" data-q="m7" onclick="pianoQual('m7',this)">m7</span>
+            <span class="chord-chip" data-q="maj7" onclick="pianoQual('maj7',this)">maj7</span>
+        </div>
+        <div class="barre-player">
+            <div class="barre-diagram" id="pianoDiagram"></div>
+            <div class="barre-row">
+                <div class="barre-ctrl">
+                    <div class="barre-name" id="pianoName">C</div>
+                    <div class="barre-fret" id="pianoRootLbl">Nada dasar C</div>
+                    <div class="barre-btns">
+                        <button type="button" onclick="pianoMove(-1)">&#9664; turun</button>
+                        <input type="range" id="pianoRoot" min="0" max="11" value="0" oninput="pianoSlide()">
+                        <button type="button" onclick="pianoMove(1)">naik &#9654;</button>
+                    </div>
+                    <button type="button" class="barre-sound" onclick="pianoPlayCur()">&#128266; Bunyikan chord</button>
+                </div>
+            </div>
+        </div>
+        <div class="chord-tip">&#128161; Mayor &amp; minor cuma beda satu tuts (nada tengah). Coba dengar bedanya pakai tombol Bunyikan.</div>
+    </div>
 </div>
 
 {{-- EDIT NOTE MODAL --}}
@@ -918,6 +971,69 @@ function barreSlide(){ barreState.fret = parseInt(document.getElementById('barre
 function barrePlay(){ var sh=BARRE[barreState.shape], p=barreState.fret; strumChord(sh.off.map(function(o){return o===-99?-1:p+o;}), true); }
 function barreBasePlay(){ var sh=BARRE[barreState.shape]; strumChord(sh.off.map(function(o){return o===-99?-1:o;}), true); }
 barreRender();
+
+/* ===== PIANO ===== */
+var NOTE_NAMES=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+var PIANO_TYPES={ maj:[0,4,7], min:[0,3,7], dom7:[0,4,7,10], m7:[0,3,7,10], maj7:[0,4,7,11] };
+var QUAL_SUF={ maj:'', min:'m', dom7:'7', m7:'m7', maj7:'maj7' };
+var PIANO_DICT=[
+    {n:'C',cat:'mayor',root:0,type:'maj'},{n:'D',cat:'mayor',root:2,type:'maj'},{n:'E',cat:'mayor',root:4,type:'maj'},
+    {n:'F',cat:'mayor',root:5,type:'maj'},{n:'G',cat:'mayor',root:7,type:'maj'},{n:'A',cat:'mayor',root:9,type:'maj'},
+    {n:'Am',cat:'minor',root:9,type:'min'},{n:'Em',cat:'minor',root:4,type:'min'},{n:'Dm',cat:'minor',root:2,type:'min'},
+    {n:'C7',cat:'seven',root:0,type:'dom7'},{n:'G7',cat:'seven',root:7,type:'dom7'},{n:'D7',cat:'seven',root:2,type:'dom7'},
+    {n:'A7',cat:'seven',root:9,type:'dom7'},{n:'E7',cat:'seven',root:4,type:'dom7'}
+];
+function pianoSvg(semis, rootSemi){
+    var whites=[0,2,4,5,7,9,11,12,14,16,17,19,21,23], blacks=[1,3,6,8,10,13,15,18,20,22];
+    var ww=20, wh=78, bw=12, bh=48, padT=4, W=whites.length*ww, H=wh+padT+13;
+    var set={}; (semis||[]).forEach(function(s){ set[(s%24+24)%24]=1; });
+    var xW={}, s='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">';
+    whites.forEach(function(sem, i){ var x=i*ww; xW[sem]=x; var hl=set[sem], fill=hl?(sem===rootSemi?'#1E7FA8':'#7EC8E3'):'#fff';
+        s+='<rect x="'+x+'" y="'+padT+'" width="'+(ww-1)+'" height="'+wh+'" rx="2.5" fill="'+fill+'" stroke="#9bb6c4" stroke-width="0.8"/>'; });
+    s+='<text x="0" y="'+(padT+wh+10)+'" font-size="8" fill="#9bb6c4">C</text><text x="'+(7*ww)+'" y="'+(padT+wh+10)+'" font-size="8" fill="#9bb6c4">C</text>';
+    blacks.forEach(function(sem){ var x=xW[sem-1]+ww-bw/2; var hl=set[sem], fill=hl?(sem===rootSemi?'#0b4a64':'#2186A8'):'#2a3a45';
+        s+='<rect x="'+x+'" y="'+padT+'" width="'+bw+'" height="'+bh+'" rx="2" fill="'+fill+'"/>'; });
+    return s+'</svg>';
+}
+function playPiano(semis){
+    try { chordAudioCtx = chordAudioCtx || new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return; }
+    if (chordAudioCtx.state==='suspended') chordAudioCtx.resume();
+    var ctx=chordAudioCtx, t0=ctx.currentTime+0.02;
+    semis.forEach(function(sm, k){ var t=t0+k*0.012, hz=130.81*Math.pow(2, sm/12);
+        var osc=ctx.createOscillator(), g=ctx.createGain(), lp=ctx.createBiquadFilter();
+        osc.type='triangle'; osc.frequency.value=hz; lp.type='lowpass'; lp.frequency.value=2800;
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.17,t+0.005); g.gain.exponentialRampToValueAtTime(0.0008,t+1.8);
+        osc.connect(lp); lp.connect(g); g.connect(ctx.destination); osc.start(t); osc.stop(t+1.9);
+    });
+}
+function renderPiano(cat){
+    var grid=document.getElementById('pianoGrid'); if(!grid) return; grid.innerHTML='';
+    PIANO_DICT.filter(function(c){ return !cat||cat==='all'||c.cat===cat; }).forEach(function(c){
+        var semis=PIANO_TYPES[c.type].map(function(iv){ return c.root+iv; });
+        var card=document.createElement('div'); card.className='chord-card'; card.style.cursor='pointer'; card.title='Ketuk untuk dengar';
+        card.innerHTML='<div class="cc-name">'+c.n+' <span style="font-size:10px;opacity:0.6;">&#128266;</span></div>'+pianoSvg(semis, c.root);
+        card.addEventListener('click', function(){ playPiano(semis); });
+        grid.appendChild(card);
+    });
+}
+function pianoFilter(cat, el){ document.querySelectorAll('#pianoFilter .chord-chip').forEach(function(x){x.classList.remove('active');}); el.classList.add('active'); renderPiano(cat); }
+var pianoState={qual:'maj', root:0};
+function pianoRender(){
+    var iv=PIANO_TYPES[pianoState.qual], semis=iv.map(function(x){ return pianoState.root+x; });
+    var d=document.getElementById('pianoDiagram'); if(d) d.innerHTML=pianoSvg(semis, pianoState.root);
+    var nm=document.getElementById('pianoName'); if(nm) nm.textContent=NOTE_NAMES[pianoState.root]+QUAL_SUF[pianoState.qual];
+    var rl=document.getElementById('pianoRootLbl'); if(rl) rl.textContent='Nada dasar '+NOTE_NAMES[pianoState.root];
+}
+function pianoQual(q, el){ pianoState.qual=q; document.querySelectorAll('#pianoQual .chord-chip').forEach(function(x){x.classList.remove('active');}); el.classList.add('active'); pianoRender(); }
+function pianoMove(d){ pianoState.root=(pianoState.root+d+12)%12; document.getElementById('pianoRoot').value=pianoState.root; pianoRender(); }
+function pianoSlide(){ pianoState.root=parseInt(document.getElementById('pianoRoot').value,10)||0; pianoRender(); }
+function pianoPlayCur(){ var iv=PIANO_TYPES[pianoState.qual]; playPiano(iv.map(function(x){ return pianoState.root+x; })); }
+function chordInst(inst, el){
+    document.querySelectorAll('#chordInst .chord-instbtn').forEach(function(x){ x.classList.remove('active'); }); el.classList.add('active');
+    document.getElementById('chordGitar').style.display = inst==='gitar'?'block':'none';
+    document.getElementById('chordPiano').style.display = inst==='piano'?'block':'none';
+}
+renderPiano('all'); pianoRender();
 
 /* ===== NOTE COLOR ===== */
 function selectColor(color, el) {
