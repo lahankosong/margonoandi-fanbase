@@ -25,8 +25,8 @@
 
     /* Image grid */
     .img-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(56px,1fr)); gap:6px; max-height:240px; overflow-y:auto; padding:2px; }
-    .img-pick { position:relative; aspect-ratio:9/16; border-radius:6px; overflow:hidden; border:2px solid var(--border); cursor:pointer; background:var(--bg-3); }
-    .img-pick img { width:100%; height:100%; object-fit:cover; display:block; }
+    .img-pick { position:relative; aspect-ratio:1/1; border-radius:6px; overflow:hidden; border:2px solid var(--border); cursor:pointer; background:#1b2630; }
+    .img-pick img { width:100%; height:100%; object-fit:contain; display:block; }
     .img-pick.sel { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-dim); }
     .img-pick.sel::after { content:attr(data-ord); position:absolute; top:2px; left:3px; color:#fff; background:var(--accent); border-radius:50%; min-width:15px; height:15px; padding:0 3px; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; }
     .vb-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.1rem; align-items:start; }
@@ -222,7 +222,11 @@
             <button onclick="closeCrop()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-3);line-height:1;">&times;</button>
         </h4>
         <canvas id="cropCanvas" style="width:100%;border-radius:8px;border:1px solid var(--border);cursor:grab;touch-action:none;display:block;background:#000;"></canvas>
-        <div class="muted" style="margin-top:6px;">Seret untuk geser · slider untuk zoom</div>
+        <div class="ratio-opt" id="cropFitOpt" style="margin-top:8px;">
+            <span class="ratio-btn sel" data-f="cover" onclick="cropFit(this)">Penuhi (crop)</span>
+            <span class="ratio-btn" data-f="contain" onclick="cropFit(this)">Muat semua (latar blur)</span>
+        </div>
+        <div class="muted" id="cropHint" style="margin-top:6px;">Seret untuk geser · slider untuk zoom</div>
         <div class="row" style="gap:8px;align-items:center;margin-top:6px;">
             <span class="muted">Zoom</span>
             <input type="range" id="cropZoom" min="1" max="3" step="0.05" value="1" oninput="onCropZoom()" style="flex:1;accent-color:var(--accent);">
@@ -316,8 +320,8 @@ function pickImage(el){
     if (i >= 0){ selImages.splice(i,1); el.classList.remove('sel'); }
     else {
         var isUp = el.dataset.upload === '1';
-        selImages.push(isUp ? {kind:'file', file:el._file, ext:el._ext||'jpg', el:el, crop:{z:1,ox:0.5,oy:0.5}}
-                            : {kind:'url', src:el.dataset.src, ext:'jpg', el:el, crop:{z:1,ox:0.5,oy:0.5}});
+        selImages.push(isUp ? {kind:'file', file:el._file, ext:el._ext||'jpg', el:el, crop:{z:1,ox:0.5,oy:0.5,fit:'cover'}}
+                            : {kind:'url', src:el.dataset.src, ext:'jpg', el:el, crop:{z:1,ox:0.5,oy:0.5,fit:'cover'}});
         el.classList.add('sel');
     }
     renumberImages();
@@ -492,15 +496,27 @@ function loadImageEl(src){
         im.src = src;
     });
 }
-// crop: {z(zoom>=1), ox, oy(fokus 0..1)}. Default = cover tengah.
+// crop: {z(zoom>=1), ox, oy(fokus 0..1), fit:'cover'|'contain'}.
 function coverDraw(ctx, im, W, H, crop){
     var iw = im.naturalWidth || im.width, ih = im.naturalHeight || im.height;
+    var vf = (vfFilter && vfFilter !== 'none') ? vfFilter : '';
+    if (crop && crop.fit === 'contain'){
+        // latar = versi cover yang di-blur + digelapkan; gambar utuh di atasnya
+        var sB = Math.max(W/iw, H/ih) * 1.1, dwB = iw*sB, dhB = ih*sB;
+        ctx.filter = ('blur(' + Math.max(8, Math.round(W*0.04)) + 'px) brightness(0.55) ' + vf).trim();
+        ctx.drawImage(im, (W-dwB)/2, (H-dhB)/2, dwB, dhB);
+        var sC = Math.min(W/iw, H/ih), dwC = iw*sC, dhC = ih*sC;
+        ctx.filter = vf || 'none';
+        ctx.drawImage(im, (W-dwC)/2, (H-dhC)/2, dwC, dhC);
+        ctx.filter = 'none';
+        return;
+    }
     var z = (crop && crop.z) ? crop.z : 1;
     var s = Math.max(W/iw, H/ih) * z, dw = iw*s, dh = ih*s;
     var ox = crop ? crop.ox : 0.5, oy = crop ? crop.oy : 0.5;
     var oxMin = (W/2)/dw, oyMin = (H/2)/dh;
     ox = clamp(ox, oxMin, 1-oxMin); oy = clamp(oy, oyMin, 1-oyMin);
-    ctx.filter = vfFilter || 'none';
+    ctx.filter = vf || 'none';
     ctx.drawImage(im, W/2 - ox*dw, H/2 - oy*dh, dw, dh);
     ctx.filter = 'none';
 }
@@ -835,11 +851,22 @@ function cropNav(d){ cropIdx = (cropIdx + d + selImages.length) % selImages.leng
 function cropDims(){ var dm = ratioDims(), AR = dm[0]/dm[1], W = 300, H = Math.round(W/AR); return [W,H]; }
 async function cropLoad(){
     var s = selImages[cropIdx]; if (!s) return;
-    if (!s.crop) s.crop = {z:1,ox:0.5,oy:0.5};
+    if (!s.crop) s.crop = {z:1,ox:0.5,oy:0.5,fit:'cover'};
+    if (!s.crop.fit) s.crop.fit = 'cover';
     document.getElementById('cropIdx').textContent = (cropIdx+1) + '/' + selImages.length;
     document.getElementById('cropZoom').value = s.crop.z;
+    document.querySelectorAll('#cropFitOpt .ratio-btn').forEach(function(b){ b.classList.toggle('sel', b.dataset.f === s.crop.fit); });
+    document.getElementById('cropHint').textContent = s.crop.fit === 'contain' ? 'Gambar tampil utuh, latar otomatis blur — geser/zoom dinonaktifkan.' : 'Seret untuk geser · slider untuk zoom';
     try { var bytes = await fetchBytes(s.kind==='url'?s.src:s.file); var u = URL.createObjectURL(new Blob([bytes])); cropImg = await loadImageEl(u); URL.revokeObjectURL(u); }
     catch(e){ cropImg = null; }
+    cropDraw();
+}
+function cropFit(el){
+    if (!selImages[cropIdx]) return;
+    document.querySelectorAll('#cropFitOpt .ratio-btn').forEach(function(b){ b.classList.remove('sel'); });
+    el.classList.add('sel');
+    selImages[cropIdx].crop.fit = el.dataset.f;
+    document.getElementById('cropHint').textContent = el.dataset.f === 'contain' ? 'Gambar tampil utuh, latar otomatis blur — geser/zoom dinonaktifkan.' : 'Seret untuk geser · slider untuk zoom';
     cropDraw();
 }
 function cropDraw(){
@@ -847,16 +874,18 @@ function cropDraw(){
     var x = cv.getContext('2d'); x.fillStyle='#000'; x.fillRect(0,0,cv.width,cv.height);
     if (cropImg) coverDraw(x, cropImg, cv.width, cv.height, selImages[cropIdx] && selImages[cropIdx].crop);
 }
-function onCropZoom(){ if(selImages[cropIdx]){ selImages[cropIdx].crop.z = parseFloat(document.getElementById('cropZoom').value); cropDraw(); } }
-function cropReset(){ if(selImages[cropIdx]){ selImages[cropIdx].crop = {z:1,ox:0.5,oy:0.5}; document.getElementById('cropZoom').value=1; cropDraw(); } }
+function onCropZoom(){ if(selImages[cropIdx] && selImages[cropIdx].crop.fit!=='contain'){ selImages[cropIdx].crop.z = parseFloat(document.getElementById('cropZoom').value); cropDraw(); } }
+function cropReset(){ if(selImages[cropIdx]){ var f=selImages[cropIdx].crop.fit||'cover'; selImages[cropIdx].crop = {z:1,ox:0.5,oy:0.5,fit:f}; document.getElementById('cropZoom').value=1; cropDraw(); } }
 (function(){
     var cv = document.getElementById('cropCanvas'); if (!cv) return;
     var dr=false, lx=0, ly=0;
     function tc(ev){ var r=cv.getBoundingClientRect(); return {x:(ev.clientX-r.left)*(cv.width/r.width), y:(ev.clientY-r.top)*(cv.height/r.height)}; }
     cv.addEventListener('pointerdown', function(ev){ if(!cropImg) return; dr=true; var p=tc(ev); lx=p.x; ly=p.y; try{cv.setPointerCapture(ev.pointerId);}catch(e){} cv.style.cursor='grabbing'; ev.preventDefault(); });
     cv.addEventListener('pointermove', function(ev){
-        if (!dr || !cropImg) return; var p=tc(ev), dx=p.x-lx, dy=p.y-ly; lx=p.x; ly=p.y;
-        var crop = selImages[cropIdx].crop, iw=cropImg.naturalWidth, ih=cropImg.naturalHeight;
+        if (!dr || !cropImg) return;
+        var crop = selImages[cropIdx].crop; if (crop.fit === 'contain') return;
+        var p=tc(ev), dx=p.x-lx, dy=p.y-ly; lx=p.x; ly=p.y;
+        var iw=cropImg.naturalWidth, ih=cropImg.naturalHeight;
         var s = Math.max(cv.width/iw, cv.height/ih)*crop.z, dw=iw*s, dh=ih*s;
         crop.ox = clamp(crop.ox - dx/dw, 0, 1); crop.oy = clamp(crop.oy - dy/dh, 0, 1);
         cropDraw();
