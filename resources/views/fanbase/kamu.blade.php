@@ -146,6 +146,8 @@
     .barre-btns button { background:var(--surface); border:1px solid var(--border); color:var(--text-2); border-radius:8px; padding:6px 10px; font-size:12px; cursor:pointer; }
     .barre-btns button:hover { border-color:var(--sky); color:var(--sky-dk); }
     .barre-btns input[type=range] { flex:1; accent-color:var(--sky); }
+    .barre-sound { margin-top:10px; background:var(--sky); color:#fff; border:none; border-radius:8px; padding:8px 14px; font-size:12px; font-weight:600; cursor:pointer; }
+    .barre-sound:hover { filter:brightness(0.92); }
 
     /* ===== GUITAR TUNER ===== */
     .tuner-card {
@@ -714,9 +716,9 @@
     <div class="barre-player">
         <div class="barre-diagram" id="barreDiagram"></div>
         <div class="barre-row">
-            <div class="barre-base">
+            <div class="barre-base" onclick="barreBasePlay()" title="Ketuk untuk dengar bentuk dasar" style="cursor:pointer;">
                 <div id="barreBaseSvg"></div>
-                <div class="barre-base-lbl">Bentuk dasar: <b id="barreBaseName">E</b></div>
+                <div class="barre-base-lbl">Bentuk dasar: <b id="barreBaseName">E</b> &#128266;</div>
             </div>
             <div class="barre-ctrl">
                 <div class="barre-name" id="barreName">F</div>
@@ -726,6 +728,7 @@
                     <input type="range" id="barreFret" min="1" max="12" value="1" oninput="barreSlide()">
                     <button type="button" onclick="barreMove(1)">naik &#9654;</button>
                 </div>
+                <button type="button" class="barre-sound" onclick="barrePlay()">&#128266; Bunyikan chord</button>
             </div>
         </div>
     </div>
@@ -783,6 +786,28 @@ var CHORDS = [
     {n:'C7', cat:'seven', f:[-1,3,2,3,1,0], fg:[0,3,2,4,1,0], tip:''},
     {n:'B7', cat:'seven', f:[-1,2,1,2,0,2], fg:[0,2,1,3,0,4], tip:''}
 ];
+/* ===== BUNYI STRUM (Web Audio) ===== */
+var chordAudioCtx=null;
+var OPEN_HZ=[82.41,110.00,146.83,196.00,246.94,329.63]; // E A D G B e
+function strumChord(fr, down){
+    try { chordAudioCtx = chordAudioCtx || new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return; }
+    if (chordAudioCtx.state==='suspended') chordAudioCtx.resume();
+    var ctx=chordAudioCtx, t0=ctx.currentTime+0.02;
+    var notes=[];
+    for (var i=0;i<6;i++){ if(fr[i]>=0) notes.push({i:i, hz:OPEN_HZ[i]*Math.pow(2, fr[i]/12)}); }
+    if (down===false) notes.reverse();   // up-strum
+    notes.forEach(function(n, k){
+        var t=t0+k*0.038;
+        var osc=ctx.createOscillator(), g=ctx.createGain(), lp=ctx.createBiquadFilter();
+        osc.type='triangle'; osc.frequency.value=n.hz;
+        lp.type='lowpass'; lp.frequency.value=3200;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.20, t+0.006);
+        g.gain.exponentialRampToValueAtTime(0.0008, t+1.6);
+        osc.connect(lp); lp.connect(g); g.connect(ctx.destination);
+        osc.start(t); osc.stop(t+1.7);
+    });
+}
 function chordSvg(c){
     var W=88, H=110, padX=12, top=24, bot=14, nf=4, ns=6;
     var gw=W-padX*2, gh=H-top-bot, sx=gw/(ns-1), fy=gh/nf, fr=c.f, fg=c.fg||[];
@@ -820,7 +845,7 @@ function neckSvg(fr, fg){
     var s='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">';
     // titik penanda fret (inlay)
     [3,5,7,9,15].forEach(function(f){ s+='<circle cx="'+fx(f)+'" cy="'+(padT+2.5*sy)+'" r="2.7" fill="#d4e6f0"/>'; });
-    s+='<circle cx="'+fx(12)+'" cy="'+(padT+1.5*sy)+'" r="2.7" fill="#d4e6f0"/><circle cx="'+fx(12)+'" cy="'+(padT+4.5*sy)+'" r="2.7" fill="#d4e6f0"/>';
+    s+='<circle cx="'+fx(12)+'" cy="'+(padT+1.5*sy)+'" r="2.7" fill="#d4e6f0"/><circle cx="'+fx(12)+'" cy="'+(padT+3.5*sy)+'" r="2.7" fill="#d4e6f0"/>';
     for(var i=0;i<ns;i++){ var y=ry(i); s+='<line x1="'+padL+'" y1="'+y+'" x2="'+(padL+nFr*fw)+'" y2="'+y+'" stroke="#cfe1ec" stroke-width="1"/>'; s+='<text x="4" y="'+(y+3.2)+'" font-size="9" fill="#7a9db0">'+labels[i]+'</text>'; }
     for(var f=1; f<=nFr; f++){ var x=padL+f*fw; s+='<line x1="'+x+'" y1="'+padT+'" x2="'+x+'" y2="'+(padT+gh)+'" stroke="#cfe1ec" stroke-width="1"/>'; }
     s+='<rect x="'+(padL-2)+'" y="'+padT+'" width="2.5" height="'+gh+'" fill="#5a7282"/>';
@@ -840,8 +865,9 @@ function renderChords(cat){
     var grid=document.getElementById('chordGrid'); if(!grid) return;
     grid.innerHTML='';
     CHORDS.filter(function(c){ return !cat||cat==='all'||c.cat===cat; }).forEach(function(c){
-        var card=document.createElement('div'); card.className='chord-card';
-        card.innerHTML='<div class="cc-name">'+c.n+'</div>'+chordSvg(c)+(c.tip?'<div class="cc-tip">'+c.tip+'</div>':'');
+        var card=document.createElement('div'); card.className='chord-card'; card.style.cursor='pointer'; card.title='Ketuk untuk dengar';
+        card.innerHTML='<div class="cc-name">'+c.n+' <span style="font-size:10px;opacity:0.6;">&#128266;</span></div>'+chordSvg(c)+(c.tip?'<div class="cc-tip">'+c.tip+'</div>':'');
+        card.addEventListener('click', function(){ strumChord(c.f, true); });
         grid.appendChild(card);
     });
 }
@@ -889,6 +915,8 @@ function barreMove(d){
     document.getElementById('barreFret').value = barreState.fret; barreRender();
 }
 function barreSlide(){ barreState.fret = parseInt(document.getElementById('barreFret').value,10)||1; barreRender(); }
+function barrePlay(){ var sh=BARRE[barreState.shape], p=barreState.fret; strumChord(sh.off.map(function(o){return o===-99?-1:p+o;}), true); }
+function barreBasePlay(){ var sh=BARRE[barreState.shape]; strumChord(sh.off.map(function(o){return o===-99?-1:o;}), true); }
 barreRender();
 
 /* ===== NOTE COLOR ===== */
