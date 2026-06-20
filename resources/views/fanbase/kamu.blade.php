@@ -117,6 +117,22 @@
     .kamu-tab-content { display: none; }
     .kamu-tab-content.active { display: block; }
 
+    /* ===== CHORD ===== */
+    .chord-head { margin-bottom: 1rem; }
+    .chord-title { font-family:'Sora',sans-serif; font-size:1rem; font-weight:600; color:var(--text-1); }
+    .chord-sub { font-size:12px; color:var(--text-3); margin-top:4px; line-height:1.5; }
+    .chord-legend { display:flex; flex-wrap:wrap; gap:12px; margin-top:8px; font-size:11px; color:var(--text-2); }
+    .chord-legend b { color:var(--sky-dk); }
+    .chord-filter { display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }
+    .chord-chip { font-size:12px; padding:5px 12px; border-radius:20px; background:var(--surface); border:1px solid var(--border); color:var(--text-2); cursor:pointer; transition:0.15s; }
+    .chord-chip.active { background:var(--sky); color:#fff; border-color:var(--sky); }
+    .chord-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(94px,1fr)); gap:10px; }
+    .chord-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:10px 6px 9px; text-align:center; box-shadow:var(--shadow-sm); }
+    .chord-card .cc-name { font-family:'Sora',sans-serif; font-weight:700; font-size:14px; color:var(--text-1); margin-bottom:4px; }
+    .chord-card .cc-tip { font-size:10px; color:var(--text-3); margin-top:6px; line-height:1.4; }
+    .chord-card svg { width:78px; height:auto; }
+    .chord-tip { margin-top:1rem; font-size:12px; color:var(--text-2); background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:11px 14px; line-height:1.6; }
+
     /* ===== GUITAR TUNER ===== */
     .tuner-card {
         background: #080f1a;
@@ -502,6 +518,9 @@
     <button class="kamu-tab" onclick="kamuTab('Tuner', this)">
         &#127928; Tuner
     </button>
+    <button class="kamu-tab" onclick="kamuTab('Chord', this)">
+        &#127928; Chord
+    </button>
 </div>
 
 {{-- TAB: NOTES --}}
@@ -645,6 +664,27 @@
 </div>
 </div>
 
+{{-- TAB: CHORD --}}
+<div class="kamu-tab-content" id="kamuTabChord">
+    <div class="chord-head">
+        <div class="chord-title">&#127928; Chord Gitar untuk Pemula</div>
+        <p class="chord-sub">Kunci dasar yang paling sering dipakai di lagu pop/indie — termasuk lagu Margonoandi. Senar tebal di kiri = E rendah (senar 6).</p>
+        <div class="chord-legend">
+            <span><b>&times;</b> jangan dibunyikan</span>
+            <span><b>o</b> senar terbuka</span>
+            <span><b>1&ndash;4</b> jari (telunjuk&ndash;kelingking)</span>
+        </div>
+        <div class="chord-filter" id="chordFilter">
+            <span class="chord-chip active" data-c="all" onclick="chordFilter('all',this)">Semua</span>
+            <span class="chord-chip" data-c="mayor" onclick="chordFilter('mayor',this)">Mayor</span>
+            <span class="chord-chip" data-c="minor" onclick="chordFilter('minor',this)">Minor</span>
+            <span class="chord-chip" data-c="seven" onclick="chordFilter('seven',this)">Septim (7)</span>
+        </div>
+    </div>
+    <div class="chord-grid" id="chordGrid"></div>
+    <div class="chord-tip">&#128161; Tekan senar tepat di belakang garis fret (bukan di atasnya). Petik satu-satu dulu untuk cek tiap senar bunyi bersih, baru strum. Latih perpindahan <b>C &harr; G &harr; D &harr; Em</b> pelan-pelan tiap hari.</div>
+</div>
+
 {{-- EDIT NOTE MODAL --}}
 <div class="note-modal-overlay" id="noteModal" onclick="closeNoteModal()">
     <div class="note-modal" onclick="event.stopPropagation()">
@@ -676,6 +716,62 @@ function kamuTab(name, btn) {
     // Stop tuner ketika pindah tab
     if (name !== 'Tuner' && tunerRunning) tunerStop();
 }
+
+/* ===== CHORD (kamus pemula) ===== */
+var CHORDS = [
+    {n:'C',  cat:'mayor', f:[-1,3,2,0,1,0], fg:[0,3,2,0,1,0], tip:'Jari 3-2-1, senar bawah dibiarkan terbuka.'},
+    {n:'G',  cat:'mayor', f:[3,2,0,0,0,3], fg:[2,1,0,0,0,3], tip:'Jari 2 & 1 di senar 6-5, jari 3 di senar 1.'},
+    {n:'D',  cat:'mayor', f:[-1,-1,0,2,3,2], fg:[0,0,0,1,3,2], tip:'Bentuk segitiga di 3 senar tipis.'},
+    {n:'A',  cat:'mayor', f:[-1,0,2,2,2,0], fg:[0,0,1,2,3,0], tip:'Tiga jari sejajar di fret 2.'},
+    {n:'E',  cat:'mayor', f:[0,2,2,1,0,0], fg:[0,2,3,1,0,0], tip:'Chord favorit Margonoandi.'},
+    {n:'F',  cat:'mayor', f:[-1,-1,3,2,1,1], fg:[0,0,3,2,1,1], tip:'Versi mudah 4 senar, tanpa barre.'},
+    {n:'Am', cat:'minor', f:[-1,0,2,2,1,0], fg:[0,0,2,3,1,0], tip:'Mirip E digeser — nuansa galau.'},
+    {n:'Em', cat:'minor', f:[0,2,2,0,0,0], fg:[0,2,3,0,0,0], tip:'Paling gampang, cuma 2 jari.'},
+    {n:'Dm', cat:'minor', f:[-1,-1,0,2,3,1], fg:[0,0,0,2,3,1], tip:'Segitiga kecil, senar 1 ditekan.'},
+    {n:'A7', cat:'seven', f:[-1,0,2,0,2,0], fg:[0,0,1,0,2,0], tip:''},
+    {n:'D7', cat:'seven', f:[-1,-1,0,2,1,2], fg:[0,0,0,2,1,3], tip:''},
+    {n:'E7', cat:'seven', f:[0,2,0,1,0,0], fg:[0,2,0,1,0,0], tip:''},
+    {n:'G7', cat:'seven', f:[3,2,0,0,0,1], fg:[3,2,0,0,0,1], tip:''},
+    {n:'C7', cat:'seven', f:[-1,3,2,3,1,0], fg:[0,3,2,4,1,0], tip:''},
+    {n:'B7', cat:'seven', f:[-1,2,1,2,0,2], fg:[0,2,1,3,0,4], tip:''}
+];
+function chordSvg(c){
+    var W=88, H=110, padX=12, top=24, bot=14, nf=4, ns=6;
+    var gw=W-padX*2, gh=H-top-bot, sx=gw/(ns-1), fy=gh/nf, fr=c.f, fg=c.fg||[];
+    var fretted=fr.filter(function(v){return v>0;});
+    var maxF=fretted.length?Math.max.apply(null,fretted):0, minF=fretted.length?Math.min.apply(null,fretted):0;
+    var base=(maxF<=nf)?1:minF;
+    var s='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">';
+    for(var f=0; f<=nf; f++){ var y=top+f*fy; s+='<line x1="'+padX+'" y1="'+y+'" x2="'+(padX+gw)+'" y2="'+y+'" stroke="#cfe1ec" stroke-width="1"/>'; }
+    if(base===1){ s+='<rect x="'+padX+'" y="'+(top-3)+'" width="'+gw+'" height="3" rx="1" fill="#5a7282"/>'; }
+    else { s+='<text x="'+(padX-3)+'" y="'+(top+fy*0.72)+'" font-size="9" text-anchor="end" fill="#7a9db0">'+base+'fr</text>'; }
+    for(var i=0;i<ns;i++){ var x=padX+i*sx; s+='<line x1="'+x+'" y1="'+top+'" x2="'+x+'" y2="'+(top+gh)+'" stroke="#cfe1ec" stroke-width="1"/>'; }
+    for(var i=0;i<ns;i++){
+        var x=padX+i*sx, v=fr[i];
+        if(v<0){ s+='<text x="'+x+'" y="'+(top-6)+'" font-size="11" text-anchor="middle" fill="#e0567a">&#215;</text>'; }
+        else if(v===0){ s+='<circle cx="'+x+'" cy="'+(top-10)+'" r="3.6" fill="none" stroke="#7a9db0" stroke-width="1.3"/>'; }
+        else {
+            var pos=v-base+1, cy=top+(pos-0.5)*fy;
+            s+='<circle cx="'+x+'" cy="'+cy+'" r="6.6" fill="#2186A8"/>';
+            var fn=fg[i]; if(fn>0) s+='<text x="'+x+'" y="'+(cy+3.3)+'" font-size="9" text-anchor="middle" fill="#fff" font-weight="700">'+fn+'</text>';
+        }
+    }
+    return s+'</svg>';
+}
+function renderChords(cat){
+    var grid=document.getElementById('chordGrid'); if(!grid) return;
+    grid.innerHTML='';
+    CHORDS.filter(function(c){ return !cat||cat==='all'||c.cat===cat; }).forEach(function(c){
+        var card=document.createElement('div'); card.className='chord-card';
+        card.innerHTML='<div class="cc-name">'+c.n+'</div>'+chordSvg(c)+(c.tip?'<div class="cc-tip">'+c.tip+'</div>':'');
+        grid.appendChild(card);
+    });
+}
+function chordFilter(cat, el){
+    document.querySelectorAll('#chordFilter .chord-chip').forEach(function(x){ x.classList.remove('active'); });
+    el.classList.add('active'); renderChords(cat);
+}
+renderChords('all');
 
 /* ===== NOTE COLOR ===== */
 function selectColor(color, el) {
