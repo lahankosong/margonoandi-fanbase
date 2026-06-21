@@ -1,6 +1,18 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="light">
 <head>
+    <script>
+    /* Tema otomatis ikut jam HP user: 06:00-17:59 = terang, selainnya = gelap.
+       ?theme=dark / ?theme=light hanya untuk preview (tidak disimpan). */
+    (function(){
+        try {
+            var p = new URLSearchParams(location.search).get('theme'), t;
+            if (p === 'dark' || p === 'light') { t = p; }
+            else { var h = new Date().getHours(); t = (h >= 6 && h < 18) ? 'light' : 'dark'; }
+            document.documentElement.setAttribute('data-theme', t);
+        } catch(e){}
+    })();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -43,6 +55,42 @@
             --radius:     16px;
             --radius-lg:  24px;
         }
+
+        /* ===== DARK THEME (otomatis ikut jam HP user) ===== */
+        [data-theme="dark"] {
+            --sky-lt:     rgba(56,168,204,0.15);
+            --cream:      #0b1520;
+            --cream-dk:   #0f1e2e;
+            --orange-lt:  rgba(240,112,64,0.15);
+            --text-1:     #EAF2F7;
+            --text-2:     #B6C9D6;
+            --text-3:     #7F9AAC;
+            --text-4:     #5C7488;
+            --border:     #24384F;
+            --border-lt:  #1B2B3F;
+            --surface:    #16273B;
+            --card:       #132235;
+            --shadow-sm:  0 1px 4px rgba(0,0,0,0.35);
+            --shadow:     0 4px 16px rgba(0,0,0,0.45);
+            --shadow-lg:  0 8px 32px rgba(0,0,0,0.55);
+            --shadow-xl:  0 16px 48px rgba(0,0,0,0.60);
+        }
+        /* override surface yang warnanya dipaku (putih) agar ikut gelap */
+        [data-theme="dark"] .fb-notif-dropdown,
+        [data-theme="dark"] .fb-notif-header,
+        [data-theme="dark"] .fb-profile-dd { background:var(--card); }
+        [data-theme="dark"] .fb-notif-header { border-color:var(--border); }
+        [data-theme="dark"] .fb-dp {
+            background:linear-gradient(135deg, var(--surface) 0%, var(--card) 60%, var(--cream-dk) 100%);
+        }
+        [data-theme="dark"] .fb-playlist {
+            background:linear-gradient(135deg, var(--sky-lt) 0%, var(--surface) 100%);
+        }
+        [data-theme="dark"] .fb-playlist-track.active {
+            background:linear-gradient(90deg, var(--sky-lt) 0%, var(--surface) 100%);
+        }
+        [data-theme="dark"] .fb-alert-success { background:rgba(34,197,94,0.12); color:#86efac; border-color:rgba(34,197,94,0.3); }
+        [data-theme="dark"] .fb-alert-error   { background:rgba(239,68,68,0.12); color:#fca5a5; border-color:rgba(239,68,68,0.3); }
 
         * { margin:0; padding:0; box-sizing:border-box; }
 

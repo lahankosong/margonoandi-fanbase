@@ -354,6 +354,10 @@
     /* 5. polish */
     ::selection { background: var(--sky); color: #fff; }
     .btn-post-aku:focus-visible, .aku-action-btn:focus-visible { outline: 2px solid var(--sky); outline-offset: 2px; }
+
+    /* 6. tambal warna putih yang dipaku saat mode gelap */
+    [data-theme="dark"] .admin-badge { background: var(--surface); color: var(--sky-mid); }
+    [data-theme="dark"] .welcome-banner { background: linear-gradient(135deg, rgba(56,168,204,0.14) 0%, var(--surface) 60%, rgba(240,112,64,0.12) 100%); border-color: var(--sky-dk); }
     @media (prefers-reduced-motion: reduce) {
         .fb-bg-orb-1, .fb-bg-orb-2, .fb-bg-orb-3, .aku-post { animation: none !important; }
         .btn-post-aku::after { display: none; }
