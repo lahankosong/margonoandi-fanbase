@@ -27,11 +27,13 @@
     .hero-photo {
         position: absolute; right: -2%; top: 0; height: 100%;
         width: 52%; object-fit: cover; object-position: top center;
-        opacity: 0.18;
+        opacity: 0; transition: opacity 0.9s ease;
         mask-image: linear-gradient(to left, rgba(0,0,0,0.5) 0%, transparent 80%);
         -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,0.5) 0%, transparent 80%);
     }
-    [data-theme="light"] .hero-photo { opacity: 0.12; }
+    /* foto artis muncul halus saat intro hero dibuka (tidak collapsed) */
+    .hero:not(.collapsed) .hero-photo { opacity: 0.18; }
+    [data-theme="light"] .hero:not(.collapsed) .hero-photo { opacity: 0.12; }
 
     .hero-content { position: relative; z-index: 1; }
     .hero-byline {
@@ -196,8 +198,9 @@
     }
     .fb-ticker:hover .fb-ticker-track { animation-play-state: paused; }
     .fb-ticker-track { display: inline-block; white-space: nowrap; animation: fbticker 30s linear infinite; will-change: transform; }
-    .fb-ticker-track span { display: inline-block; margin: 0 1.4rem; font-size: 13px; color: var(--text-2); font-weight: 500; }
-    .fb-ticker-track span b { color: var(--accent); font-weight: 600; }
+    .fb-ticker-track span { display: inline-block; margin: 0 1.3rem; font-size: 14px; color: var(--text); font-weight: 600; }
+    .fb-ticker-track span b { color: var(--accent); font-weight: 700; }
+    .fb-ticker-track span::before { content: '\2726'; color: var(--accent-2); font-size: 9px; vertical-align: middle; margin-right: 1.3rem; opacity: 0.7; }
     @keyframes fbticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
     /* FANBASE PROMO */
@@ -401,6 +404,8 @@
     @keyframes ard2 { from { transform: translate(0,0) scale(1); } to { transform: translate(-6vw,-4vh) scale(1.12); } }
     @keyframes ard3 { from { transform: translate(0,0) scale(1); } to { transform: translate(-5vw,4vh) scale(1.20); } }
     [data-theme="light"] .aurora-bg { opacity: 0.65; }
+    /* hemat GPU di HP: blur lebih ringan */
+    @media (max-width: 640px) { .aurora-bg b { filter: blur(48px); } }
 
     /* display font + gradient accent text */
     .hero-title, .section-heading, .fb-movement h2 { font-family: 'Space Grotesk', 'Inter', sans-serif; }
@@ -426,9 +431,12 @@
     }
     .btn-primary:hover::after { left: 145%; }
 
-    /* ticker: tepi memudar + gradasi halus */
+    /* ticker: lebih menonjol — tint aksen + tepi bercahaya + tepi memudar */
     .fb-ticker {
-        background: linear-gradient(90deg, var(--bg-2), var(--card-bg), var(--bg-2));
+        background: linear-gradient(90deg, rgba(56,168,204,0.12), rgba(240,112,64,0.08) 50%, rgba(56,168,204,0.12));
+        border-top: 1px solid var(--accent-dim); border-bottom: 1px solid var(--accent-dim);
+        padding: 13px 0;
+        box-shadow: 0 0 24px -8px var(--accent-glow) inset;
         -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
         mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
     }
@@ -461,7 +469,7 @@
     .btn-primary:focus-visible, .btn-ghost:focus-visible, .hero-collapse:focus-visible, .fb-ticker:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
     @media (prefers-reduced-motion: reduce) {
-        .aurora-bg b, .eq i { animation: none !important; }
+        .aurora-bg b, .eq i, .fb-ticker-track { animation: none !important; }
         .reveal { opacity: 1 !important; transform: none !important; }
         .btn-primary::after { display: none; }
     }
