@@ -118,7 +118,7 @@
     .kamu-tab-content.active { display: block; }
 
     /* ===== CHORD ===== */
-    .chord-inst { display:flex; gap:8px; margin-bottom:14px; }
+    .chord-inst { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
     .chord-instbtn { font-size:13px; padding:8px 18px; border-radius:20px; background:var(--surface); border:1px solid var(--border); color:var(--text-2); cursor:pointer; font-weight:600; }
     .chord-instbtn.active { background:var(--sky); color:#fff; border-color:var(--sky); }
     .chord-head { margin-bottom: 1rem; }
@@ -690,6 +690,8 @@
     <div class="chord-inst" id="chordInst">
         <span class="chord-instbtn active" data-i="gitar" onclick="chordInst('gitar',this)">&#127928; Gitar</span>
         <span class="chord-instbtn" data-i="piano" onclick="chordInst('piano',this)">&#127929; Piano</span>
+        <span class="chord-instbtn" data-i="ukulele" onclick="chordInst('ukulele',this)">&#127926; Ukulele</span>
+        <span class="chord-instbtn" data-i="bass" onclick="chordInst('bass',this)">&#127925; Bass</span>
     </div>
 
     <div id="chordGitar">
@@ -789,6 +791,77 @@
         </div>
         <div class="chord-tip">&#128161; Mayor &amp; minor cuma beda satu tuts (nada tengah). Coba dengar bedanya pakai tombol Bunyikan.</div>
     </div>
+
+    {{-- ===== UKULELE ===== --}}
+    <div id="chordUkulele" style="display:none;">
+        <div class="chord-head">
+            <div class="chord-title">&#127926; Chord Ukulele untuk Pemula</div>
+            <p class="chord-sub">Senar G&ndash;C&ndash;E&ndash;A (dari atas). Ketuk kartu untuk dengar. <b>&times;</b> tidak dibunyikan, <b>o</b> senar terbuka.</p>
+            <div class="chord-filter" id="ukeFilter">
+                <span class="chord-chip active" data-c="all" onclick="ukeFilter('all',this)">Semua</span>
+                <span class="chord-chip" data-c="mayor" onclick="ukeFilter('mayor',this)">Mayor</span>
+                <span class="chord-chip" data-c="minor" onclick="ukeFilter('minor',this)">Minor</span>
+                <span class="chord-chip" data-c="seven" onclick="ukeFilter('seven',this)">Septim (7)</span>
+            </div>
+        </div>
+        <div class="chord-grid" id="ukeGrid"></div>
+
+        <div class="chord-head" style="margin-top:1.5rem;">
+            <div class="chord-title">&#127899; Chord Geser (Barre)</div>
+            <p class="chord-sub">Satu bentuk, geser naik = nada naik. Pakai bentuk A (telunjuk nge-barre semua senar).</p>
+        </div>
+        <div class="chord-filter" id="ukeShapes">
+            <span class="chord-chip active" data-s="Amaj" onclick="ukeShape('Amaj',this)">Bentuk A</span>
+            <span class="chord-chip" data-s="Amin" onclick="ukeShape('Amin',this)">Bentuk Am</span>
+            <span class="chord-chip" data-s="A7" onclick="ukeShape('A7',this)">Bentuk A7</span>
+        </div>
+        <div class="barre-player">
+            <div class="barre-diagram" id="ukeDiagram"></div>
+            <div class="barre-row">
+                <div class="barre-ctrl">
+                    <div class="barre-name" id="ukeName">A&#9839;</div>
+                    <div class="barre-fret" id="ukeFretLbl">Posisi fret 1</div>
+                    <div class="barre-btns">
+                        <button type="button" onclick="ukeMove(-1)">&#9664; turun</button>
+                        <input type="range" id="ukeFret" min="1" max="10" value="1" oninput="ukeSlide()">
+                        <button type="button" onclick="ukeMove(1)">naik &#9654;</button>
+                    </div>
+                    <button type="button" class="barre-sound" onclick="ukePlayCur()">&#128266; Bunyikan chord</button>
+                </div>
+            </div>
+        </div>
+        <div class="chord-tip">&#128161; Ukulele cuma 4 senar &mdash; paling cepat buat ngiringi nyanyi. Coba <b>C &harr; Am &harr; F &harr; G</b>.</div>
+    </div>
+
+    {{-- ===== BASS ===== --}}
+    <div id="chordBass" style="display:none;">
+        <div class="chord-head">
+            <div class="chord-title">&#127925; Bass untuk Pemula</div>
+            <p class="chord-sub">Senar E&ndash;A&ndash;D&ndash;G. Pola dasar bass = <b>root + kuint + oktaf</b> (tanpa nada ke-3, jadi cocok untuk mayor maupun minor). Ketuk kartu untuk dengar polanya.</p>
+        </div>
+        <div class="chord-grid" id="bassGrid"></div>
+
+        <div class="chord-head" style="margin-top:1.5rem;">
+            <div class="chord-title">&#127899; Geser Nada Dasar</div>
+            <p class="chord-sub">Geser posisi root di senar E &mdash; pola oktaf ikut pindah. Pola ini bisa dipakai untuk chord apa pun.</p>
+        </div>
+        <div class="barre-player">
+            <div class="barre-diagram" id="bassDiagram"></div>
+            <div class="barre-row">
+                <div class="barre-ctrl">
+                    <div class="barre-name" id="bassName">C</div>
+                    <div class="barre-fret" id="bassFretLbl">Root fret 8 (senar E)</div>
+                    <div class="barre-btns">
+                        <button type="button" onclick="bassMove(-1)">&#9664; turun</button>
+                        <input type="range" id="bassFret" min="1" max="12" value="8" oninput="bassSlide()">
+                        <button type="button" onclick="bassMove(1)">naik &#9654;</button>
+                    </div>
+                    <button type="button" class="barre-sound" onclick="bassPlayCur()">&#128266; Bunyikan pola</button>
+                </div>
+            </div>
+        </div>
+        <div class="chord-tip">&#128161; Di bass, kunci utamanya <b>root</b> tiap chord, lalu hias pakai kuint &amp; oktaf. Dengar polanya, lalu tiru.</div>
+    </div>
 </div>
 
 {{-- EDIT NOTE MODAL --}}
@@ -864,7 +937,7 @@ function strumChord(fr, down){
     });
 }
 function chordSvg(c){
-    var W=88, H=110, padX=12, top=24, bot=14, nf=4, ns=6;
+    var W=88, H=110, padX=12, top=24, bot=14, nf=4, ns=(c.f&&c.f.length)||6;
     var gw=W-padX*2, gh=H-top-bot, sx=gw/(ns-1), fy=gh/nf, fr=c.f, fg=c.fg||[];
     var fretted=fr.filter(function(v){return v>0;});
     var maxF=fretted.length?Math.max.apply(null,fretted):0, minF=fretted.length?Math.min.apply(null,fretted):0;
@@ -1030,12 +1103,127 @@ function pianoQual(q, el){ pianoState.qual=q; document.querySelectorAll('#pianoQ
 function pianoMove(d){ pianoState.root=(pianoState.root+d+12)%12; document.getElementById('pianoRoot').value=pianoState.root; pianoRender(); }
 function pianoSlide(){ pianoState.root=parseInt(document.getElementById('pianoRoot').value,10)||0; pianoRender(); }
 function pianoPlayCur(){ var iv=PIANO_TYPES[pianoState.qual]; playPiano(iv.map(function(x){ return pianoState.root+x; })); }
+/* ===== ENGINE GENERIK (uke & bass) ===== */
+function strumGen(fr, openHz, down){
+    try { chordAudioCtx = chordAudioCtx || new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return; }
+    if (chordAudioCtx.state==='suspended') chordAudioCtx.resume();
+    var ctx=chordAudioCtx, t0=ctx.currentTime+0.02, notes=[];
+    for (var i=0;i<fr.length;i++){ if(fr[i]>=0) notes.push(openHz[i]*Math.pow(2, fr[i]/12)); }
+    if (down===false) notes.reverse();
+    notes.forEach(function(hz, k){
+        var t=t0+k*0.04, osc=ctx.createOscillator(), g=ctx.createGain(), lp=ctx.createBiquadFilter();
+        osc.type='triangle'; osc.frequency.value=hz; lp.type='lowpass'; lp.frequency.value=3000;
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.20,t+0.006); g.gain.exponentialRampToValueAtTime(0.0008,t+1.6);
+        osc.connect(lp); lp.connect(g); g.connect(ctx.destination); osc.start(t); osc.stop(t+1.7);
+    });
+}
+/* leher penuh generik (N senar) */
+function neckSvgG(fr, fg, labels){
+    fg=fg||[]; var ns=labels.length, nFr=15, padL=28, padT=18, padB=18, fw=20, sy=15;
+    var gh=(ns-1)*sy, W=padL+nFr*fw+10, H=padT+gh+padB, mid=(ns-1)/2;
+    var fx=function(f){return padL+(f-0.5)*fw;}, ry=function(i){return padT+i*sy;};
+    var s='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">';
+    [3,5,7,9,15].forEach(function(f){ s+='<circle cx="'+fx(f)+'" cy="'+(padT+mid*sy)+'" r="2.7" fill="#d4e6f0"/>'; });
+    s+='<circle cx="'+fx(12)+'" cy="'+(padT+(mid-1)*sy)+'" r="2.7" fill="#d4e6f0"/><circle cx="'+fx(12)+'" cy="'+(padT+(mid+1)*sy)+'" r="2.7" fill="#d4e6f0"/>';
+    for(var i=0;i<ns;i++){ var y=ry(i); s+='<line x1="'+padL+'" y1="'+y+'" x2="'+(padL+nFr*fw)+'" y2="'+y+'" stroke="#cfe1ec" stroke-width="1"/>'; s+='<text x="4" y="'+(y+3.2)+'" font-size="9" fill="#7a9db0">'+labels[i]+'</text>'; }
+    for(var f=1;f<=nFr;f++){ var x=padL+f*fw; s+='<line x1="'+x+'" y1="'+padT+'" x2="'+x+'" y2="'+(padT+gh)+'" stroke="#cfe1ec" stroke-width="1"/>'; }
+    s+='<rect x="'+(padL-2)+'" y="'+padT+'" width="2.5" height="'+gh+'" fill="#5a7282"/>';
+    [3,5,7,9,12,15].forEach(function(f){ s+='<text x="'+fx(f)+'" y="'+(padT+gh+10)+'" font-size="8" text-anchor="middle" fill="#9bb6c4">'+f+'</text>'; });
+    for(var i=0;i<ns;i++){ if(fr[i]<0) s+='<text x="'+(padL-9)+'" y="'+(ry(i)+3.5)+'" font-size="10" text-anchor="middle" fill="#e0567a">&#215;</text>'; }
+    var fretted=fr.filter(function(v){return v>0;}), minF=fretted.length?Math.min.apply(null,fretted):0;
+    var bRows=[]; for(var i=0;i<ns;i++){ if(fr[i]>0&&fr[i]===minF) bRows.push(i); }
+    if(bRows.length>=2){ var r1=bRows[0], r2=bRows[bRows.length-1], bx=fx(minF); s+='<rect x="'+(bx-6.2)+'" y="'+(ry(r1)-6.2)+'" width="12.4" height="'+((r2-r1)*sy+12.4)+'" rx="6.2" fill="#2186A8"/>'; }
+    for(var i=0;i<ns;i++){ var v=fr[i]; if(v<=0) continue;
+        if(bRows.length>=2 && v===minF){ if(i===bRows[0]){ var fn0=fg[i]; if(fn0>0) s+='<text x="'+fx(minF)+'" y="'+(ry(i)+3.2)+'" font-size="9" text-anchor="middle" fill="#fff" font-weight="700">'+fn0+'</text>'; } continue; }
+        var x=fx(v), y=ry(i); s+='<circle cx="'+x+'" cy="'+y+'" r="6.2" fill="#2186A8"/>';
+        var fn=fg[i]; if(fn>0) s+='<text x="'+x+'" y="'+(y+3.2)+'" font-size="9" text-anchor="middle" fill="#fff" font-weight="700">'+fn+'</text>';
+    }
+    return s+'</svg>';
+}
+
+/* ===== UKULELE (G C E A) ===== */
+var UKE_OPEN=[392.00,261.63,329.63,440.00], UKE_LABELS=['G','C','E','A'];
+var UKE_CHORDS=[
+    {n:'C', cat:'mayor', f:[0,0,0,3], fg:[0,0,0,3], tip:'Cuma 1 jari!'},
+    {n:'F', cat:'mayor', f:[2,0,1,0], fg:[2,0,1,0], tip:''},
+    {n:'G', cat:'mayor', f:[0,2,3,2], fg:[0,1,3,2], tip:''},
+    {n:'D', cat:'mayor', f:[2,2,2,0], fg:[1,2,3,0], tip:'Tiga jari rapat.'},
+    {n:'A', cat:'mayor', f:[2,1,0,0], fg:[2,1,0,0], tip:''},
+    {n:'Am', cat:'minor', f:[2,0,0,0], fg:[2,0,0,0], tip:'Cuma 1 jari.'},
+    {n:'Em', cat:'minor', f:[0,4,3,2], fg:[0,3,2,1], tip:''},
+    {n:'Dm', cat:'minor', f:[2,2,1,0], fg:[2,3,1,0], tip:''},
+    {n:'C7', cat:'seven', f:[0,0,0,1], fg:[0,0,0,1], tip:''},
+    {n:'G7', cat:'seven', f:[0,2,1,2], fg:[0,2,1,3], tip:''},
+    {n:'A7', cat:'seven', f:[0,1,0,0], fg:[0,1,0,0], tip:''},
+    {n:'D7', cat:'seven', f:[2,2,2,3], fg:[1,1,1,2], tip:''}
+];
+function ukeStrum(fr){ strumGen(fr, UKE_OPEN, true); }
+function renderUke(cat){
+    var grid=document.getElementById('ukeGrid'); if(!grid) return; grid.innerHTML='';
+    UKE_CHORDS.filter(function(c){return !cat||cat==='all'||c.cat===cat;}).forEach(function(c){
+        var card=document.createElement('div'); card.className='chord-card'; card.style.cursor='pointer'; card.title='Ketuk untuk dengar';
+        card.innerHTML='<div class="cc-name">'+c.n+' <span style="font-size:10px;opacity:0.6;">&#128266;</span></div>'+chordSvg(c)+(c.tip?'<div class="cc-tip">'+c.tip+'</div>':'');
+        card.addEventListener('click', function(){ ukeStrum(c.f); });
+        grid.appendChild(card);
+    });
+}
+function ukeFilter(cat, el){ document.querySelectorAll('#ukeFilter .chord-chip').forEach(function(x){x.classList.remove('active');}); el.classList.add('active'); renderUke(cat); }
+var UKE_BARRE={ Amaj:{suf:'', off:[2,1,0,0], fg:[3,2,1,1]}, Amin:{suf:'m', off:[2,0,0,0], fg:[2,1,1,1]}, A7:{suf:'7', off:[0,1,0,0], fg:[0,2,1,1]} };
+var ukeState={shape:'Amaj', fret:1};
+function ukeRender(){
+    var sh=UKE_BARRE[ukeState.shape], p=ukeState.fret, f=sh.off.map(function(o){return p+o;});
+    var dia=document.getElementById('ukeDiagram'); if(dia) dia.innerHTML=neckSvgG(f, sh.fg, UKE_LABELS);
+    var nm=document.getElementById('ukeName'); if(nm) nm.textContent=NOTES_A[p%12]+sh.suf;
+    var fl=document.getElementById('ukeFretLbl'); if(fl) fl.textContent='Posisi fret '+p;
+}
+function ukeShape(s, el){ ukeState.shape=s; document.querySelectorAll('#ukeShapes .chord-chip').forEach(function(x){x.classList.remove('active');}); el.classList.add('active'); ukeRender(); }
+function ukeMove(d){ ukeState.fret=Math.min(10,Math.max(1,ukeState.fret+d)); document.getElementById('ukeFret').value=ukeState.fret; ukeRender(); }
+function ukeSlide(){ ukeState.fret=parseInt(document.getElementById('ukeFret').value,10)||1; ukeRender(); }
+function ukePlayCur(){ var sh=UKE_BARRE[ukeState.shape], p=ukeState.fret; ukeStrum(sh.off.map(function(o){return p+o;})); }
+
+/* ===== BASS (E A D G) — pola root+kuint+oktaf ===== */
+var BASS_OPEN=[41.20,55.00,73.42,98.00], BASS_LABELS=['E','A','D','G'];
+function bassBoxFr(r){ return [r, r+2, r+2, -1]; }   // root(E), kuint(A), oktaf(D), G mute
+var BASS_BOX_FG=[1,3,4,0];
+var BASS_ROOTS=[ {n:'C',r:8},{n:'D',r:10},{n:'E',r:12},{n:'F',r:1},{n:'G',r:3},{n:'A',r:5},{n:'B',r:7} ];
+function bassPlay(r){
+    try { chordAudioCtx = chordAudioCtx || new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return; }
+    if (chordAudioCtx.state==='suspended') chordAudioCtx.resume();
+    var ctx=chordAudioCtx, t0=ctx.currentTime+0.02;
+    var hz=[ BASS_OPEN[0]*Math.pow(2,r/12), BASS_OPEN[1]*Math.pow(2,(r+2)/12), BASS_OPEN[2]*Math.pow(2,(r+2)/12) ];
+    hz.forEach(function(f,k){ var t=t0+k*0.22, osc=ctx.createOscillator(), g=ctx.createGain(), lp=ctx.createBiquadFilter();
+        osc.type='triangle'; osc.frequency.value=f; lp.type='lowpass'; lp.frequency.value=900;
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.32,t+0.01); g.gain.exponentialRampToValueAtTime(0.0008,t+0.5);
+        osc.connect(lp); lp.connect(g); g.connect(ctx.destination); osc.start(t); osc.stop(t+0.6);
+    });
+}
+function renderBass(){
+    var grid=document.getElementById('bassGrid'); if(!grid) return; grid.innerHTML='';
+    BASS_ROOTS.forEach(function(c){
+        var card=document.createElement('div'); card.className='chord-card'; card.style.cursor='pointer'; card.title='Ketuk untuk dengar';
+        card.innerHTML='<div class="cc-name">'+c.n+' <span style="font-size:10px;opacity:0.6;">&#128266;</span></div>'+chordSvg({f:bassBoxFr(c.r), fg:BASS_BOX_FG});
+        card.addEventListener('click', function(){ bassPlay(c.r); });
+        grid.appendChild(card);
+    });
+}
+var bassState={root:8};
+function bassRender(){
+    var dia=document.getElementById('bassDiagram'); if(dia) dia.innerHTML=neckSvgG(bassBoxFr(bassState.root), BASS_BOX_FG, BASS_LABELS);
+    var nm=document.getElementById('bassName'); if(nm) nm.textContent=NOTES_E[bassState.root%12];
+    var fl=document.getElementById('bassFretLbl'); if(fl) fl.textContent='Root fret '+bassState.root+' (senar E)';
+}
+function bassMove(d){ bassState.root=Math.min(12,Math.max(1,bassState.root+d)); document.getElementById('bassFret').value=bassState.root; bassRender(); }
+function bassSlide(){ bassState.root=parseInt(document.getElementById('bassFret').value,10)||1; bassRender(); }
+function bassPlayCur(){ bassPlay(bassState.root); }
+
 function chordInst(inst, el){
     document.querySelectorAll('#chordInst .chord-instbtn').forEach(function(x){ x.classList.remove('active'); }); el.classList.add('active');
-    document.getElementById('chordGitar').style.display = inst==='gitar'?'block':'none';
-    document.getElementById('chordPiano').style.display = inst==='piano'?'block':'none';
+    var map={gitar:'chordGitar', piano:'chordPiano', ukulele:'chordUkulele', bass:'chordBass'};
+    for (var k in map){ var d=document.getElementById(map[k]); if(d) d.style.display = (k===inst)?'block':'none'; }
 }
 renderPiano('all'); pianoRender();
+renderUke('all'); ukeRender();
+renderBass(); bassRender();
 
 /* ===== NOTE COLOR ===== */
 function selectColor(color, el) {
