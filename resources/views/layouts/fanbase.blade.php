@@ -787,6 +787,11 @@
                     <span>Notifikasi</span>
                     <button class="fb-notif-readall" onclick="fbMarkAllRead()">Baca semua</button>
                 </div>
+                <div id="fbPushBar" style="padding:8px 14px;border-bottom:1px solid var(--border);font-size:11px;display:flex;align-items:center;gap:8px;">
+                    <span id="fbPushStatus" style="color:var(--text-3);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Notifikasi HP</span>
+                    <button id="fbPushEnableBtn" onclick="fbEnablePush()" style="background:linear-gradient(135deg,var(--sky),var(--sky-dk));color:#fff;border:none;border-radius:6px;padding:4px 11px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;display:none;">Aktifkan</button>
+                    <button id="fbPushTestBtn" onclick="fbTestPush()" style="background:var(--surface);color:var(--text-2);border:1px solid var(--border);border-radius:6px;padding:4px 11px;font-size:11px;cursor:pointer;display:none;">Tes</button>
+                </div>
                 <div id="fbNotifList">
                     <div class="fb-notif-empty">Memuat...</div>
                 </div>
@@ -1418,6 +1423,7 @@ function fbOpenNotif() {
     dd.classList.add('open');
     fbNotifOpen = true;
     fbLoadNotifs();
+    try { fbUpdatePushUI(); } catch(e){}
 }
 function fbCloseNotif() {
     var dd = document.getElementById('fbNotifDropdown');
@@ -1611,6 +1617,46 @@ function fbSetupPush(reg) {
     if (Notification.permission === 'denied') return;
     // minta izin (di TWA Android 13+ memunculkan dialog sistem)
     Notification.requestPermission().then(function(p){ if (p === 'granted') subscribe(); }).catch(function(){});
+}
+function fbUpdatePushUI() {
+    var st = document.getElementById('fbPushStatus'),
+        en = document.getElementById('fbPushEnableBtn'),
+        tb = document.getElementById('fbPushTestBtn');
+    if (!st) return;
+    if (typeof Notification === 'undefined' || !('serviceWorker' in navigator) || !MAF_VAPID) {
+        st.textContent = '🔔 Notifikasi tidak didukung di perangkat ini';
+        if (en) en.style.display = 'none'; if (tb) tb.style.display = 'none'; return;
+    }
+    var p = Notification.permission;
+    if (p === 'granted') { st.textContent = '✓ Notifikasi HP aktif'; if (en) en.style.display = 'none'; if (tb) tb.style.display = ''; }
+    else if (p === 'denied') { st.textContent = '⚠ Notifikasi diblokir — aktifkan via Pengaturan HP'; if (en) en.style.display = 'none'; if (tb) tb.style.display = 'none'; }
+    else { st.textContent = '🔔 Aktifkan notifikasi HP'; if (en) en.style.display = ''; if (tb) tb.style.display = 'none'; }
+}
+function fbEnablePush() {
+    if (typeof Notification === 'undefined') return;
+    var st = document.getElementById('fbPushStatus');
+    Notification.requestPermission().then(function(p){
+        if (p !== 'granted') { fbUpdatePushUI(); return; }
+        navigator.serviceWorker.ready.then(function(reg){
+            reg.pushManager.getSubscription().then(function(sub){
+                if (sub) { fbSendSub(sub); fbUpdatePushUI(); return; }
+                reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: fbUrlB64ToUint8(MAF_VAPID) })
+                    .then(function(s){ fbSendSub(s); fbUpdatePushUI(); })
+                    .catch(function(){ if (st) st.textContent = '⚠ Gagal subscribe (cek VAPID di server)'; });
+            });
+        }).catch(function(){});
+    }).catch(function(){});
+}
+function fbTestPush() {
+    var st = document.getElementById('fbPushStatus');
+    if (st) st.textContent = '⏳ Mengirim tes...';
+    fetch('/push/test', { method: 'POST', headers: { 'X-CSRF-TOKEN': fbCsrfToken(), 'Accept': 'application/json' } })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+            if (d && d.ok) { if (st) st.textContent = '✓ Tes terkirim — cek tray HP (≤10 dtk)'; }
+            else { if (st) st.textContent = (d && d.msg) ? ('⚠ ' + d.msg) : '⚠ Gagal kirim tes'; }
+        })
+        .catch(function(){ if (st) st.textContent = '⚠ Gagal kirim tes'; });
 }
 
 // ===== MEMBER SEARCH (right sidebar desktop) =====

@@ -172,4 +172,5 @@ Route::middleware(['auth'])->group(function () {
     // Web Push (notifikasi sistem Android via service worker)
     Route::post('/push/subscribe', [\App\Http\Controllers\PushController::class, 'subscribe'])->name('push.subscribe');
     Route::post('/push/unsubscribe', [\App\Http\Controllers\PushController::class, 'unsubscribe'])->name('push.unsubscribe');
+    Route::post('/push/test', [\App\Http\Controllers\PushController::class, 'test'])->name('push.test');
 });
