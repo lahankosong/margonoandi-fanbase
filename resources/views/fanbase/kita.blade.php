@@ -259,6 +259,13 @@
     .kc-action:hover { background: var(--sky-lt); color: var(--sky-dk); }
     .kc-action.liked { color: #e11d48; }
     .kc-action.liked:hover { color: #e11d48; background: #fff1f2; }
+
+    /* dark: hover "bahaya" jadi translucent biar tak menyilaukan */
+    [data-theme="dark"] .kita-action-top-btn.del:hover,
+    [data-theme="dark"] .kita-action-btn.liked:hover,
+    [data-theme="dark"] .kita-comment-delete:hover,
+    [data-theme="dark"] .kc-action.liked:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.35); }
+
     .kita-reply-item {
         display: flex; gap: 7px; margin-top: 6px; padding-left: 14px;
         border-left: 2px solid var(--border-lt);

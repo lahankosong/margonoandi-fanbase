@@ -110,6 +110,7 @@
     .dia-tool-btn { background:transparent; border:none; cursor:pointer; font-size:18px; padding:6px 7px; border-radius:50%; line-height:1; flex-shrink:0; color:var(--text-2); }
     .dia-tool-btn:hover { background:var(--surface); }
     .dia-tool-btn.recording { background:#fee2e2; animation:diaPulse 1s infinite; }
+    [data-theme="dark"] .dia-tool-btn.recording { background:rgba(239,68,68,0.18); }
     @keyframes diaPulse { 0%,100%{opacity:1;} 50%{opacity:0.45;} }
     .dia-media { display:block; margin-bottom:4px; }
     .dia-media-img { max-width:220px; max-height:280px; border-radius:12px; cursor:pointer; display:block; background:var(--surface); }
