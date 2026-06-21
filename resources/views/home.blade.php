@@ -41,10 +41,17 @@
     }
     .hero-story {
         font-size: 14px; color: var(--text-2); line-height: 1.9;
-        max-width: 480px; margin-bottom: 2rem;
+        max-width: 480px; margin: 0;
     }
     .hero-story em { color: var(--text-2); font-style: normal; }
-    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+    .hero-story-wrap {
+        max-width: 480px; overflow: hidden;
+        max-height: 0; opacity: 0;
+        transition: max-height 0.5s ease, opacity 0.4s ease, margin 0.4s ease;
+        margin-bottom: 0;
+    }
+    .hero-story-wrap.open { max-height: 460px; opacity: 1; margin-bottom: 2rem; }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 0.5rem; }
 
     .btn-primary {
         padding: 11px 28px; border-radius: 50px; font-size: 13px;
@@ -382,13 +389,15 @@
             {{ $settings['tagline_2'] ?? 'Satu rindu.' }}<br>
             {{ $settings['tagline_3'] ?? 'Dua puluh tahun.' }}
         </h1>
-        <p class="hero-story">{!! nl2br(e($settings['hero_story'] ?? '')) !!}</p>
+        <div class="hero-story-wrap" id="heroStoryWrap">
+            <p class="hero-story">{!! nl2br(e($settings['hero_story'] ?? '')) !!}</p>
+        </div>
         <div class="hero-actions">
             <button class="btn-primary" onclick="document.getElementById('featuredSection').scrollIntoView({behavior:'smooth'})">
                 &#9654; Dengarkan
             </button>
-            <button class="btn-ghost" onclick="document.getElementById('storySection').scrollIntoView({behavior:'smooth'})">
-                Baca ceritanya
+            <button class="btn-ghost" id="heroStoryToggle" aria-expanded="false" onclick="toggleHeroStory()">
+                Baca ceritanya &#9662;
             </button>
         </div>
     </div>
@@ -397,6 +406,15 @@
         <span>scroll</span>
     </div>
 </div>
+
+<script>
+function toggleHeroStory(){
+    var w=document.getElementById('heroStoryWrap'), b=document.getElementById('heroStoryToggle');
+    var open=w.classList.toggle('open');
+    b.innerHTML = open ? 'Tutup cerita &#9652;' : 'Baca ceritanya &#9662;';
+    b.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+</script>
 
 @php $fbEntry = auth()->check() ? route('aku') : route('google.login'); @endphp
 
