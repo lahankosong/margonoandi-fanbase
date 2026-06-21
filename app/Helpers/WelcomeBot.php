@@ -88,13 +88,13 @@ class WelcomeBot
         if ($fromUser->id === $bot->id) return null;
 
         $text = '';
-        try { $text = self::aiReply($conv, $bot); } catch (\Throwable $e) { $text = ''; }
-        if (trim($text) === '') {
+        try { $text = self::cleanReply(self::aiReply($conv, $bot)); } catch (\Throwable $e) { $text = ''; }
+        if ($text === '') {
             $lastUser = Message::where('conversation_id', $conv->id)
                 ->where('user_id', '!=', $bot->id)->latest('id')->value('body') ?? '';
             $text = self::ruleReply((string) $lastUser, $fromUser);
         }
-        $text = trim(mb_substr($text, 0, 1200));
+        $text = self::softCap($text, 700);
         if ($text === '') return null;
 
         $msg = Message::create([
@@ -133,7 +133,7 @@ class WelcomeBot
                 'x-api-key' => $key, 'anthropic-version' => '2023-06-01', 'content-type' => 'application/json',
             ])->post(rtrim($p->base_url, '/') . '/messages', [
                 'model'      => $p->model,
-                'max_tokens' => 350,
+                'max_tokens' => 500,
                 'system'     => $msgs[0]['content'],
                 'messages'   => array_slice($msgs, 1),
             ]);
@@ -144,7 +144,7 @@ class WelcomeBot
             'model'       => $p->model ?: 'deepseek-chat',
             'messages'    => $msgs,
             'temperature' => 0.85,
-            'max_tokens'  => 350,
+            'max_tokens'  => 500,
         ]);
         return $resp->successful() ? (string) $resp->json('choices.0.message.content', '') : '';
     }
@@ -169,14 +169,42 @@ class WelcomeBot
 
         return implode("\n", [
             'Kamu adalah "Margonoandi", bot ramah di aplikasi fanbase musik Margonoandi.',
-            'GAYA BAHASA: anak muda Indonesia banget (santai, slang ringan seperti "wih", "nih", "yuk", "bareng") TAPI tetap SOPAN & hangat. Balasan SINGKAT (1-3 kalimat), pakai 1-2 emoji secukupnya. Jangan kaku/formal dan jangan alay berlebihan.',
+            'GAYA BAHASA: anak muda Indonesia banget (santai, slang ringan seperti "wih", "nih", "yuk", "bareng") TAPI tetap SOPAN & hangat. Pakai 1-2 emoji secukupnya. Jangan kaku/formal, jangan alay.',
+            'FORMAT WAJIB: ini CHAT biasa — tulis MENGALIR seperti ngobrol di WhatsApp. DILARANG KERAS pakai markdown atau simbol format (tanda **, *, __, #, -, •) dan DILARANG bikin daftar/list/poin. Balasan PENDEK: maksimal 2-3 kalimat. Fokus HANYA ke yang ditanya, jangan menjelaskan semuanya sekaligus.',
             'TUGAS: menyambut & membantu user, menjawab seputar aplikasi & lagu Margonoandi, dan sesekali mengajak mereka mendukung (membagikan ke teman musisinya) tanpa memaksa.',
             'VISI: ini sebuah gerakan ekosistem musik Indonesia "dimulai dari kamar tidur" untuk SEMUA peran (gitaris, basis, drummer, vokalis, keyboardis, songwriter, arranger, event/wedding organizer, promotor, penikmat musik). Statusnya MASIH BETA dan untuk sekarang menumpang di web pribadi Margonoandi; kalau dukungan besar, akan dibangun "rumah baru" yang layak.',
-            'FITUR APP: pemutar lagu, belajar chord (gitar/piano/ukulele/bass) + tuner gitar, komunitas (Aku & Kita), chat (Dia), direktori musisi & cari personil band, catatan pribadi.',
+            'FITUR APP (sebut SEPERLUNYA saja, jangan didaftar semua): pemutar lagu, belajar chord gitar/piano/ukulele/bass + tuner gitar, komunitas (Aku & Kita), chat (Dia), direktori musisi & cari personil band, catatan pribadi. Kalau ditanya "ada fitur apa", sebut 1-3 yang paling relevan dengan santai lalu tawarkan cerita lebih, JANGAN sebut semua.',
             'LAGU MARGONOANDI (HANYA gunakan data ini; JANGAN mengarang judul/cerita/fakta lain):',
             $songLines,
-            'ATURAN: Jangan mengarang fakta di luar yang diberikan. Kalau tidak tahu, akui dengan jujur & ramah. Jangan menjanjikan fitur yang belum ada. Selalu Bahasa Indonesia, jangan kasar/SARA, dan tetap dalam konteks musik & aplikasi ini.',
+            'ATURAN: Jangan mengarang fakta di luar yang diberikan. Kalau tidak tahu, akui dengan jujur & ramah. Jangan menjanjikan fitur yang belum ada. Selalu Bahasa Indonesia, jangan kasar/SARA, tetap dalam konteks musik & aplikasi ini.',
         ]);
+    }
+
+    /** Bersihkan markdown/list dari balasan AI supaya tampil natural di chat. */
+    protected static function cleanReply(string $t): string
+    {
+        $t = trim((string) $t);
+        if ($t === '') return '';
+        $t = preg_replace('/\*\*(.+?)\*\*/s', '$1', $t);          // **tebal**
+        $t = preg_replace('/__(.+?)__/s', '$1', $t);              // __tebal__
+        $t = preg_replace('/(?<!\*)\*(?!\*)(.+?)\*(?!\*)/s', '$1', $t); // *miring*
+        $t = preg_replace('/`{1,3}([^`]*)`{1,3}/s', '$1', $t);    // `code`
+        $t = preg_replace('/^\s{0,3}#{1,6}\s*/m', '', $t);        // # heading
+        $t = preg_replace('/^\s*(?:[-*•]|\d+[.)])\s+/m', '', $t); // bullet/angka di awal baris
+        $t = preg_replace('/[ \t]{2,}/', ' ', $t);               // rapikan spasi
+        $t = preg_replace('/\n{3,}/', "\n\n", $t);
+        return trim($t);
+    }
+
+    /** Potong di batas kalimat/spasi (bukan mid-kata) bila kepanjangan. */
+    protected static function softCap(string $t, int $max): string
+    {
+        $t = trim($t);
+        if (mb_strlen($t) <= $max) return $t;
+        $cut = mb_substr($t, 0, $max);
+        $p = max((int) mb_strrpos($cut, '. '), (int) mb_strrpos($cut, '! '), (int) mb_strrpos($cut, '? '));
+        if ($p < 150) { $sp = mb_strrpos($cut, ' '); $p = ($sp !== false) ? (int) $sp : $max; }
+        return rtrim(mb_substr($cut, 0, $p + 1));
     }
 
     /** Balasan cadangan tanpa AI (keyword), gaya anak muda sopan. */
