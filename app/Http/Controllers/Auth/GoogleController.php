@@ -45,7 +45,10 @@ class GoogleController extends Controller
             return redirect()->route('aku');
 
         } catch (\Throwable $e) {
-            return redirect()->route('login')
+            // Catat error asli ke storage/logs (sebelumnya tertutup karena route 'login' tak ada)
+            report($e);
+            // 'login' BUKAN nama route yang valid (login = google.login) -> arahkan ke home dgn pesan
+            return redirect()->route('home')
                 ->with('error', 'Login gagal, silakan coba lagi.');
         }
     }
