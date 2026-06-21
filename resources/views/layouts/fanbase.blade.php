@@ -3,14 +3,26 @@
 <head>
     <script>
     /* Tema otomatis ikut jam HP user: 06:00-17:59 = terang, selainnya = gelap.
-       ?theme=dark / ?theme=light hanya untuk preview (tidak disimpan). */
+       ?theme=dark / ?theme=light hanya untuk preview (tidak disimpan).
+       Cek ulang saat tab kembali aktif/fokus -> ikut pergantian siang/malam tanpa refresh. */
     (function(){
-        try {
-            var p = new URLSearchParams(location.search).get('theme'), t;
-            if (p === 'dark' || p === 'light') { t = p; }
-            else { var h = new Date().getHours(); t = (h >= 6 && h < 18) ? 'light' : 'dark'; }
-            document.documentElement.setAttribute('data-theme', t);
-        } catch(e){}
+        function pick(){
+            try { var p = new URLSearchParams(location.search).get('theme');
+                if (p === 'dark' || p === 'light') return p; } catch(e){}
+            var h = new Date().getHours(); return (h >= 6 && h < 18) ? 'light' : 'dark';
+        }
+        try { document.documentElement.setAttribute('data-theme', pick()); } catch(e){} // awal: tanpa animasi
+        function applyAnimated(){
+            try {
+                var t = pick(), html = document.documentElement;
+                if (html.getAttribute('data-theme') === t) return;
+                html.classList.add('theme-anim');
+                html.setAttribute('data-theme', t);
+                setTimeout(function(){ html.classList.remove('theme-anim'); }, 550);
+            } catch(e){}
+        }
+        document.addEventListener('visibilitychange', function(){ if (!document.hidden) applyAnimated(); });
+        window.addEventListener('focus', applyAnimated);
     })();
     </script>
     <meta charset="UTF-8">
@@ -54,6 +66,11 @@
             --radius-sm:  10px;
             --radius:     16px;
             --radius-lg:  24px;
+        }
+
+        /* transisi halus HANYA saat tema berganti (kelas dipasang sementara via JS, hindari animasi saat load) */
+        html.theme-anim, html.theme-anim * {
+            transition: background-color .5s ease, color .5s ease, border-color .5s ease, fill .5s ease, box-shadow .5s ease !important;
         }
 
         /* ===== DARK THEME (otomatis ikut jam HP user) ===== */

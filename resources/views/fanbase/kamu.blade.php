@@ -119,6 +119,9 @@
 
     /* ===== CHORD ===== */
     .chord-inst { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+    .strum-dir { display:flex; align-items:center; gap:8px; margin:-4px 0 14px; font-size:12px; color:var(--text-3); }
+    .strum-dir button { font-size:12px; padding:5px 12px; border-radius:20px; background:var(--surface); border:1px solid var(--border); color:var(--text-2); cursor:pointer; font-weight:600; }
+    .strum-dir button:hover { border-color:var(--sky); color:var(--sky-dk); }
     .chord-instbtn { font-size:13px; padding:8px 18px; border-radius:20px; background:var(--surface); border:1px solid var(--border); color:var(--text-2); cursor:pointer; font-weight:600; }
     .chord-instbtn.active { background:var(--sky); color:#fff; border-color:var(--sky); }
     .chord-head { margin-bottom: 1rem; }
@@ -694,6 +697,11 @@
         <span class="chord-instbtn" data-i="bass" onclick="chordInst('bass',this)">&#127925; Bass</span>
     </div>
 
+    <div class="strum-dir">
+        <span>Arah genjreng:</span>
+        <button type="button" id="strumDirBtn" onclick="toggleStrumDir()">&#11015;&#65039; Bawah</button>
+    </div>
+
     <div id="chordGitar">
     <div class="chord-head">
         <div class="chord-title">&#127928; Chord Gitar untuk Pemula</div>
@@ -917,6 +925,9 @@ var CHORDS = [
 /* ===== BUNYI STRUM (Web Audio) ===== */
 var chordAudioCtx=null;
 var OPEN_HZ=[82.41,110.00,146.83,196.00,246.94,329.63]; // E A D G B e
+var GTR_LABELS=['E','A','D','G','B','e'];
+var STRUM_DIR=true; // true=genjreng bawah, false=atas
+function toggleStrumDir(){ STRUM_DIR=!STRUM_DIR; var b=document.getElementById('strumDirBtn'); if(b) b.innerHTML = STRUM_DIR ? '&#11015;&#65039; Bawah' : '&#11014;&#65039; Atas'; }
 function strumChord(fr, down){
     try { chordAudioCtx = chordAudioCtx || new (window.AudioContext||window.webkitAudioContext)(); } catch(e){ return; }
     if (chordAudioCtx.state==='suspended') chordAudioCtx.resume();
@@ -936,7 +947,7 @@ function strumChord(fr, down){
         osc.start(t); osc.stop(t+1.7);
     });
 }
-function chordSvg(c){
+function chordSvg(c, labels){
     var W=88, H=110, padX=12, top=24, bot=14, nf=4, ns=(c.f&&c.f.length)||6;
     var gw=W-padX*2, gh=H-top-bot, sx=gw/(ns-1), fy=gh/nf, fr=c.f, fg=c.fg||[];
     var fretted=fr.filter(function(v){return v>0;});
@@ -962,6 +973,7 @@ function chordSvg(c){
             var fn=fg[i]; if(fn>0) s+='<text x="'+x+'" y="'+(cy+3.3)+'" font-size="9" text-anchor="middle" fill="#fff" font-weight="700">'+fn+'</text>';
         }
     }
+    if(labels){ for(var li=0; li<ns; li++){ s+='<text x="'+(padX+li*sx)+'" y="'+(top+gh+11)+'" font-size="8" text-anchor="middle" fill="#9bb6c4">'+labels[li]+'</text>'; } }
     return s+'</svg>';
 }
 // Diagram LEHER PENUH (fret 1-15) untuk chord geser — senar atas→bawah (E..e)
@@ -994,8 +1006,8 @@ function renderChords(cat){
     grid.innerHTML='';
     CHORDS.filter(function(c){ return !cat||cat==='all'||c.cat===cat; }).forEach(function(c){
         var card=document.createElement('div'); card.className='chord-card'; card.style.cursor='pointer'; card.title='Ketuk untuk dengar';
-        card.innerHTML='<div class="cc-name">'+c.n+' <span style="font-size:10px;opacity:0.6;">&#128266;</span></div>'+chordSvg(c)+(c.tip?'<div class="cc-tip">'+c.tip+'</div>':'');
-        card.addEventListener('click', function(){ strumChord(c.f, true); });
+        card.innerHTML='<div class="cc-name">'+c.n+' <span style="font-size:10px;opacity:0.6;">&#128266;</span></div>'+chordSvg(c, GTR_LABELS)+(c.tip?'<div class="cc-tip">'+c.tip+'</div>':'');
+        card.addEventListener('click', function(){ strumChord(c.f, STRUM_DIR); });
         grid.appendChild(card);
     });
 }
@@ -1030,7 +1042,7 @@ function barreRender(){
     var fl=document.getElementById('barreFretLbl'); if(fl) fl.textContent = 'Posisi fret ' + p;
     // bentuk dasar (posisi terbuka)
     var baseF=sh.off.map(function(o){ return o===-99 ? -1 : o; });
-    var bs=document.getElementById('barreBaseSvg'); if(bs) bs.innerHTML = chordSvg({f:baseF, fg:sh.bfg||sh.fg});
+    var bs=document.getElementById('barreBaseSvg'); if(bs) bs.innerHTML = chordSvg({f:baseF, fg:sh.bfg||sh.fg}, GTR_LABELS);
     var bn=document.getElementById('barreBaseName'); if(bn) bn.textContent = NOTES_BY_ROOT[sh.root][0] + sh.suf;
 }
 function barreShape(s, el){
@@ -1043,8 +1055,8 @@ function barreMove(d){
     document.getElementById('barreFret').value = barreState.fret; barreRender();
 }
 function barreSlide(){ barreState.fret = parseInt(document.getElementById('barreFret').value,10)||1; barreRender(); }
-function barrePlay(){ var sh=BARRE[barreState.shape], p=barreState.fret; strumChord(sh.off.map(function(o){return o===-99?-1:p+o;}), true); }
-function barreBasePlay(){ var sh=BARRE[barreState.shape]; strumChord(sh.off.map(function(o){return o===-99?-1:o;}), true); }
+function barrePlay(){ var sh=BARRE[barreState.shape], p=barreState.fret; strumChord(sh.off.map(function(o){return o===-99?-1:p+o;}), STRUM_DIR); }
+function barreBasePlay(){ var sh=BARRE[barreState.shape]; strumChord(sh.off.map(function(o){return o===-99?-1:o;}), STRUM_DIR); }
 barreRender();
 
 /* ===== PIANO ===== */
@@ -1157,12 +1169,12 @@ var UKE_CHORDS=[
     {n:'A7', cat:'seven', f:[0,1,0,0], fg:[0,1,0,0], tip:''},
     {n:'D7', cat:'seven', f:[2,2,2,3], fg:[1,1,1,2], tip:''}
 ];
-function ukeStrum(fr){ strumGen(fr, UKE_OPEN, true); }
+function ukeStrum(fr){ strumGen(fr, UKE_OPEN, STRUM_DIR); }
 function renderUke(cat){
     var grid=document.getElementById('ukeGrid'); if(!grid) return; grid.innerHTML='';
     UKE_CHORDS.filter(function(c){return !cat||cat==='all'||c.cat===cat;}).forEach(function(c){
         var card=document.createElement('div'); card.className='chord-card'; card.style.cursor='pointer'; card.title='Ketuk untuk dengar';
-        card.innerHTML='<div class="cc-name">'+c.n+' <span style="font-size:10px;opacity:0.6;">&#128266;</span></div>'+chordSvg(c)+(c.tip?'<div class="cc-tip">'+c.tip+'</div>':'');
+        card.innerHTML='<div class="cc-name">'+c.n+' <span style="font-size:10px;opacity:0.6;">&#128266;</span></div>'+chordSvg(c, UKE_LABELS)+(c.tip?'<div class="cc-tip">'+c.tip+'</div>':'');
         card.addEventListener('click', function(){ ukeStrum(c.f); });
         grid.appendChild(card);
     });
@@ -1201,7 +1213,7 @@ function renderBass(){
     var grid=document.getElementById('bassGrid'); if(!grid) return; grid.innerHTML='';
     BASS_ROOTS.forEach(function(c){
         var card=document.createElement('div'); card.className='chord-card'; card.style.cursor='pointer'; card.title='Ketuk untuk dengar';
-        card.innerHTML='<div class="cc-name">'+c.n+' <span style="font-size:10px;opacity:0.6;">&#128266;</span></div>'+chordSvg({f:bassBoxFr(c.r), fg:BASS_BOX_FG});
+        card.innerHTML='<div class="cc-name">'+c.n+' <span style="font-size:10px;opacity:0.6;">&#128266;</span></div>'+chordSvg({f:bassBoxFr(c.r), fg:BASS_BOX_FG}, BASS_LABELS);
         card.addEventListener('click', function(){ bassPlay(c.r); });
         grid.appendChild(card);
     });
