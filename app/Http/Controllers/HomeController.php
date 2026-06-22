@@ -80,7 +80,26 @@ class HomeController extends Controller
             ],
         ];
 
-        return view('home', compact('songs', 'featuredSong', 'ctaSongs', 'settings', 'seo'));
+        // Teaser musisi untuk landing (HANYA field publik aman: nama/peran/lokasi/genre/bio.
+        // Tanpa kontak/portofolio/tip — detail lengkap wajib login via /musisi/{id} yang auth-only).
+        $musicians = collect();
+        try {
+            $musicians = \App\Models\MusicianProfile::with('user')
+                ->where('is_active', true)
+                ->whereNotNull('roles')->where('roles', '!=', '')
+                ->latest('updated_at')->take(8)->get()
+                ->map(fn ($p) => [
+                    'name'     => $p->user->name ?? 'Musisi',
+                    'avatar'   => $p->user->avatar ?? asset('images/default-avatar.png'),
+                    'roles'    => $p->rolesArray(),
+                    'skill'    => $p->skill_level,
+                    'location' => $p->location,
+                    'genres'   => $p->genresArray(),
+                    'bio'      => \Illuminate\Support\Str::limit(strip_tags((string) $p->bio), 130),
+                ])->values();
+        } catch (\Throwable $e) {}
+
+        return view('home', compact('songs', 'featuredSong', 'ctaSongs', 'settings', 'seo', 'musicians'));
     }
 
     /** sitemap.xml dinamis: homepage + semua lagu aktif, termasuk image:image untuk Google Image. */

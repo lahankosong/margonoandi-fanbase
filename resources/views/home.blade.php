@@ -1034,6 +1034,77 @@ try { if(localStorage.getItem('heroCollapsed')==='0') setHeroCollapsed(false, fa
 
 <hr class="divider">
 
+{{-- MUSISI SHOWCASE (teaser publik; detail wajib login) --}}
+@if(($musicians ?? collect())->count() > 0)
+<style>
+    .ms-land { text-align:center; }
+    .ms-land-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; max-width:760px; margin:1.5rem auto 0; }
+    .ms-land-card { background:var(--card-bg); border:1px solid var(--border); border-radius:16px; padding:1rem .75rem; cursor:pointer; text-align:center; transition:transform .2s, border-color .2s, box-shadow .25s; font-family:inherit; color:inherit; }
+    .ms-land-card:hover { transform:translateY(-4px); border-color:var(--accent); box-shadow:0 12px 28px -14px var(--accent); }
+    .ms-land-av { width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid var(--border); }
+    .ms-land-name { font-weight:600; font-size:14px; color:var(--text); margin-top:.6rem; }
+    .ms-land-role { font-size:12px; color:var(--accent); margin-top:2px; }
+    .ms-land-loc { font-size:11px; color:var(--text-3); margin-top:2px; }
+    .ms-land-ov { display:none; position:fixed; inset:0; z-index:3000; background:rgba(0,0,0,.7); align-items:center; justify-content:center; padding:1rem; }
+    .ms-land-ov.open { display:flex; }
+    .ms-land-modal { background:var(--bg-2); border:1px solid var(--border); border-radius:20px; padding:1.6rem 1.4rem; max-width:380px; width:100%; text-align:center; position:relative; }
+    .ms-land-x { position:absolute; top:12px; right:14px; background:var(--card-bg); border:1px solid var(--border); border-radius:8px; width:28px; height:28px; color:var(--text-3); cursor:pointer; }
+    .ms-land-modal-av { width:84px; height:84px; border-radius:50%; object-fit:cover; border:3px solid var(--border); }
+    .ms-land-modal-name { font-family:'Space Grotesk','Inter',sans-serif; font-size:1.2rem; font-weight:600; color:var(--text); margin-top:.6rem; }
+    .ms-land-modal-tags { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:.75rem 0; }
+    .ms-land-modal-tags span { font-size:11px; padding:3px 10px; border-radius:20px; background:var(--accent-dim); color:var(--accent); }
+    .ms-land-modal-bio { font-size:13px; color:var(--text-2); line-height:1.6; }
+</style>
+<div class="section ms-land">
+    <p class="section-eyebrow">Dari kamar tidur ke panggung</p>
+    <p class="section-heading">Musisi yang sudah gabung</p>
+    <div class="ms-land-grid">
+        @foreach($musicians as $m)
+        <button type="button" class="ms-land-card" onclick='openMsLand(@json($m, JSON_HEX_APOS|JSON_HEX_QUOT))'>
+            <img src="{{ $m['avatar'] }}" class="ms-land-av" loading="lazy" alt="" onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+            <div class="ms-land-name">{{ $m['name'] }}</div>
+            <div class="ms-land-role">{{ implode(' · ', array_slice($m['roles'], 0, 2)) ?: 'Musisi' }}</div>
+            @if($m['location'])<div class="ms-land-loc">📍 {{ $m['location'] }}</div>@endif
+        </button>
+        @endforeach
+    </div>
+    <a href="{{ $fbEntry }}" class="btn-ghost" style="text-decoration:none;display:inline-block;margin-top:1.25rem;"
+       @guest onclick="gtag && gtag('event','cta_click',{event_category:'engagement',button:'lihat_musisi'})" @endguest
+    >Lihat semua musisi &mdash; Masuk</a>
+</div>
+
+<div class="ms-land-ov" id="msLandOv" onclick="if(event.target===this)closeMsLand()">
+    <div class="ms-land-modal">
+        <button class="ms-land-x" onclick="closeMsLand()">&#10005;</button>
+        <img id="msLandAv" src="" class="ms-land-modal-av" alt="" onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+        <div id="msLandName" class="ms-land-modal-name"></div>
+        <div id="msLandTags" class="ms-land-modal-tags"></div>
+        <div id="msLandBio" class="ms-land-modal-bio"></div>
+        <a href="{{ route('google.login') }}" class="btn-primary" style="text-decoration:none;display:block;text-align:center;margin-top:1.1rem;">&#128274; Masuk untuk lihat profil lengkap &amp; hubungi</a>
+        <p style="font-size:11px;color:var(--text-3);margin-top:8px;">Portofolio, kontak &amp; dukungan hanya untuk member.</p>
+    </div>
+</div>
+<script>
+function openMsLand(m){
+    if(!m) return;
+    document.getElementById('msLandAv').src = m.avatar || '';
+    document.getElementById('msLandName').textContent = m.name || 'Musisi';
+    var tags = [];
+    if (m.skill) tags.push(m.skill);
+    (m.roles || []).slice(0,4).forEach(function(r){ tags.push(r); });
+    (m.genres || []).slice(0,3).forEach(function(g){ tags.push(g); });
+    document.getElementById('msLandTags').innerHTML = tags.map(function(t){
+        var d=document.createElement('div'); d.textContent=String(t); return '<span>'+d.innerHTML+'</span>';
+    }).join('');
+    document.getElementById('msLandBio').textContent = m.bio || '';
+    document.getElementById('msLandOv').classList.add('open');
+}
+function closeMsLand(){ document.getElementById('msLandOv').classList.remove('open'); }
+</script>
+@endif
+
+<hr class="divider">
+
 {{-- FEATURED SONG --}}
 @if($featuredSong)
 <div class="section" id="featuredSection">
