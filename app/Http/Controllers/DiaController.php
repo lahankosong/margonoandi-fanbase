@@ -108,16 +108,43 @@ class DiaController extends Controller
         ));
     }
 
-    public function start($userId)
+    public function start(Request $request, $userId)
     {
-        $myId  = Auth::id();
-        $minId = min($myId, (int)$userId);
-        $maxId = max($myId, (int)$userId);
+        $myId   = Auth::id();
+        $userId = (int) $userId;
+        if ($userId === $myId) {
+            return redirect()->route('dia');
+        }
+        $minId = min($myId, $userId);
+        $maxId = max($myId, $userId);
 
         $conversation = Conversation::firstOrCreate([
             'user_one_id' => $minId,
             'user_two_id' => $maxId,
         ]);
+
+        // Pesan pembuka opsional (mis. dari tombol "Saya Minat" pada Gig/Band) —
+        // bawa konteks kategori + judul agar penerima langsung paham.
+        $intro = trim((string) $request->input('intro', ''));
+        if ($intro !== '') {
+            $intro = \Illuminate\Support\Str::limit($intro, 500);
+            $last  = $conversation->messages()->latest('id')->value('body');
+            if ($last !== $intro) {
+                Message::create([
+                    'conversation_id' => $conversation->id,
+                    'user_id'         => $myId,
+                    'body'            => $intro,
+                ]);
+                $conversation->update(['last_message' => $intro, 'last_message_at' => now()]);
+                try {
+                    NotifHelper::send(
+                        $userId, $myId, 'message',
+                        Auth::user()->name . ' mengirim pesan',
+                        $intro, url('/dia/conversation/' . $conversation->id)
+                    );
+                } catch (\Throwable $e) {}
+            }
+        }
 
         return redirect()->route('dia.conversation', $conversation->id);
     }

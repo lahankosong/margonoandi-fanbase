@@ -344,11 +344,11 @@
     .kita-action-btn.linked-btn:hover { background: #ede9fe; color: #5b21b6; }
 
     /* ── Linked popup ── */
-    .lp-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 3000; align-items: flex-end; justify-content: center; }
+    .lp-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 3000; align-items: flex-end; justify-content: center; padding: 0 10px calc(96px + env(safe-area-inset-bottom)); }
     .lp-overlay.open { display: flex; }
-    @media(min-width:540px){ .lp-overlay { align-items: center; } }
-    .lp-modal { background: var(--card); border-radius: 20px 20px 0 0; width: 100%; max-width: 540px; max-height: 85vh; overflow-y: auto; padding: 1.25rem; box-shadow: var(--shadow-lg); position: relative; }
-    @media(min-width:540px){ .lp-modal { border-radius: 20px; max-height: 80vh; } }
+    @media(min-width:540px){ .lp-overlay { align-items: center; padding: 1rem; } }
+    .lp-modal { background: var(--card); border-radius: 18px; width: 100%; max-width: 540px; max-height: 74vh; overflow-y: auto; padding: 1.25rem; box-shadow: var(--shadow-lg); position: relative; }
+    @media(min-width:540px){ .lp-modal { max-height: 80vh; } }
     .lp-close { position: absolute; top: 12px; right: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; color: var(--text-3); }
     .lp-type-badge { display: inline-flex; align-items: center; font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; background: #ede9fe; color: #5b21b6; margin-bottom: 8px; }
     .lp-status-badge { display: inline-flex; align-items: center; font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; margin-left: 6px; }
@@ -647,7 +647,6 @@
 {{-- POPUP LINKED (GIG / BAND) --}}
 <div class="lp-overlay" id="lpOverlay" onclick="closeLpIfBg(event)">
     <div class="lp-modal" onclick="event.stopPropagation()">
-        <button class="lp-close" onclick="closeLinkedPost()">&#10005;</button>
         <div id="lpTypeBadge" class="lp-type-badge"></div>
         <span id="lpStatusBadge" class="lp-status-badge"></span>
         <div id="lpTitle" class="lp-title"></div>
@@ -732,10 +731,15 @@ function openLinkedPost(d) {
         var csrf = document.createElement('input');
         csrf.type = 'hidden'; csrf.name = '_token'; csrf.value = csrfToken;
         form.appendChild(csrf);
+        // Pesan pembuka otomatis: sertakan kategori + judul agar pembuat langsung paham
+        var intro = document.createElement('input');
+        intro.type = 'hidden'; intro.name = 'intro';
+        intro.value = 'Halo! 👋 Saya tertarik dengan ' + (d.type_label || '') + ' "' + (d.title || '') + '" yang kamu posting. Boleh info lebih lanjut?';
+        form.appendChild(intro);
         var btn = document.createElement('button');
         btn.type = 'submit';
         btn.className = 'lp-daftar';
-        btn.innerHTML = '&#128172; Daftar / Hubungi';
+        btn.innerHTML = '&#128172; Saya Minat &mdash; Hubungi';
         form.appendChild(btn);
         cta.appendChild(form);
     }
