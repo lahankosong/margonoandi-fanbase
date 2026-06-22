@@ -558,6 +558,19 @@ if (tableExists($conn, $dbname, 'posts')) {
     echo '<pre class="info">&#8212; tabel posts belum ada, skip</pre>';
 }
 
+// ── 9w. Roles user (onboarding) + Tip Jar musisi ───────────────────────────────
+echo '<h2>9w. Peran User &amp; Tip Jar</h2>';
+if (!columnExists($conn, $dbname, 'users', 'roles')) {
+    runSQL($conn, 'ADD users.roles', "ALTER TABLE `users` ADD COLUMN `roles` varchar(255) DEFAULT NULL");
+} else { echo '<pre class="info">&#8212; users.roles sudah ada, skip</pre>'; }
+if (tableExists($conn, $dbname, 'musician_profiles')) {
+    if (!columnExists($conn, $dbname, 'musician_profiles', 'tip_url')) {
+        runSQL($conn, 'ADD musician_profiles.tip_url', "ALTER TABLE `musician_profiles` ADD COLUMN `tip_url` varchar(255) DEFAULT NULL");
+    } else { echo '<pre class="info">&#8212; musician_profiles.tip_url sudah ada, skip</pre>'; }
+} else {
+    echo '<pre class="info">&#8212; tabel musician_profiles belum ada, skip</pre>';
+}
+
 // ── 10. Verifikasi akhir ──────────────────────────────────────────────────────
 echo '<h2>10. Verifikasi Tabel Kritis</h2>';
 $check = [

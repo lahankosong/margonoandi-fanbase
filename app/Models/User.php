@@ -15,9 +15,40 @@ class User extends Authenticatable
         'password',
         'google_id',
         'avatar',
+        'roles',
         'last_seen',
         'is_online',
     ];
+
+    /** Pilihan peran untuk onboarding & profil (key => label berikon). */
+    public static function roleOptions(): array
+    {
+        return [
+            'gitaris'           => '🎸 Gitaris',
+            'basis'             => '🎵 Basis',
+            'drummer'           => '🥁 Drummer',
+            'vokalis'           => '🎤 Vokalis',
+            'keyboardis'        => '🎹 Keyboardis',
+            'songwriter'        => '✍️ Songwriter',
+            'arranger'          => '🎚️ Arranger',
+            'produser'          => '🎛️ Produser',
+            'event_organizer'   => '🎫 Event Organizer',
+            'wedding_organizer' => '💍 Wedding Organizer',
+            'promotor'          => '📣 Promotor',
+            'penikmat'          => '🎧 Penikmat Musik',
+        ];
+    }
+
+    public function rolesArray(): array
+    {
+        return array_values(array_filter(array_map('trim', explode(',', (string) $this->roles))));
+    }
+
+    public function roleLabels(): array
+    {
+        $opt = self::roleOptions();
+        return array_map(fn ($r) => $opt[$r] ?? $r, $this->rolesArray());
+    }
 
     protected $casts = [
         'last_seen' => 'datetime',

@@ -90,6 +90,10 @@
             <label>Instagram</label>
             <input type="text" name="instagram" class="mp-input" value="{{ old('instagram', $profile->instagram ?? '') }}" placeholder="@username">
         </div>
+        <div class="mp-fg">
+            <label>☕ Link Dukungan / Saweran <span style="font-weight:400;color:var(--text-3);">(Saweria, Trakteer, dll)</span></label>
+            <input type="text" name="tip_url" class="mp-input" value="{{ old('tip_url', $profile->tip_url ?? '') }}" placeholder="https://saweria.co/username">
+        </div>
         <div class="mp-row">
             <label class="mp-check"><input type="checkbox" name="open_to_band" value="1" {{ ($profile->open_to_band ?? true) ? 'checked' : '' }}> Terbuka gabung band</label>
             <label class="mp-check"><input type="checkbox" name="open_to_collab" value="1" {{ ($profile->open_to_collab ?? true) ? 'checked' : '' }}> Terbuka kolaborasi</label>

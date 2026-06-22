@@ -63,6 +63,7 @@ class MusicianController extends Controller
             'spotify_url'  => 'nullable|string|max:255',
             'youtube_url'  => 'nullable|string|max:255',
             'instagram'    => 'nullable|string|max:120',
+            'tip_url'      => 'nullable|string|max:255',
         ]);
         $data['open_to_band']   = $request->boolean('open_to_band');
         $data['open_to_collab'] = $request->boolean('open_to_collab');

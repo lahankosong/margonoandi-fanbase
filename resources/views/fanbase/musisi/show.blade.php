@@ -73,6 +73,10 @@
     @endif
 
     <div class="ms-actions">
+        @if($profile->tip_url)
+        <a href="{{ $profile->tip_url }}" target="_blank" rel="noopener"
+           class="ms-btn" style="background:linear-gradient(135deg,var(--orange),var(--orange-dk));color:#fff;">☕ Dukung / Saweran</a>
+        @endif
         @if($profile->user_id === auth()->id())
         <a href="{{ route('musisi.edit') }}" class="ms-btn ms-btn-primary">✏️ Edit profilku</a>
         @else
@@ -81,8 +85,21 @@
             <button type="submit" class="ms-btn ms-btn-primary">💬 Hubungi</button>
         </form>
         @endif
+        <button type="button" class="ms-btn ms-btn-ghost" onclick="msShareProfile()">🔗 Bagikan</button>
         <a href="{{ route('musisi.index') }}" class="ms-btn ms-btn-ghost">← Kembali</a>
     </div>
 </div>
+
+<script>
+function msShareProfile(){
+    var url = window.location.href;
+    var title = {{ Illuminate\Support\Js::from(($profile->user->name ?? 'Musisi') . ' — Margonoandi') }};
+    if (navigator.share) {
+        navigator.share({ title: title, text: 'Cek profil musisi ini di Margonoandi', url: url }).catch(function(){});
+    } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(function(){ alert('Link profil disalin!'); }).catch(function(){ prompt('Salin link:', url); });
+    } else { prompt('Salin link:', url); }
+}
+</script>
 
 @endsection

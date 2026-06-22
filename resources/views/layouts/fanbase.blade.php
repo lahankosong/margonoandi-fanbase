@@ -124,6 +124,17 @@
         }
         @media (prefers-reduced-motion: reduce) { .fb-spot-ring { transition:none !important; } }
 
+        /* ===== ONBOARDING: Pilih Peranmu ===== */
+        .fb-onb-ov { position:fixed; inset:0; z-index:4000; background:rgba(10,20,30,0.72); display:flex; align-items:center; justify-content:center; padding:1.2rem; }
+        .fb-onb-card { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:1.6rem 1.4rem; max-width:440px; width:100%; box-shadow:var(--shadow-xl); text-align:center; max-height:88vh; overflow-y:auto; }
+        .fb-onb-title { font-family:'Sora',sans-serif; font-size:1.25rem; font-weight:700; color:var(--text-1); }
+        .fb-onb-sub { font-size:13px; color:var(--text-3); margin:6px 0 1.1rem; line-height:1.5; }
+        .fb-onb-roles { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-bottom:1.3rem; }
+        .fb-onb-chip { font-size:13px; padding:8px 14px; border-radius:20px; background:var(--surface); border:1px solid var(--border); color:var(--text-2); cursor:pointer; font-family:inherit; transition:0.15s; }
+        .fb-onb-chip.on { background:var(--sky); border-color:var(--sky); color:#fff; font-weight:600; transform:translateY(-1px); }
+        .fb-onb-save { width:100%; background:linear-gradient(135deg,var(--sky),var(--sky-dk)); color:#fff; border:none; border-radius:12px; padding:12px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; }
+        .fb-onb-skip { background:none; border:none; color:var(--text-3); font-size:12px; cursor:pointer; margin-top:10px; font-family:inherit; }
+
         * { margin:0; padding:0; box-sizing:border-box; }
 
         html { scroll-behavior:smooth; }
@@ -1169,6 +1180,37 @@
 </nav>
 
 <audio id="fbAudio" preload="none"></audio>
+
+@auth
+@if(empty(Auth::user()->roles))
+<div class="fb-onb-ov" id="fbOnbOv">
+    <div class="fb-onb-card">
+        <div class="fb-onb-title">Halo, {{ \Illuminate\Support\Str::of(Auth::user()->name)->before(' ') }}! 👋</div>
+        <p class="fb-onb-sub">Kamu di dunia musik sebagai apa? Pilih satu atau lebih &mdash; biar kami sajikan yang paling pas buatmu.</p>
+        <div class="fb-onb-roles" id="fbOnbRoles">
+            @foreach(\App\Models\User::roleOptions() as $key => $label)
+            <button type="button" class="fb-onb-chip" data-role="{{ $key }}" onclick="this.classList.toggle('on')">{{ $label }}</button>
+            @endforeach
+        </div>
+        <button class="fb-onb-save" onclick="fbSaveOnboarding()">Mulai dari kamarku 🔥</button>
+        <div><button class="fb-onb-skip" onclick="fbSkipOnboarding()">Nanti saja</button></div>
+    </div>
+</div>
+<script>
+function fbSaveOnboarding(){
+    var roles = Array.prototype.slice.call(document.querySelectorAll('#fbOnbRoles .fb-onb-chip.on')).map(function(c){ return c.getAttribute('data-role'); });
+    if (!roles.length) roles = ['penikmat'];
+    fbOnbSubmit(roles);
+}
+function fbSkipOnboarding(){ fbOnbSubmit(['penikmat']); }
+function fbOnbSubmit(roles){
+    var ov = document.getElementById('fbOnbOv');
+    fetch('/onboarding/roles', { method:'POST', headers:{ 'X-CSRF-TOKEN': fbCsrfToken(), 'Content-Type':'application/json', 'Accept':'application/json' }, body: JSON.stringify({ roles: roles }) })
+        .finally(function(){ if (ov) ov.style.display = 'none'; });
+}
+</script>
+@endif
+@endauth
 
 @stack('scripts')
 

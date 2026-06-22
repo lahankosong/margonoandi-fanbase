@@ -8,7 +8,7 @@ class MusicianProfile extends Model
 {
     protected $fillable = [
         'user_id', 'roles', 'skill_level', 'genres', 'location', 'bio',
-        'looking_for', 'spotify_url', 'youtube_url', 'instagram',
+        'looking_for', 'spotify_url', 'youtube_url', 'instagram', 'tip_url',
         'open_to_band', 'open_to_collab', 'is_active',
     ];
 

@@ -23,6 +23,7 @@ use App\Http\Controllers\DiaController;
 use App\Http\Controllers\KamuNoteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\GeocodeController;
+use App\Http\Controllers\OnboardingController;
 
 
 
@@ -135,6 +136,9 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/band/{id}', [BandPostController::class, 'destroy'])->whereNumber('id')->name('band.destroy');
 
     // Papan Gig
+    // Onboarding: simpan peran user
+    Route::post('/onboarding/roles', [OnboardingController::class, 'saveRoles'])->name('onboarding.roles');
+
     Route::get('/gig/create', [GigPostController::class, 'create'])->name('gig.create');
     Route::post('/gig', [GigPostController::class, 'store'])->name('gig.store');
     Route::get('/gig/{id}/edit', [GigPostController::class, 'edit'])->whereNumber('id')->name('gig.edit');
