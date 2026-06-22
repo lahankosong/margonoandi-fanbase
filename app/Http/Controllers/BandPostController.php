@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\BandPost;
+use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class BandPostController extends Controller
 {
@@ -37,9 +39,26 @@ class BandPostController extends Controller
         $data['urgent']  = $request->boolean('urgent');
         $data['status']  = 'open';
 
-        BandPost::create($data);
+        $band = BandPost::create($data);
 
-        return redirect()->route('band.index')->with('success', 'Lowongan personil dipasang.');
+        // Auto-post ke Kita
+        $roles = $band->roles_needed
+            ? implode(', ', array_map('trim', explode(',', $band->roles_needed)))
+            : '';
+        $body = "🎯 Cari Personil: {$band->title}";
+        if ($roles)            $body .= "\nDibutuhkan: {$roles}";
+        if ($band->location)   $body .= "\n📍 {$band->location}";
+        if ($band->description) $body .= "\n\n" . Str::limit($band->description, 250);
+
+        Post::create([
+            'user_id'     => Auth::id(),
+            'body'        => $body,
+            'linked_type' => 'band',
+            'linked_id'   => $band->id,
+        ]);
+
+        return redirect()->route('musisi.index', ['tab' => 'band'])
+            ->with('success', 'Lowongan dipasang dan otomatis dibagikan ke Kita.');
     }
 
     public function show($id)
@@ -60,7 +79,11 @@ class BandPostController extends Controller
     {
         $post = BandPost::findOrFail($id);
         if ($post->user_id !== Auth::id()) abort(403);
+        // Hapus linked kita post juga
+        Post::where('linked_type', 'band')->where('linked_id', $post->id)->delete();
+
         $post->delete();
-        return redirect()->route('band.index')->with('success', 'Lowongan dihapus.');
+        return redirect()->route('musisi.index', ['tab' => 'band'])
+            ->with('success', 'Lowongan dihapus.');
     }
 }

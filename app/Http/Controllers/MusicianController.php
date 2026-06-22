@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\MusicianProfile;
+use App\Models\BandPost;
+use App\Models\GigPost;
 use App\Models\Follow;
 use App\Models\User;
 use App\Helpers\NotifHelper;
@@ -24,7 +26,21 @@ class MusicianController extends Controller
             // tabel belum ada — jalankan fixdb.php
         }
         $myProfile = $this->myProfile();
-        return view('fanbase.musisi.index', compact('profiles', 'myProfile'));
+
+        $bandPosts = collect();
+        try {
+            $bandPosts = BandPost::with('user')
+                ->orderByDesc('urgent')->orderByDesc('created_at')->get();
+        } catch (\Throwable $e) {}
+
+        $gigPosts = collect();
+        try {
+            $gigPosts = GigPost::with('user')->orderByDesc('created_at')->get();
+        } catch (\Throwable $e) {}
+
+        $gigTypes = GigPost::types();
+
+        return view('fanbase.musisi.index', compact('profiles', 'myProfile', 'bandPosts', 'gigPosts', 'gigTypes'));
     }
 
     // Form profil sendiri

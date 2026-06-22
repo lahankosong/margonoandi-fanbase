@@ -15,6 +15,7 @@ use App\Http\Controllers\PromoTemplateController;
 use App\Http\Controllers\ContentCalendarController;
 use App\Http\Controllers\MusicianController;
 use App\Http\Controllers\BandPostController;
+use App\Http\Controllers\GigPostController;
 use App\Http\Controllers\AkuController;
 use App\Http\Controllers\KamuController;
 use App\Http\Controllers\KitaController;
@@ -132,6 +133,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/band/{id}', [BandPostController::class, 'show'])->whereNumber('id')->name('band.show');
     Route::put('/band/{id}/status', [BandPostController::class, 'toggleStatus'])->whereNumber('id')->name('band.status');
     Route::delete('/band/{id}', [BandPostController::class, 'destroy'])->whereNumber('id')->name('band.destroy');
+
+    // Papan Gig
+    Route::get('/gig/create', [GigPostController::class, 'create'])->name('gig.create');
+    Route::post('/gig', [GigPostController::class, 'store'])->name('gig.store');
+    Route::put('/gig/{id}/status', [GigPostController::class, 'toggleStatus'])->whereNumber('id')->name('gig.status');
+    Route::delete('/gig/{id}', [GigPostController::class, 'destroy'])->whereNumber('id')->name('gig.destroy');
 
     Route::get('/dia', [DiaController::class, 'index'])->name('dia')->middleware('trackvisit:fanbase');
     Route::get('/dia/conversation/{id}', [DiaController::class, 'conversation'])->name('dia.conversation');

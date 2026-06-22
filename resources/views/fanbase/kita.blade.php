@@ -338,6 +338,32 @@
         border: 1px solid var(--border); border-radius: 20px;
         padding: 3px 10px; white-space: nowrap; flex-shrink: 0;
     }
+
+    /* ── Linked post (gig/band) detail button ── */
+    .kita-action-btn.linked-btn { color: #7c3aed; }
+    .kita-action-btn.linked-btn:hover { background: #ede9fe; color: #5b21b6; }
+
+    /* ── Linked popup ── */
+    .lp-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 3000; align-items: flex-end; justify-content: center; }
+    .lp-overlay.open { display: flex; }
+    @media(min-width:540px){ .lp-overlay { align-items: center; } }
+    .lp-modal { background: var(--card); border-radius: 20px 20px 0 0; width: 100%; max-width: 540px; max-height: 85vh; overflow-y: auto; padding: 1.25rem; box-shadow: var(--shadow-lg); position: relative; }
+    @media(min-width:540px){ .lp-modal { border-radius: 20px; max-height: 80vh; } }
+    .lp-close { position: absolute; top: 12px; right: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 13px; color: var(--text-3); }
+    .lp-type-badge { display: inline-flex; align-items: center; font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; background: #ede9fe; color: #5b21b6; margin-bottom: 8px; }
+    .lp-status-badge { display: inline-flex; align-items: center; font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; margin-left: 6px; }
+    .lp-status-badge.open   { background: #d1fae5; color: #065f46; }
+    .lp-status-badge.closed { background: #fee2e2; color: #991b1b; }
+    .lp-title { font-family: 'Sora', sans-serif; font-size: 1.05rem; font-weight: 700; color: var(--text-1); margin-bottom: 6px; line-height: 1.3; }
+    .lp-creator { font-size: 12px; color: var(--text-3); margin-bottom: 10px; }
+    .lp-meta { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: var(--text-3); margin-bottom: 10px; }
+    .lp-section { margin-top: 10px; }
+    .lp-section-label { font-size: 11px; font-weight: 700; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .lp-section-body { font-size: 13px; color: var(--text-2); line-height: 1.7; white-space: pre-wrap; word-break: break-word; }
+    .lp-cta { display: flex; gap: 10px; margin-top: 1.1rem; flex-wrap: wrap; }
+    .lp-daftar { background: var(--sky); color: #fff; border: none; border-radius: 12px; padding: 11px 22px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .lp-daftar:hover { opacity: .9; }
+    .lp-cancel { background: var(--surface); color: var(--text-2); border: 1px solid var(--border); border-radius: 12px; padding: 11px 18px; font-size: 13px; cursor: pointer; font-family: inherit; }
 </style>
 @endpush
 
@@ -399,6 +425,42 @@
     </div>
     @endforeach
 
+    @php
+    $linkedData = null;
+    if (!empty($post->linked_type) && !empty($post->linked_id)) {
+        if ($post->linked_type === 'gig' && isset($gigPosts[$post->linked_id])) {
+            $gp = $gigPosts[$post->linked_id];
+            $linkedData = [
+                'kind'         => 'gig',
+                'type_label'   => \App\Models\GigPost::typeLabel($gp->type),
+                'title'        => $gp->title,
+                'creator_id'   => $gp->user_id,
+                'creator_name' => optional($gp->user)->name ?? '',
+                'description'  => $gp->description,
+                'location'     => $gp->location,
+                'date_event'   => $gp->date_event ? $gp->date_event->format('d M Y') : null,
+                'requirements' => $gp->requirements,
+                'status'       => $gp->status,
+            ];
+        } elseif ($post->linked_type === 'band' && isset($bandPosts[$post->linked_id])) {
+            $bp = $bandPosts[$post->linked_id];
+            $linkedData = [
+                'kind'         => 'band',
+                'type_label'   => '🎯 Cari Personil',
+                'title'        => $bp->title,
+                'creator_id'   => $bp->user_id,
+                'creator_name' => optional($bp->user)->name ?? '',
+                'description'  => $bp->description,
+                'roles_needed' => $bp->roles_needed,
+                'genres'       => $bp->genres,
+                'location'     => $bp->location,
+                'urgent'       => $bp->urgent,
+                'status'       => $bp->status,
+            ];
+        }
+    }
+    @endphp
+
     <div class="kita-post" id="kitaPost{{ $post->id }}">
 
         <div class="kita-post-header">
@@ -448,6 +510,12 @@
                 <span>&#128172;</span>
                 <span id="kitaCommentCount{{ $post->id }}">{{ $post->comments_count }}</span>
             </button>
+            @if($linkedData)
+            <button class="kita-action-btn linked-btn"
+                    onclick="openLinkedPost({{ json_encode($linkedData) }})">
+                &#128279; Lihat Detail
+            </button>
+            @endif
         </div>
 
         {{-- COMMENTS --}}
@@ -576,6 +644,31 @@
 </div>
 @endif
 
+{{-- POPUP LINKED (GIG / BAND) --}}
+<div class="lp-overlay" id="lpOverlay" onclick="closeLpIfBg(event)">
+    <div class="lp-modal" onclick="event.stopPropagation()">
+        <button class="lp-close" onclick="closeLinkedPost()">&#10005;</button>
+        <div id="lpTypeBadge" class="lp-type-badge"></div>
+        <span id="lpStatusBadge" class="lp-status-badge"></span>
+        <div id="lpTitle" class="lp-title"></div>
+        <div id="lpCreator" class="lp-creator"></div>
+        <div id="lpMeta" class="lp-meta"></div>
+        <div id="lpDescription" class="lp-section" style="display:none;">
+            <div class="lp-section-label">Deskripsi</div>
+            <div class="lp-section-body" id="lpDescBody"></div>
+        </div>
+        <div id="lpRoles" class="lp-section" style="display:none;">
+            <div class="lp-section-label">Role Dibutuhkan</div>
+            <div class="lp-section-body" id="lpRolesBody"></div>
+        </div>
+        <div id="lpReqs" class="lp-section" style="display:none;">
+            <div class="lp-section-label">Persyaratan</div>
+            <div class="lp-section-body" id="lpReqsBody"></div>
+        </div>
+        <div class="lp-cta" id="lpCta"></div>
+    </div>
+</div>
+
 {{-- POPUP MUSISI / AUDIENS --}}
 <div class="mc-overlay" id="musOverlay" onclick="closeMusCard(event)">
     <div class="mc-card" onclick="event.stopPropagation()">
@@ -598,6 +691,64 @@
 <script>
 var BASE_URL  = '{{ url("") }}';
 var csrfToken = '{{ csrf_token() }}';
+
+/* ===== POPUP LINKED (GIG / BAND) ===== */
+function openLinkedPost(d) {
+    document.getElementById('lpTypeBadge').textContent  = d.type_label || '';
+    var sb = document.getElementById('lpStatusBadge');
+    sb.textContent  = d.status === 'open' ? '● Buka' : '✕ Tutup';
+    sb.className    = 'lp-status-badge ' + (d.status || '');
+    document.getElementById('lpTitle').textContent    = d.title || '';
+    document.getElementById('lpCreator').textContent  = 'diposting oleh ' + (d.creator_name || '');
+    // meta row
+    var meta = [];
+    if (d.location)   meta.push('📍 ' + d.location);
+    if (d.date_event) meta.push('🗓 ' + d.date_event);
+    if (d.genres)     meta.push('🎶 ' + d.genres);
+    if (d.urgent)     meta.push('⚡ URGENT');
+    document.getElementById('lpMeta').textContent = meta.join('   ');
+    // description
+    var descEl = document.getElementById('lpDescription');
+    if (d.description) { document.getElementById('lpDescBody').textContent = d.description; descEl.style.display = ''; }
+    else descEl.style.display = 'none';
+    // roles (band only)
+    var rolesEl = document.getElementById('lpRoles');
+    if (d.roles_needed) { document.getElementById('lpRolesBody').textContent = d.roles_needed; rolesEl.style.display = ''; }
+    else rolesEl.style.display = 'none';
+    // requirements (gig only)
+    var reqsEl = document.getElementById('lpReqs');
+    if (d.requirements) { document.getElementById('lpReqsBody').textContent = d.requirements; reqsEl.style.display = ''; }
+    else reqsEl.style.display = 'none';
+    // CTA
+    var cta = document.getElementById('lpCta');
+    cta.innerHTML = '';
+    @auth
+    var authId = {{ Auth::id() }};
+    if (d.creator_id && d.creator_id != authId) {
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = BASE_URL + '/dia/start/' + d.creator_id;
+        form.style.display = 'inline';
+        var csrf = document.createElement('input');
+        csrf.type = 'hidden'; csrf.name = '_token'; csrf.value = csrfToken;
+        form.appendChild(csrf);
+        var btn = document.createElement('button');
+        btn.type = 'submit';
+        btn.className = 'lp-daftar';
+        btn.innerHTML = '&#128172; Daftar / Hubungi';
+        form.appendChild(btn);
+        cta.appendChild(form);
+    }
+    @endauth
+    var cancelBtn = document.createElement('button');
+    cancelBtn.className = 'lp-cancel';
+    cancelBtn.textContent = 'Tutup';
+    cancelBtn.onclick = closeLinkedPost;
+    cta.appendChild(cancelBtn);
+    document.getElementById('lpOverlay').classList.add('open');
+}
+function closeLinkedPost() { document.getElementById('lpOverlay').classList.remove('open'); }
+function closeLpIfBg(e) { if (e.target === document.getElementById('lpOverlay')) closeLinkedPost(); }
 
 /* ===== POPUP MUSISI ===== */
 var mcUser = null;

@@ -78,7 +78,21 @@ class KitaController extends Controller
                 ->toArray();
         } catch (\Throwable $e) {}
 
-        return view('fanbase.kita', compact('posts', 'memberLogs', 'likedIds', 'likersByPost', 'likedCommentIds', 'musicianMap'));
+        // Linked gig/band posts untuk popup di kartu Kita
+        $gigPosts  = collect();
+        $bandPosts = collect();
+        try {
+            $gigIds  = $posts->where('linked_type', 'gig')->pluck('linked_id');
+            $bandIds = $posts->where('linked_type', 'band')->pluck('linked_id');
+            if ($gigIds->isNotEmpty()) {
+                $gigPosts = \App\Models\GigPost::with('user')->whereIn('id', $gigIds)->get()->keyBy('id');
+            }
+            if ($bandIds->isNotEmpty()) {
+                $bandPosts = \App\Models\BandPost::with('user')->whereIn('id', $bandIds)->get()->keyBy('id');
+            }
+        } catch (\Throwable $e) {}
+
+        return view('fanbase.kita', compact('posts', 'memberLogs', 'likedIds', 'likersByPost', 'likedCommentIds', 'musicianMap', 'gigPosts', 'bandPosts'));
     }
 
     public function store(Request $request)

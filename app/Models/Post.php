@@ -8,7 +8,8 @@ class Post extends Model
 {
     protected $fillable = [
         'user_id', 'body', 'location',
-        'likes_count', 'comments_count', 'is_pinned'
+        'likes_count', 'comments_count', 'is_pinned',
+        'linked_type', 'linked_id',
     ];
 
     protected $casts = [
@@ -16,6 +17,7 @@ class Post extends Model
         'likes_count'    => 'integer',
         'comments_count' => 'integer',
         'is_pinned'      => 'boolean',
+        'linked_id'      => 'integer',
     ];
 
     public function user()
