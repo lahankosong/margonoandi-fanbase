@@ -523,6 +523,39 @@ runSQL($conn, 'CREATE TABLE push_subscriptions',
         KEY `push_subscriptions_endpoint_index` (`endpoint`(191))
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+// ── 9x. Papan Gig + posts.linked_* ─────────────────────────────────────────────
+echo '<h2>9x. Papan Gig &amp; Linked Post</h2>';
+runSQL($conn, 'CREATE TABLE gig_posts',
+    "CREATE TABLE IF NOT EXISTS `gig_posts` (
+        `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+        `user_id` bigint(20) UNSIGNED NOT NULL,
+        `title` varchar(120) NOT NULL,
+        `type` varchar(50) NOT NULL DEFAULT 'lainnya',
+        `description` text DEFAULT NULL,
+        `location` varchar(120) DEFAULT NULL,
+        `date_event` date DEFAULT NULL,
+        `requirements` text DEFAULT NULL,
+        `status` varchar(20) NOT NULL DEFAULT 'open',
+        `created_at` timestamp NULL DEFAULT NULL,
+        `updated_at` timestamp NULL DEFAULT NULL,
+        PRIMARY KEY (`id`),
+        KEY `gig_posts_user_id_index` (`user_id`),
+        KEY `gig_posts_status_index` (`status`),
+        KEY `gig_posts_type_index` (`type`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+if (tableExists($conn, $dbname, 'posts')) {
+    if (!columnExists($conn, $dbname, 'posts', 'linked_type')) {
+        runSQL($conn, 'ADD COLUMN linked_type ke posts', "ALTER TABLE `posts` ADD COLUMN `linked_type` varchar(20) DEFAULT NULL");
+    } else { echo '<pre class="info">&#8212; posts.linked_type sudah ada, skip</pre>'; }
+    if (!columnExists($conn, $dbname, 'posts', 'linked_id')) {
+        runSQL($conn, 'ADD COLUMN linked_id ke posts', "ALTER TABLE `posts` ADD COLUMN `linked_id` bigint(20) UNSIGNED DEFAULT NULL");
+    } else { echo '<pre class="info">&#8212; posts.linked_id sudah ada, skip</pre>'; }
+    runSQL($conn, 'ADD INDEX posts_linked_index', "ALTER TABLE `posts` ADD INDEX `posts_linked_index` (`linked_type`, `linked_id`)");
+} else {
+    echo '<pre class="info">&#8212; tabel posts belum ada, skip</pre>';
+}
+
 // ── 10. Verifikasi akhir ──────────────────────────────────────────────────────
 echo '<h2>10. Verifikasi Tabel Kritis</h2>';
 $check = [
@@ -538,6 +571,8 @@ $check = [
     'musician_profiles'    => 'Direktori Musisi (ekosistem)',
     'follows'              => 'Sistem Follow',
     'band_posts'           => 'Cari Personil (band)',
+    'gig_posts'            => 'Papan Gig / Manggung',
+    'push_subscriptions'   => 'Web Push (notif Android)',
 ];
 foreach ($check as $tbl => $label) {
     $exists = tableExists($conn, $dbname, $tbl);
