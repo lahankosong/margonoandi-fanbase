@@ -571,6 +571,16 @@ if (tableExists($conn, $dbname, 'musician_profiles')) {
     echo '<pre class="info">&#8212; tabel musician_profiles belum ada, skip</pre>';
 }
 
+// ── 9u. Foto profil musisi (upload manual) ─────────────────────────────────────
+echo '<h2>9u. Foto Profil Musisi</h2>';
+if (tableExists($conn, $dbname, 'musician_profiles')) {
+    if (!columnExists($conn, $dbname, 'musician_profiles', 'photo')) {
+        runSQL($conn, 'ADD musician_profiles.photo', "ALTER TABLE `musician_profiles` ADD COLUMN `photo` varchar(255) DEFAULT NULL");
+    } else { echo '<pre class="info">&#8212; musician_profiles.photo sudah ada, skip</pre>'; }
+} else {
+    echo '<pre class="info">&#8212; tabel musician_profiles belum ada, skip</pre>';
+}
+
 // ── 10. Verifikasi akhir ──────────────────────────────────────────────────────
 echo '<h2>10. Verifikasi Tabel Kritis</h2>';
 $check = [

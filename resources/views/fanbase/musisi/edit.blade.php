@@ -37,9 +37,28 @@
 </div>
 @endif
 
-<form method="POST" action="{{ route('musisi.save') }}">
+<form method="POST" action="{{ route('musisi.save') }}" enctype="multipart/form-data">
     @csrf
     <div class="mp-card">
+        @php
+            $prevSrc = ($profile && $profile->photo)
+                ? (\Illuminate\Support\Str::startsWith($profile->photo, ['http://','https://']) ? $profile->photo : asset($profile->photo))
+                : (auth()->user()->avatar ?? asset('images/default-avatar.png'));
+        @endphp
+        <div class="mp-fg">
+            <label>Foto Profil</label>
+            <div style="display:flex;align-items:center;gap:14px;">
+                <img id="mpPhotoPrev" src="{{ $prevSrc }}" onerror="this.src='{{ asset('images/default-avatar.png') }}'"
+                     style="width:74px;height:74px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0;">
+                <div style="flex:1;min-width:0;">
+                    <input type="file" name="photo" accept="image/*" class="mp-input" onchange="mpPreviewPhoto(this)" style="padding:7px 10px;">
+                    <span class="hint">JPG/PNG/WEBP, maks 3 MB. Kosongkan = pakai foto akun Google.</span>
+                </div>
+            </div>
+            @if($profile && $profile->photo)
+            <label class="mp-check" style="margin-top:10px;"><input type="checkbox" name="remove_photo" value="1"> Hapus foto, kembali ke foto Google</label>
+            @endif
+        </div>
         <div class="mp-row">
             <div class="mp-fg">
                 <label>Role / Instrumen</label>
@@ -101,5 +120,15 @@
         <button type="submit" class="mp-save">{{ $profile ? 'Simpan Perubahan' : 'Buat Profil' }}</button>
     </div>
 </form>
+
+<script>
+function mpPreviewPhoto(input){
+    if(input.files && input.files[0]){
+        var r=new FileReader();
+        r.onload=function(e){ var img=document.getElementById('mpPhotoPrev'); if(img) img.src=e.target.result; };
+        r.readAsDataURL(input.files[0]);
+    }
+}
+</script>
 
 @endsection

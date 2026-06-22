@@ -101,7 +101,7 @@
     <div style="display:flex;flex-direction:column;gap:10px;">
         @foreach($matches as $m)
         <div style="display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px;">
-            <img src="{{ $m->user->avatar ?? asset('images/default-avatar.png') }}" onerror="this.src='{{ asset('images/default-avatar.png') }}'" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;" alt="">
+            <img src="{{ $m->photoUrl() }}" onerror="this.src='{{ asset('images/default-avatar.png') }}'" style="width:46px;height:46px;border-radius:50%;object-fit:cover;flex-shrink:0;" alt="">
             <div style="flex:1;min-width:0;">
                 <div style="font-weight:600;color:var(--text-1);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $m->user->name ?? 'Musisi' }}</div>
                 <div style="font-size:11px;color:var(--text-3);margin-top:1px;">

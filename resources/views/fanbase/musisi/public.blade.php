@@ -11,7 +11,7 @@
     <p class="section-eyebrow">Profil Musisi · Margonoandi</p>
 
     <div class="ms-pub-card" style="background:var(--card-bg);border:1px solid var(--border);border-radius:22px;padding:2rem 1.5rem;margin-top:1rem;transition:transform .15s ease;transform-style:preserve-3d;will-change:transform;">
-        <img src="{{ $u->avatar ?? asset('images/default-avatar.png') }}"
+        <img src="{{ $profile->photoUrl() }}"
              onerror="this.src='{{ asset('images/default-avatar.png') }}'"
              alt="{{ $u->name ?? 'Musisi' }}"
              style="width:96px;height:96px;border-radius:50%;object-fit:cover;border:3px solid var(--border);">

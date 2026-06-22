@@ -34,7 +34,7 @@
 
 <div class="ms-card">
     <div class="ms-top">
-        <img class="ms-avatar" src="{{ $profile->user->avatar ?? asset('images/default-avatar.png') }}" alt="">
+        <img class="ms-avatar" src="{{ $profile->photoUrl() }}" onerror="this.src='{{ asset('images/default-avatar.png') }}'" alt="">
         <div style="min-width:0;">
             <div class="ms-name">{{ $profile->user->name ?? 'Musisi' }}</div>
             @if($profile->location)<div class="ms-loc">📍 {{ $profile->location }}</div>@endif
@@ -106,7 +106,7 @@ function msShareProfile(){
 @php
 $cardData = [
     'name'     => $profile->user->name ?? 'Musisi',
-    'avatar'   => $profile->user->avatar ?? asset('images/default-avatar.png'),
+    'avatar'   => $profile->photoUrl(),
     'roles'    => array_map('ucfirst', $profile->rolesArray()),
     'genres'   => $profile->genresArray(),
     'location' => $profile->location,

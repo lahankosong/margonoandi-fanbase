@@ -109,7 +109,7 @@
            data-genres="{{ strtolower($p->genres) }}"
            data-location="{{ strtolower($p->location) }}">
             <div class="mus-card-top">
-                <img class="mus-avatar" src="{{ $p->user->avatar ?? asset('images/default-avatar.png') }}" alt="">
+                <img class="mus-avatar" src="{{ $p->photoUrl() }}" onerror="this.src='{{ asset('images/default-avatar.png') }}'" alt="">
                 <div style="min-width:0;">
                     <div class="mus-name">{{ $p->user->name ?? 'Musisi' }}</div>
                     @if($p->location)<div class="mus-loc">📍 {{ $p->location }}</div>@endif

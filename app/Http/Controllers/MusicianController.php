@@ -64,12 +64,39 @@ class MusicianController extends Controller
             'youtube_url'  => 'nullable|string|max:255',
             'instagram'    => 'nullable|string|max:120',
             'tip_url'      => 'nullable|string|max:255',
+            'photo'        => 'nullable|image|mimes:jpeg,jpg,png,webp|max:3072',
+        ], [
+            'photo.image' => 'File foto harus berupa gambar (JPG/PNG/WEBP).',
+            'photo.max'   => 'Ukuran foto maksimal 3 MB.',
         ]);
+        unset($data['photo']);
         $data['open_to_band']   = $request->boolean('open_to_band');
         $data['open_to_collab'] = $request->boolean('open_to_collab');
         $data['is_active']      = true;
 
-        MusicianProfile::updateOrCreate(['user_id' => Auth::id()], $data);
+        $profile = MusicianProfile::firstOrNew(['user_id' => Auth::id()]);
+
+        $isLocal = fn ($p) => $p && !\Illuminate\Support\Str::startsWith($p, ['http://', 'https://']);
+
+        // Hapus foto (kembali ke avatar Google)
+        if ($request->boolean('remove_photo')) {
+            if ($isLocal($profile->photo)) @unlink(public_path($profile->photo));
+            $profile->photo = null;
+        }
+
+        // Upload foto baru → override avatar Google
+        if ($request->hasFile('photo')) {
+            if ($isLocal($profile->photo)) @unlink(public_path($profile->photo));
+            $file     = $request->file('photo');
+            $ext      = strtolower($file->getClientOriginalExtension() ?: 'jpg');
+            $filename = 'musisi_' . Auth::id() . '_' . time() . '.' . $ext;
+            $file->move(public_path('images/avatars'), $filename);
+            $profile->photo = 'images/avatars/' . $filename;
+        }
+
+        $profile->fill($data);
+        $profile->user_id = Auth::id();
+        $profile->save();
 
         return redirect()->route('musisi.index')
             ->with('success', 'Profil musisimu tersimpan.');
@@ -88,7 +115,7 @@ class MusicianController extends Controller
             $seo = [
                 'title'       => ($u->name ?? 'Musisi') . ' — Musisi di Margonoandi',
                 'description' => $desc,
-                'image'       => $u->avatar ?? asset('images/Margonoandi.jpeg'),
+                'image'       => $profile->photoUrl(),
                 'url'         => route('musisi.show', $profile->id),
                 'type'        => 'profile',
             ];
@@ -116,7 +143,9 @@ class MusicianController extends Controller
         return response()->json([
             'user_id'      => (int) $userId,
             'name'         => $user->name,
-            'avatar'       => $user->avatar,
+            'avatar'       => ($profile && $profile->photo)
+                ? (\Illuminate\Support\Str::startsWith($profile->photo, ['http://', 'https://']) ? $profile->photo : asset($profile->photo))
+                : $user->avatar,
             'is_self'      => (int) $userId === Auth::id(),
             'city'         => $user->city ?? null,
             'is_musician'  => (bool) $profile,

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class MusicianProfile extends Model
 {
     protected $fillable = [
-        'user_id', 'roles', 'skill_level', 'genres', 'location', 'bio',
+        'user_id', 'photo', 'roles', 'skill_level', 'genres', 'location', 'bio',
         'looking_for', 'spotify_url', 'youtube_url', 'instagram', 'tip_url',
         'open_to_band', 'open_to_collab', 'is_active',
     ];
@@ -22,6 +22,17 @@ class MusicianProfile extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Foto profil: pakai upload manual jika ada, kalau tidak ikut avatar Google. */
+    public function photoUrl()
+    {
+        if (!empty($this->photo)) {
+            return \Illuminate\Support\Str::startsWith($this->photo, ['http://', 'https://'])
+                ? $this->photo
+                : asset($this->photo);
+        }
+        return $this->user->avatar ?? asset('images/default-avatar.png');
     }
 
     public function rolesArray()

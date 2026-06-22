@@ -90,7 +90,7 @@ class HomeController extends Controller
                 ->latest('updated_at')->take(8)->get()
                 ->map(fn ($p) => [
                     'name'     => $p->user->name ?? 'Musisi',
-                    'avatar'   => $p->user->avatar ?? asset('images/default-avatar.png'),
+                    'avatar'   => $p->photoUrl(),
                     'roles'    => $p->rolesArray(),
                     'skill'    => $p->skill_level,
                     'location' => $p->location,
