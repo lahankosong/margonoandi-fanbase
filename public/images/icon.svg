@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#0f1e2e"/>
+  <g fill="none" stroke-width="40" stroke-linecap="round" stroke-linejoin="round">
+    <!-- cincin terbuka: kiri biru muda, kanan teal -->
+    <path d="M205 122 A 150 150 0 0 0 150 372" stroke="#92CDE4"/>
+    <path d="M307 122 A 150 150 0 0 1 362 372" stroke="#2E83A6"/>
+    <!-- prong atas (turun ke pusat) -->
+    <path d="M205 122 V 232" stroke="#92CDE4"/>
+    <path d="M307 122 V 232" stroke="#2E83A6"/>
+    <!-- psi/Y oranye: garpu + batang -->
+    <path d="M205 232 Q 205 300 256 300 Q 307 300 307 232" stroke="#E07C2E"/>
+    <path d="M256 300 V 404" stroke="#E07C2E"/>
+  </g>
+</svg>

@@ -22,6 +22,9 @@
     <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#38A8CC">
     <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/images/icon.svg">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="/images/icon.svg">
     <meta property="og:type" content="{{ $seoType }}">
     <meta property="og:site_name" content="Margonoandi">
     <meta property="og:title" content="{{ $seoTitle }}">

@@ -34,7 +34,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Margonoandi">
     <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="/images/Margonoandi.jpeg">
+    <link rel="icon" type="image/svg+xml" href="/images/icon.svg">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="/images/icon.svg">
     <title>Margonoandi — @yield('title', 'Fanbase')</title>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
     <style>

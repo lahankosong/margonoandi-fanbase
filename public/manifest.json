@@ -11,21 +11,15 @@
   "categories": ["music", "social"],
   "icons": [
     {
-      "src": "https://ui-avatars.com/api/?name=M&background=38A8CC&color=fff&size=192&bold=true&format=png",
-      "sizes": "192x192",
-      "type": "image/png",
+      "src": "/images/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "https://ui-avatars.com/api/?name=M&background=38A8CC&color=fff&size=512&bold=true&format=png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://ui-avatars.com/api/?name=M&background=38A8CC&color=fff&size=512&bold=true&format=png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "src": "/images/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "maskable"
     }
   ],
@@ -36,9 +30,9 @@
       "description": "Lihat postingan komunitas",
       "url": "/kita",
       "icons": [{
-        "src": "https://ui-avatars.com/api/?name=K&background=38A8CC&color=fff&size=96&bold=true&format=png",
-        "sizes": "96x96",
-        "type": "image/png"
+        "src": "/images/icon.svg",
+        "sizes": "any",
+        "type": "image/svg+xml"
       }]
     },
     {
@@ -47,9 +41,9 @@
       "description": "Tuning gitar standar EADGBE",
       "url": "/kamu",
       "icons": [{
-        "src": "https://ui-avatars.com/api/?name=T&background=F59E42&color=fff&size=96&bold=true&format=png",
-        "sizes": "96x96",
-        "type": "image/png"
+        "src": "/images/icon.svg",
+        "sizes": "any",
+        "type": "image/svg+xml"
       }]
     }
   ]
