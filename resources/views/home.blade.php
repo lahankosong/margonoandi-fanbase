@@ -497,11 +497,11 @@
 
     .feat-phone {
         position: relative; width: 214px; aspect-ratio: 360 / 740;
-        background: #0d0d0f; border-radius: 38px; border: 3px solid #2a2a30;
+        background: #0d0d0f; border-radius: 26px; border: 3px solid #2a2a30;
         box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 30px 80px -20px rgba(0,0,0,0.7), inset 0 0 20px rgba(255,255,255,0.02);
         margin: 0 auto 1.25rem; overflow: hidden;
     }
-    .feat-phone-inner { position: absolute; inset: 0; overflow: hidden; border-radius: 36px; }
+    .feat-phone-inner { position: absolute; inset: 0; overflow: hidden; border-radius: 22px; }
     .feat-notch {
         position: absolute; top: 0; left: 50%; transform: translateX(-50%);
         width: 64px; height: 20px; background: #0d0d0f; border-radius: 0 0 14px 14px; z-index: 10;
@@ -974,7 +974,6 @@ try { if(localStorage.getItem('heroCollapsed')==='0') setHeroCollapsed(false, fa
                 </div>
 
             </div>
-            <div class="feat-notch"></div>
             <div class="feat-home-bar"></div>
         </div>
 
