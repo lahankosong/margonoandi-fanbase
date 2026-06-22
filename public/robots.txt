@@ -2,7 +2,7 @@ User-agent: *
 Allow: /
 Allow: /lagu/
 
-# Area member / privat — tidak perlu di-index
+# Area member / privat - tidak perlu di-index
 Disallow: /admin
 Disallow: /aku
 Disallow: /kamu

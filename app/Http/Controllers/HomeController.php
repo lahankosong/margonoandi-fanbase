@@ -59,17 +59,23 @@ class HomeController extends Controller
     /** sitemap.xml dinamis: homepage + semua lagu aktif. */
     public function sitemap()
     {
-        $songs = Song::where('is_active', true)->get(['slug', 'updated_at']);
-
         $xml  = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
         $xml .= '  <url><loc>' . htmlspecialchars(url('/')) . '</loc><changefreq>daily</changefreq><priority>1.0</priority></url>' . "\n";
-        foreach ($songs as $s) {
-            $loc = route('song.show', $s->slug);
-            $xml .= '  <url><loc>' . htmlspecialchars($loc) . '</loc>';
-            if ($s->updated_at) $xml .= '<lastmod>' . $s->updated_at->toAtomString() . '</lastmod>';
-            $xml .= '<changefreq>weekly</changefreq><priority>0.8</priority></url>' . "\n";
-        }
+
+        try {
+            $songs = Song::where('is_active', true)
+                ->whereNotNull('slug')->where('slug', '!=', '')
+                ->get(['slug', 'updated_at']);
+            foreach ($songs as $s) {
+                if (empty($s->slug)) continue;
+                try { $loc = route('song.show', $s->slug); } catch (\Throwable $e) { continue; }
+                $xml .= '  <url><loc>' . htmlspecialchars($loc) . '</loc>';
+                if ($s->updated_at) $xml .= '<lastmod>' . $s->updated_at->toAtomString() . '</lastmod>';
+                $xml .= '<changefreq>weekly</changefreq><priority>0.8</priority></url>' . "\n";
+            }
+        } catch (\Throwable $e) {}
+
         $xml .= '</urlset>';
 
         return response($xml, 200, ['Content-Type' => 'application/xml; charset=UTF-8']);
