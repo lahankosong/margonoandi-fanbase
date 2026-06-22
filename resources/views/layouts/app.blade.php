@@ -498,12 +498,12 @@
 
 @guest
 @if(config('services.google.client_id'))
-{{-- Google One Tap: popup "Lanjut sebagai ..." → login sekali tap tanpa redirect --}}
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+{{-- Google One Tap: dimuat SETELAH page load agar spinner tab tak berputar abadi
+     (iframe One Tap menahan koneksi → kalau dimuat saat load, event 'load' tak pernah selesai) --}}
 <script>
 (function(){
-    function init(){
-        if (!window.google || !google.accounts || !google.accounts.id) { return setTimeout(init, 400); }
+    function startOneTap(){
+        if (!window.google || !google.accounts || !google.accounts.id) { return; }
         try {
             google.accounts.id.initialize({
                 client_id: @json(config('services.google.client_id')),
@@ -527,8 +527,17 @@
             if (d && d.ok) { window.location = d.redirect || '/aku'; }
         }).catch(function(){});
     }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-    else init();
+    function loadGsi(){
+        if (window.google && google.accounts) { startOneTap(); return; }
+        var s = document.createElement('script');
+        s.src = 'https://accounts.google.com/gsi/client';
+        s.async = true; s.defer = true;
+        s.onload = startOneTap;
+        document.head.appendChild(s);
+    }
+    // Tunggu halaman benar-benar selesai load, baru muat One Tap (cegah tab "loading" terus)
+    if (document.readyState === 'complete') setTimeout(loadGsi, 600);
+    else window.addEventListener('load', function(){ setTimeout(loadGsi, 600); });
 })();
 </script>
 @endif
