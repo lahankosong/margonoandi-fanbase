@@ -496,7 +496,7 @@
     .feat-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
     .feat-phone {
-        position: relative; width: 214px; height: 420px;
+        position: relative; width: 214px; aspect-ratio: 360 / 740;
         background: #0d0d0f; border-radius: 38px; border: 3px solid #2a2a30;
         box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 30px 80px -20px rgba(0,0,0,0.7), inset 0 0 20px rgba(255,255,255,0.02);
         margin: 0 auto 1.25rem; overflow: hidden;
@@ -659,7 +659,7 @@
     .feat-desc-item strong { color: var(--text); }
 
     @media (max-width: 420px) {
-        .feat-phone { width: 190px; height: 374px; }
+        .feat-phone { width: 190px; height: auto; }
         .feat-tabs { flex-wrap: nowrap; justify-content: flex-start; }
     }
 </style>
