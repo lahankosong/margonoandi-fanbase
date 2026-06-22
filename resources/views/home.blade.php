@@ -739,6 +739,17 @@ try { if(localStorage.getItem('heroCollapsed')==='0') setHeroCollapsed(false, fa
 {{-- FANBASE MOVEMENT / PROMO CTA --}}
 <div class="section fb-promo" id="fbPromoSection">
 
+    {{-- Gerakan / fb-movement --}}
+    <div class="fb-movement">
+        <p class="section-eyebrow"><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>Sebuah gerakan, bukan sekadar aplikasi</p>
+        <h2>Ekosistem Musik Indonesia,<br><b>Ayo kita mulai dari kamarmu.</b></h2>
+        <p class="fb-promo-intro">Bukan soal kamu sudah terkenal atau belum. Budaya baru ini lahir dari siapa saja yang cinta musik &mdash; bahkan dari kamarmu, hari ini. Tempat para musisi rumahan membangun interaksi, saling menginspirasi, dan mari tumbuh bersama.</p>
+    {{-- CTA 2: Mulai dari kamarmu --}}
+    <a href="{{ $fbEntry }}" class="btn-primary fb-promo-cta"
+       @guest onclick="gtag && gtag('event', 'cta_click', {event_category:'engagement', button:'promo_gabung'})" @endguest
+    >&#128640; Mulai dari kamarmu &mdash; Ayoo Masuk</a>
+    </div>
+    
     <p class="section-eyebrow">Fitur berikut ada di dalam Aplikasi</p>
     <p class="section-heading">Bisa kamu temukan setelah Masuk dengan email terdaftar di Google</p>
 
@@ -992,19 +1003,7 @@ try { if(localStorage.getItem('heroCollapsed')==='0') setHeroCollapsed(false, fa
     <p class="fb-promo-note">@auth Kamu sudah di dalam &mdash; ayo lanjut berkarya. @else Cukup login pakai Google &mdash; gratis &amp; aman. @endauth</p>
 
     <hr style="border:none;border-top:1px solid var(--border);margin:2.5rem 0;">
-
-    {{-- Gerakan / fb-movement --}}
-    <div class="fb-movement">
-        <p class="section-eyebrow"><span class="eq"><i></i><i></i><i></i><i></i><i></i></span>Sebuah gerakan, bukan sekadar aplikasi</p>
-        <h2>Ekosistem Musik Indonesia,<br><b>Ayo kita mulai dari kamar kamu.</b></h2>
-        <p class="fb-promo-intro">Bukan soal kamu sudah terkenal atau belum. Budaya baru ini lahir dari siapa saja yang cinta musik &mdash; dari kamar kecilmu, hari ini. Tempat para musisi rumahan membangun interaksi, saling terhubung, dan mari tumbuh bersama.</p>
-    </div>
-
-    {{-- CTA 2: Mulai dari kamarmu --}}
-    <a href="{{ $fbEntry }}" class="btn-primary fb-promo-cta"
-       @guest onclick="gtag && gtag('event', 'cta_click', {event_category:'engagement', button:'promo_gabung'})" @endguest
-    >&#128640; Mulai dari kamarmu &mdash; Ayoo Masuk</a>
-
+    
     {{-- Role cards --}}
     <p class="fb-roles-label" style="margin-top:2.5rem;">Apa pun latar musikmu, ada tempat di sini untuk berkembang :</p>
     <div class="fb-roles">
@@ -1509,7 +1508,10 @@ console.log('Home loaded:', songs.length, 'songs');
         descs.forEach(function(d,i){ d.classList.toggle('active', i === featCurrent); });
 
         var activeTab = tabs[featCurrent];
-        if (activeTab) activeTab.scrollIntoView({ behavior:'smooth', block:'nearest', inline:'center' });
+        if (activeTab) {
+            var tc = document.getElementById('featTabs');
+            if (tc) tc.scrollTo({ left: activeTab.offsetLeft - tc.offsetWidth / 2 + activeTab.offsetWidth / 2, behavior: 'smooth' });
+        }
 
         featResetTimer();
     };
