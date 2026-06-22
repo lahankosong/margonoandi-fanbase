@@ -1084,7 +1084,7 @@ try { if(localStorage.getItem('heroCollapsed')==='0') setHeroCollapsed(false, fa
     <div class="ms-land-grid">
         @foreach($musicians as $m)
         <button type="button" class="ms-land-card" data-m='@json($m, JSON_HEX_APOS|JSON_HEX_QUOT)' onclick="openMsLand(this)">
-            <img src="{{ $m['avatar'] }}" class="ms-land-av" loading="lazy" alt="" onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+            <img src="{{ $m['avatar'] }}" class="ms-land-av" loading="lazy" alt="" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}'">
             <div class="ms-land-name">{{ $m['name'] }}</div>
             <div class="ms-land-role">{{ implode(' · ', array_slice($m['roles'], 0, 2)) ?: 'Musisi' }}</div>
             @if($m['location'])<div class="ms-land-loc">📍 {{ $m['location'] }}</div>@endif
@@ -1105,7 +1105,7 @@ try { if(localStorage.getItem('heroCollapsed')==='0') setHeroCollapsed(false, fa
 <div class="ms-land-ov" id="msLandOv" onclick="if(event.target===this)closeMsLand()">
     <div class="ms-land-modal">
         <button class="ms-land-x" onclick="closeMsLand()">&#10005;</button>
-        <img id="msLandAv" src="" class="ms-land-modal-av" alt="" onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+        <img id="msLandAv" src="" class="ms-land-modal-av" alt="" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}'">
         <div id="msLandName" class="ms-land-modal-name"></div>
         <div id="msLandTags" class="ms-land-modal-tags"></div>
         <div id="msLandBio" class="ms-land-modal-bio"></div>

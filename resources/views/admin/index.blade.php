@@ -409,7 +409,7 @@
                     <img class="activity-avatar"
                          src="{{ $item->user->avatar }}"
                          alt="{{ $item->user->name }}"
-                         onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                         onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}'">
                 @else
                     <div class="activity-avatar-placeholder">
                         {{ $item->type === 'member' ? '🎉' : '📝' }}

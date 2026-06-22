@@ -1529,7 +1529,7 @@ function fbLoadNotifs() {
                     + '<button onclick="fbDeclineInvite('+inviteId+','+n.id+',event)" style="padding:4px 10px;font-size:11px;background:transparent;color:var(--text-3);border:1px solid var(--border);border-radius:6px;cursor:pointer;">Tolak</button>'
                     : '';
                 return '<div class="fb-notif-item'+unread+'" id="fbNotif'+n.id+'">'
-                    + '<img class="fb-notif-avatar" src="'+escHtml(avatar)+'" onerror="this.src=\''+defaultAvatar+'\'" alt="">'
+                    + '<img class="fb-notif-avatar" src="'+escHtml(avatar)+'" onerror="this.onerror=null;this.src=\''+defaultAvatar+'\'" alt="">'
                     + '<div class="fb-notif-body">'
                     + '<div class="fb-notif-title">'+escHtml(n.title||'')+'</div>'
                     + '<div class="fb-notif-msg">'+escHtml(n.body||'')+'</div>'
@@ -1541,7 +1541,7 @@ function fbLoadNotifs() {
             // Pakai data-attribute — JSON.stringify bikin double-quote di dalam onclick HTML dan merusak parser
             return '<div class="fb-notif-item'+unread+'" id="fbNotif'+n.id
                 +'" data-nid="'+n.id+'" data-nurl="'+escHtml(n.url||'')+'" onclick="fbNotifClickEl(this)">'
-                + '<img class="fb-notif-avatar" src="'+escHtml(avatar)+'" onerror="this.src=\''+defaultAvatar+'\'" alt="">'
+                + '<img class="fb-notif-avatar" src="'+escHtml(avatar)+'" onerror="this.onerror=null;this.src=\''+defaultAvatar+'\'" alt="">'
                 + '<div class="fb-notif-body">'
                 + '<div class="fb-notif-title">'+escHtml(n.title||'')+'</div>'
                 + '<div class="fb-notif-msg">'+escHtml(n.body||'')+'</div>'
@@ -1726,7 +1726,7 @@ function fbMemberSearch(q){
         var dot=m.online?'<span style="width:7px;height:7px;border-radius:50%;background:var(--sky);flex-shrink:0;display:inline-block;margin-left:auto;"></span>':'';
         var fallback="https://ui-avatars.com/api/?name="+encodeURIComponent(m.first)+"&background=38A8CC&color=fff&size=28";
         var av=m.avatar
-            ?'<img src="'+m.avatar+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.src=\''+fallback+'\'">'
+            ?'<img src="'+m.avatar+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.onerror=null;this.src=\''+fallback+'\'">'
             :'<img src="'+fallback+'" style="width:28px;height:28px;border-radius:50%;flex-shrink:0;">';
         html+='<form method="POST" action="/dia/start/'+m.id+'" style="margin:0;">'
             +'<input type="hidden" name="_token" value="'+csrf+'">'

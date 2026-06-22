@@ -983,7 +983,7 @@ function kitaSubmitReply(postId, parentId) {
         if (wrap) wrap.classList.remove('open');
         // Inject reply HTML sebelum reply-wrap
         var replyHtml = '<div class="kita-reply-item" id="kitaComment'+d.comment.id+'">'
-            + '<img src="'+escHtml(d.comment.avatar)+'" class="kita-comment-avatar" style="width:22px;height:22px;" onerror="this.src=\''+d.comment.avatar+'\'" alt="">'
+            + '<img src="'+escHtml(d.comment.avatar)+'" class="kita-comment-avatar" style="width:22px;height:22px;" onerror="this.onerror=null;this.src=\''+d.comment.avatar+'\'" alt="">'
             + '<div class="kita-comment-bubble">'
             + '<div class="kita-comment-header">'
             + '<span class="kita-comment-name">'+escHtml(d.comment.user)+'</span>'

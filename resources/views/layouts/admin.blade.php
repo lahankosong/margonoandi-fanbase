@@ -223,11 +223,11 @@
             <img class="adm-avatar" id="admProfileBtn" role="button" tabindex="0" title="Menu akun"
                  src="{{ Auth::user()->avatar ?? asset('images/default-avatar.png') }}"
                  alt="{{ Auth::user()->name }}"
-                 onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                 onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}'">
             <div class="adm-profile-dropdown" id="admProfileDropdown">
                 <div class="adm-profile-dd-head">
                     <img src="{{ Auth::user()->avatar ?? asset('images/default-avatar.png') }}" alt=""
-                         onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                         onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}'">
                     <div style="min-width:0;">
                         <div class="adm-profile-dd-name">{{ Auth::user()->name }}</div>
                         <div class="adm-profile-dd-email">{{ Auth::user()->email }}</div>

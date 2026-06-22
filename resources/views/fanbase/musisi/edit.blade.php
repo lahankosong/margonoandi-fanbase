@@ -48,7 +48,7 @@
         <div class="mp-fg">
             <label>Foto Profil</label>
             <div style="display:flex;align-items:center;gap:14px;">
-                <img id="mpPhotoPrev" src="{{ $prevSrc }}" onerror="this.src='{{ asset('images/default-avatar.png') }}'"
+                <img id="mpPhotoPrev" src="{{ $prevSrc }}" onerror="this.onerror=null;this.src='{{ asset('images/default-avatar.png') }}'"
                      style="width:74px;height:74px;border-radius:50%;object-fit:cover;border:2px solid var(--border);flex-shrink:0;">
                 <div style="flex:1;min-width:0;">
                     <input type="file" id="mpPhotoInput" name="photo" accept="image/*" class="mp-input" onchange="mpOpenCrop(this)" style="padding:7px 10px;">
