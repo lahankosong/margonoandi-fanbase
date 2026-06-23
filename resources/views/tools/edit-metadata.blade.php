@@ -151,23 +151,29 @@ function load(file){
         S.origBuf=ev.target.result;
         g('mdInfo').innerHTML='🎵 <b>'+file.name+'</b> · '+(file.size/1024/1024).toFixed(1)+' MB'+(S.isMp3?'':' <span style="color:#f59e0b">[bukan MP3 — output MP3 akan di-encode ulang]</span>');
         g('mdEditor').classList.add('show');st('');
-        // prefill dari tag yang ada
+        // 1) BACA metadata LAMA dulu → 2) isi form untuk diedit
         ['mdTitle','mdArtist','mdAlbum','mdYear','mdGenre','mdTrack'].forEach(function(id){g(id).value='';});
         g('mdTitle').value=S.name;
-        if(window.jsmediatags){
+        var noteEl=document.createElement('div');noteEl.style.cssText='margin-top:5px;font-size:11px;';g('mdInfo').appendChild(noteEl);
+        function readNote(html,col){noteEl.innerHTML=html;noteEl.style.color=col||'#94a3b8';}
+        if(!window.jsmediatags){ readNote('⚠️ Pembaca tag belum termuat — coba muat ulang halaman.','#f59e0b'); }
+        else {
+            readNote('🔎 Membaca metadata lama…');
             window.jsmediatags.read(file,{onSuccess:function(res){
-                var t=res.tags||{};
-                if(t.title)g('mdTitle').value=t.title;
-                if(t.artist)g('mdArtist').value=t.artist;
-                if(t.album)g('mdAlbum').value=t.album;
-                if(t.year)g('mdYear').value=(''+t.year).replace(/\D/g,'').slice(0,4);
-                if(t.genre)g('mdGenre').value=t.genre;
-                if(t.track)g('mdTrack').value=t.track;
+                var t=res.tags||{},found=[];
+                if(t.title){g('mdTitle').value=t.title;found.push('judul');}
+                if(t.artist){g('mdArtist').value=t.artist;found.push('artis');}
+                if(t.album){g('mdAlbum').value=t.album;found.push('album');}
+                if(t.year){g('mdYear').value=(''+t.year).replace(/\D/g,'').slice(0,4);found.push('tahun');}
+                if(t.genre){g('mdGenre').value=t.genre;found.push('genre');}
+                if(t.track){g('mdTrack').value=(''+t.track);found.push('track');}
                 if(t.picture&&t.picture.data&&t.picture.data.length){
                     var u8=new Uint8Array(t.picture.data);S.coverBuf=u8.buffer.slice(0);
                     try{g('mdCover').src=URL.createObjectURL(new Blob([u8],{type:t.picture.format||'image/jpeg'}));}catch(e){}
+                    found.push('cover');
                 }
-            },onError:function(){}});
+                readNote(found.length?('✓ Metadata lama dimuat ('+found.join(', ')+') — silakan edit di bawah.'):'ℹ️ File ini belum punya metadata — isi manual lalu unduh.', found.length?'#22c55e':'#94a3b8');
+            },onError:function(){ readNote('ℹ️ Tak ada metadata terbaca (mungkin format lain) — isi manual.','#94a3b8'); }});
         }
         window.scrollTo({top:g('mdEditor').offsetTop-20,behavior:'smooth'});
     };
