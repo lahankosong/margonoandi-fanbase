@@ -149,8 +149,8 @@
 {{-- ===== SPLIT INSTRUMEN ===== --}}
 <div class="card" style="margin-top:1.5rem;">
     <div class="card-head">
-        <span>🎛️ Split Instrumen</span>
-        <span class="muted">Pisah lagu jadi 4 stem — proses di browser, hasil bisa diunduh</span>
+        <span>🎤 Hapus Vokal (Karaoke)</span>
+        <span class="muted">Pisah jadi Instrumen (karaoke) + Vokal — proses di browser, hasil bisa diunduh. Untuk lagu stereo.</span>
     </div>
     <div class="card-body">
         <div id="adsiDrop" style="border:2px dashed var(--border);border-radius:10px;padding:1.5rem 1rem;text-align:center;cursor:pointer;transition:border-color .2s;margin-bottom:.75rem;">
@@ -170,7 +170,7 @@
                     <option value="mp3-320">MP3 320 kbps (HQ)</option>
                     <option value="wav">WAV (lossless)</option>
                 </select>
-                <button id="adsiBtn" class="btn btn-primary" onclick="adsiProcess()">🎛️ Proses Split</button>
+                <button id="adsiBtn" class="btn btn-primary" onclick="adsiProcess()">🎤 Hapus Vokal</button>
                 <button class="btn btn-soft btn-sm" onclick="adsiReset()">🔄 Ganti file</button>
             </div>
             <div id="adsiProgress" style="display:none;margin-bottom:.65rem;">
@@ -180,7 +180,7 @@
                 <div id="adsiPLbl" style="font-size:11px;color:var(--text-3);text-align:center;"></div>
             </div>
             <div id="adsiResult" style="display:none;">
-                <div style="font-size:12px;font-weight:700;color:#818cf8;margin-bottom:.6rem;">✅ 4 Stem siap:</div>
+                <div style="font-size:12px;font-weight:700;color:#818cf8;margin-bottom:.6rem;">✅ Hasil siap:</div>
                 <div id="adsiStemWrap"></div>
                 <div class="row" style="margin-top:.65rem;flex-wrap:wrap;">
                     <button onclick="adsiDownloadAll()" class="btn btn-primary">📦 Download Semua (ZIP)</button>
@@ -434,38 +434,7 @@ window.addEventListener('resize',function(){if(_buf)admDraw();});
 // ══════════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
-var ADSI_W=[
-'importScripts("https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/ort.min.js");',
-'ort.env.wasm.wasmPaths="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/";',
-'var MODEL_URL="https://huggingface.co/MrCitron/demucs-v4-onnx/resolve/main/htdemucs.onnx";',
-'var SEG=343980,_sess=null;',
-'async function loadModel(){',
-'var resp=await fetch(MODEL_URL);if(!resp.ok)throw new Error("HTTP "+resp.status);',
-'var total=parseInt(resp.headers.get("Content-Length")||"0");',
-'var reader=resp.body.getReader(),recv=0,chunks=[];',
-'while(true){var rr=await reader.read();if(rr.done)break;chunks.push(rr.value);recv+=rr.value.length;',
-'if(total>0){self.postMessage({t:"p",v:3+Math.round(recv/total*14),lbl:"Unduh model AI "+Math.round(recv/1024/1024)+"/"+Math.round(total/1024/1024)+" MB..."});}',
-'else{self.postMessage({t:"p",v:10,lbl:"Unduh model AI "+Math.round(recv/1024/1024)+" MB..."});}}',
-'var ab=new Uint8Array(recv),pos=0;',
-'for(var ci=0;ci<chunks.length;ci++){ab.set(chunks[ci],pos);pos+=chunks[ci].length;}',
-'self.postMessage({t:"p",v:18,lbl:"Memuat model ke memori..."});',
-'_sess=await ort.InferenceSession.create(ab.buffer,{executionProviders:["wasm"]});',
-'self.postMessage({t:"p",v:20,lbl:"Model siap!"});}',
-'self.onmessage=async function(ev){',
-'try{var L=ev.data.L,R=ev.data.R,n=L.length;',
-'if(!_sess)await loadModel();',
-'var nC=Math.ceil(n/SEG);',
-'var oL=[new Float32Array(n),new Float32Array(n),new Float32Array(n),new Float32Array(n)];',
-'var oR=[new Float32Array(n),new Float32Array(n),new Float32Array(n),new Float32Array(n)];',
-'for(var c=0;c<nC;c++){var cs=c*SEG,ce=Math.min(cs+SEG,n),cl=ce-cs;',
-'var inp=new Float32Array(2*SEG);inp.set(L.subarray(cs,ce),0);inp.set(R.subarray(cs,ce),SEG);',
-'var t=new ort.Tensor("float32",inp,[1,2,SEG]);',
-'var res=await _sess.run({"mix":t});var sd=res["stems"].data;',
-'for(var st=0;st<4;st++){for(var i=0;i<cl;i++){oL[st][cs+i]=sd[st*2*SEG+i];oR[st][cs+i]=sd[st*2*SEG+SEG+i];}}',
-'self.postMessage({t:"p",v:20+Math.round(77*(c+1)/nC),lbl:"Proses chunk "+(c+1)+"/"+nC+"..."});}',
-'self.postMessage({t:"done",vocL:oL[3],vocR:oR[3],drumsL:oL[0],drumsR:oR[0],bassL:oL[1],bassR:oR[1],otherL:oL[2],otherR:oR[2]},[oL[0].buffer,oR[0].buffer,oL[1].buffer,oR[1].buffer,oL[2].buffer,oR[2].buffer,oL[3].buffer,oR[3].buffer]);',
-'}catch(err){self.postMessage({t:"err",msg:String(err)});}};'
-].join('\n');
+// Demucs ONNX (289MB) dihapus — diganti phase-cancellation client-side di adsiProcess (instan, jalan di HP)
 
 var _c2=null,_b2=null,_nm='lagu',_st2=null,_wk=null,_urls2=[];
 function gd(id){return document.getElementById(id);}
@@ -499,39 +468,26 @@ function adsiLoad(file){
 
 window.adsiProcess=function(){
     if(!_b2){adsiSt('Pilih file dulu.');return;}
+    if(_b2.numberOfChannels<2){adsiSt('⚠️ Butuh lagu STEREO untuk hapus vokal (file ini mono).');return;}
     var btn=gd('adsiBtn');btn.disabled=true;
     gd('adsiProgress').style.display='block';gd('adsiResult').style.display='none';
-    adsiProg(1,'Menyiapkan audio…');adsiSt('');
-    function doProcess(buf){
-        var L=buf.getChannelData(0),R=buf.numberOfChannels>1?buf.getChannelData(1):L;
-        var lC=new Float32Array(L),rC=new Float32Array(R);
-        if(_wk){_wk.terminate();_wk=null;}
-        _wk=new Worker(URL.createObjectURL(new Blob([ADSI_W],{type:'application/javascript'})));
-        _wk.onmessage=function(ev){
-            var d=ev.data;
-            if(d.t==='p')adsiProg(d.v,d.lbl);
-            else if(d.t==='done'){
-                _st2={vocL:d.vocL,vocR:d.vocR,drumsL:d.drumsL,drumsR:d.drumsR,bassL:d.bassL,bassR:d.bassR,otherL:d.otherL,otherR:d.otherR};
-                adsiProg(100,'Selesai!');adsiRender(44100);btn.disabled=false;_wk=null;
-            }else if(d.t==='err'){adsiSt('⚠️ '+d.msg);btn.disabled=false;gd('adsiProgress').style.display='none';}
-        };
-        _wk.onerror=function(e){adsiSt('⚠️ '+e.message);btn.disabled=false;gd('adsiProgress').style.display='none';};
-        _wk.postMessage({L:lC,R:rC},[lC.buffer,rC.buffer]);
-    }
-    if(_b2.sampleRate!==44100){
-        adsiProg(1,'Resample ke 44100 Hz…');
-        var offLen=Math.ceil(_b2.duration*44100);
-        var offCtx=new OfflineAudioContext(_b2.numberOfChannels,offLen,44100);
-        var src=offCtx.createBufferSource();src.buffer=_b2;src.connect(offCtx.destination);src.start(0);
-        offCtx.startRendering().then(doProcess).catch(function(e){adsiSt('⚠️ Resample gagal: '+e.message);btn.disabled=false;});
-    }else{doProcess(_b2);}
+    adsiProg(8,'Memproses…');adsiSt('');
+    setTimeout(function(){
+        try{
+            var L=_b2.getChannelData(0),R=_b2.getChannelData(1),n=L.length,i;
+            var inst=new Float32Array(n),voc=new Float32Array(n);
+            for(i=0;i<n;i++){var l=L[i],r=R[i];inst[i]=l-r;voc[i]=(l+r)*0.5;}
+            function norm(a){var mx=0,j;for(j=0;j<a.length;j++){var v=a[j]<0?-a[j]:a[j];if(v>mx)mx=v;}if(mx>1e-4){var g=0.95/mx;for(j=0;j<a.length;j++)a[j]*=g;}}
+            norm(inst);norm(voc);
+            _st2={instL:inst,instR:inst,vocL:voc,vocR:voc};
+            adsiProg(100,'Selesai!');adsiRender(_b2.sampleRate);btn.disabled=false;
+        }catch(e){adsiSt('⚠️ '+e.message);btn.disabled=false;gd('adsiProgress').style.display='none';}
+    },50);
 };
 
 var _ASD=[
-    {key:'voc',  lk:'vocL',   rk:'vocR',   icon:'🎤',label:'Vokal',        color:'#38bdf8'},
-    {key:'drums',lk:'drumsL', rk:'drumsR', icon:'🥁',label:'Drum',         color:'#f87171'},
-    {key:'bass', lk:'bassL',  rk:'bassR',  icon:'🎸',label:'Bass',         color:'#f59e0b'},
-    {key:'other',lk:'otherL', rk:'otherR', icon:'🎵',label:'Other/Melodi', color:'#22c55e'}
+    {key:'instrumen',lk:'instL',rk:'instR',icon:'🎸',label:'Instrumen (Karaoke)',color:'#22c55e'},
+    {key:'vokal',    lk:'vocL', rk:'vocR', icon:'🎤',label:'Vokal (eksperimen)', color:'#38bdf8'}
 ];
 
 function adsiRender(sr){
@@ -578,12 +534,10 @@ window.adsiDownloadAll=function(){
     adsiSt('<span class="spinner"></span> Membuat ZIP…');
     var fv=gd('adsiFmt')?gd('adsiFmt').value:'mp3-128';
     var isWav=fv==='wav',kbps=isWav?0:parseInt(fv.split('-')[1])||128,ext=isWav?'wav':'mp3';
-    var zip=new JSZip(),sr=44100;
+    var zip=new JSZip(),sr=(_b2?_b2.sampleRate:44100);
     var pairs=[
-        {c0:_st2.vocL,  c1:_st2.vocR,   nm:'01_vokal'},
-        {c0:_st2.drumsL,c1:_st2.drumsR, nm:'02_drum'},
-        {c0:_st2.bassL, c1:_st2.bassR,  nm:'03_bass'},
-        {c0:_st2.otherL,c1:_st2.otherR, nm:'04_other'}
+        {c0:_st2.instL,c1:_st2.instR,nm:'01_instrumen'},
+        {c0:_st2.vocL, c1:_st2.vocR, nm:'02_vokal'}
     ];
     pairs.forEach(function(p){zip.file(_nm+'_'+p.nm+'.'+ext,isWav?adsiEW(p.c0,p.c1,sr):adsiEM(p.c0,p.c1,sr,kbps));});
     zip.generateAsync({type:'blob'}).then(function(z){var a=document.createElement('a');a.href=URL.createObjectURL(z);a.download=_nm+'_split.zip';a.click();adsiSt('');});

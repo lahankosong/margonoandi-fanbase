@@ -1014,8 +1014,8 @@ try { if(localStorage.getItem('heroCollapsed')==='0') setHeroCollapsed(false, fa
     <button onclick="siOpen()" style="display:flex;align-items:center;gap:14px;background:var(--card-bg,rgba(15,23,42,0.6));border:1px solid var(--border);border-radius:16px;padding:1rem 1.25rem;margin-top:.75rem;transition:.2s;width:100%;cursor:pointer;text-align:left;" onmouseover="this.style.borderColor='#818cf8'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="font-size:2rem;flex-shrink:0;">🎛️</div>
         <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;font-size:14px;color:var(--text,#f0f0f0);">Split Instrumen — Pisah Vokal &amp; Instrumen</div>
-            <div style="font-size:12px;color:var(--text-3,#94a3b8);margin-top:2px;">Hasilkan 4 stem: Vokal · Instrumental · Bass · Melodi — gratis, langsung di browser!</div>
+            <div style="font-weight:700;font-size:14px;color:var(--text,#f0f0f0);">Hapus Vokal (Karaoke) — Pisah Vokal &amp; Instrumen</div>
+            <div style="font-size:12px;color:var(--text-3,#94a3b8);margin-top:2px;">Pisah jadi Instrumen (karaoke) + Vokal — gratis, instan di browser, tanpa upload. Untuk lagu stereo.</div>
         </div>
         <div style="font-size:12px;font-weight:700;color:#818cf8;white-space:nowrap;">Coba 🎛️</div>
     </button>
@@ -1119,7 +1119,7 @@ try { if(localStorage.getItem('heroCollapsed')==='0') setHeroCollapsed(false, fa
     <div id="siOverlay" style="display:none;position:fixed;inset:0;z-index:9990;" onclick="siClose()"></div>
     <div id="siPopup" style="display:none;position:fixed;z-index:9999;width:min(520px,96vw);background:#0f172a;border:1px solid #312e81;border-radius:18px;box-shadow:0 24px 80px rgba(0,0,0,.75);overflow:hidden;top:50%;left:50%;transform:translate(-50%,-50%);">
         <div id="siHead" style="display:flex;align-items:center;justify-content:space-between;padding:.65rem 1rem;background:linear-gradient(135deg,#6366f1,#4338ca);cursor:grab;user-select:none;-webkit-user-select:none;">
-            <span style="font-weight:700;font-size:13px;color:#fff;">🎛️ Split Instrumen</span>
+            <span style="font-weight:700;font-size:13px;color:#fff;">🎤 Hapus Vokal (Karaoke)</span>
             <div style="display:flex;align-items:center;gap:6px;">
                 <span style="font-size:10px;color:rgba(255,255,255,.5);cursor:default;">⠿ geser</span>
                 <button onclick="siClose()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">✕</button>
@@ -1141,7 +1141,7 @@ try { if(localStorage.getItem('heroCollapsed')==='0') setHeroCollapsed(false, fa
                         <option value="mp3-320">MP3 320 kbps (HQ)</option>
                         <option value="wav">WAV (lossless)</option>
                     </select>
-                    <button id="siBtn" onclick="siProcess()" style="flex:1;padding:8px 14px;background:linear-gradient(135deg,#6366f1,#4338ca);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🎛️ Proses Split</button>
+                    <button id="siBtn" onclick="siProcess()" style="flex:1;padding:8px 14px;background:linear-gradient(135deg,#6366f1,#4338ca);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">🎤 Hapus Vokal</button>
                     <button onclick="siReset()" style="padding:7px 10px;background:#1e293b;border:1px solid #334155;color:#94a3b8;border-radius:8px;font-size:11px;cursor:pointer;">🔄</button>
                 </div>
                 <div id="siProgress" style="display:none;margin-bottom:.65rem;">
@@ -1151,7 +1151,7 @@ try { if(localStorage.getItem('heroCollapsed')==='0') setHeroCollapsed(false, fa
                     <div id="siPLbl" style="font-size:11px;color:#64748b;text-align:center;"></div>
                 </div>
                 <div id="siResult" style="display:none;">
-                    <div style="font-size:12px;font-weight:700;color:#818cf8;margin-bottom:.65rem;">✅ 4 Stem siap — dengarkan &amp; unduh:</div>
+                    <div style="font-size:12px;font-weight:700;color:#818cf8;margin-bottom:.65rem;">✅ Hasil siap — dengarkan &amp; unduh:</div>
                     <div id="siStemWrap"></div>
                     <div style="display:flex;gap:8px;margin-top:.75rem;flex-wrap:wrap;">
                         <button onclick="siDownloadAll()" style="flex:1;padding:9px;background:linear-gradient(135deg,#6366f1,#4338ca);color:#fff;border:none;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer;">📦 Download Semua (ZIP)</button>
@@ -2283,38 +2283,7 @@ window.addEventListener('resize',function(){if(_buf)requestAnimationFrame(acpDra
 // ══════════════════════════════════════════════════════════════════════════════
 (function(){
 'use strict';
-var SI_W=[
-'importScripts("https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/ort.min.js");',
-'ort.env.wasm.wasmPaths="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.17.3/dist/";',
-'var MODEL_URL="https://huggingface.co/MrCitron/demucs-v4-onnx/resolve/main/htdemucs.onnx";',
-'var SEG=343980,_sess=null;',
-'async function loadModel(){',
-'var resp=await fetch(MODEL_URL);if(!resp.ok)throw new Error("HTTP "+resp.status);',
-'var total=parseInt(resp.headers.get("Content-Length")||"0");',
-'var reader=resp.body.getReader(),recv=0,chunks=[];',
-'while(true){var rr=await reader.read();if(rr.done)break;chunks.push(rr.value);recv+=rr.value.length;',
-'if(total>0){self.postMessage({t:"p",v:3+Math.round(recv/total*14),lbl:"Unduh model AI "+Math.round(recv/1024/1024)+"/"+Math.round(total/1024/1024)+" MB..."});}',
-'else{self.postMessage({t:"p",v:10,lbl:"Unduh model AI "+Math.round(recv/1024/1024)+" MB..."});}}',
-'var ab=new Uint8Array(recv),pos=0;',
-'for(var ci=0;ci<chunks.length;ci++){ab.set(chunks[ci],pos);pos+=chunks[ci].length;}',
-'self.postMessage({t:"p",v:18,lbl:"Memuat model ke memori..."});',
-'_sess=await ort.InferenceSession.create(ab.buffer,{executionProviders:["wasm"]});',
-'self.postMessage({t:"p",v:20,lbl:"Model siap!"});}',
-'self.onmessage=async function(ev){',
-'try{var L=ev.data.L,R=ev.data.R,n=L.length;',
-'if(!_sess)await loadModel();',
-'var nC=Math.ceil(n/SEG);',
-'var oL=[new Float32Array(n),new Float32Array(n),new Float32Array(n),new Float32Array(n)];',
-'var oR=[new Float32Array(n),new Float32Array(n),new Float32Array(n),new Float32Array(n)];',
-'for(var c=0;c<nC;c++){var cs=c*SEG,ce=Math.min(cs+SEG,n),cl=ce-cs;',
-'var inp=new Float32Array(2*SEG);inp.set(L.subarray(cs,ce),0);inp.set(R.subarray(cs,ce),SEG);',
-'var t=new ort.Tensor("float32",inp,[1,2,SEG]);',
-'var res=await _sess.run({"mix":t});var sd=res["stems"].data;',
-'for(var st=0;st<4;st++){for(var i=0;i<cl;i++){oL[st][cs+i]=sd[st*2*SEG+i];oR[st][cs+i]=sd[st*2*SEG+SEG+i];}}',
-'self.postMessage({t:"p",v:20+Math.round(77*(c+1)/nC),lbl:"Proses chunk "+(c+1)+"/"+nC+"..."});}',
-'self.postMessage({t:"done",vocL:oL[3],vocR:oR[3],drumsL:oL[0],drumsR:oR[0],bassL:oL[1],bassR:oR[1],otherL:oL[2],otherR:oR[2]},[oL[0].buffer,oR[0].buffer,oL[1].buffer,oR[1].buffer,oL[2].buffer,oR[2].buffer,oL[3].buffer,oR[3].buffer]);',
-'}catch(err){self.postMessage({t:"err",msg:String(err)});}};'
-].join('\n');
+// Demucs ONNX (289MB) dihapus — diganti phase-cancellation client-side di siProcess (instan, jalan di HP)
 
 var _ctx=null,_buf=null,_name='lagu',_stems=null,_worker=null,_stemUrls=[];
 var _siDrag=false,_siOX=0,_siOY=0;
@@ -2363,39 +2332,26 @@ function siLoad(file){
 
 window.siProcess=function(){
     if(!_buf){siSt('Pilih file dulu.');return;}
+    if(_buf.numberOfChannels<2){siSt('⚠️ Butuh lagu STEREO untuk hapus vokal (file ini mono).');return;}
     var btn=gs('siBtn');btn.disabled=true;
     gs('siProgress').style.display='block';gs('siResult').style.display='none';
-    siProg(1,'Menyiapkan audio…');siSt('');
-    function doProcess(buf){
-        var L=buf.getChannelData(0),R=buf.numberOfChannels>1?buf.getChannelData(1):L;
-        var lC=new Float32Array(L),rC=new Float32Array(R);
-        if(_worker){_worker.terminate();_worker=null;}
-        _worker=new Worker(URL.createObjectURL(new Blob([SI_W],{type:'application/javascript'})));
-        _worker.onmessage=function(ev){
-            var d=ev.data;
-            if(d.t==='p')siProg(d.v,d.lbl);
-            else if(d.t==='done'){
-                _stems={vocL:d.vocL,vocR:d.vocR,drumsL:d.drumsL,drumsR:d.drumsR,bassL:d.bassL,bassR:d.bassR,otherL:d.otherL,otherR:d.otherR};
-                siProg(100,'Selesai!');siRenderResult(44100);btn.disabled=false;_worker=null;
-            }else if(d.t==='err'){siSt('⚠️ '+d.msg);btn.disabled=false;gs('siProgress').style.display='none';}
-        };
-        _worker.onerror=function(e){siSt('⚠️ '+e.message);btn.disabled=false;gs('siProgress').style.display='none';};
-        _worker.postMessage({L:lC,R:rC},[lC.buffer,rC.buffer]);
-    }
-    if(_buf.sampleRate!==44100){
-        siProg(1,'Resample ke 44100 Hz…');
-        var offLen=Math.ceil(_buf.duration*44100);
-        var offCtx=new OfflineAudioContext(_buf.numberOfChannels,offLen,44100);
-        var src=offCtx.createBufferSource();src.buffer=_buf;src.connect(offCtx.destination);src.start(0);
-        offCtx.startRendering().then(doProcess).catch(function(e){siSt('⚠️ Resample gagal: '+e.message);btn.disabled=false;});
-    }else{doProcess(_buf);}
+    siProg(8,'Memproses…');siSt('');
+    setTimeout(function(){
+        try{
+            var L=_buf.getChannelData(0),R=_buf.getChannelData(1),n=L.length,i;
+            var inst=new Float32Array(n),voc=new Float32Array(n);
+            for(i=0;i<n;i++){var l=L[i],r=R[i];inst[i]=l-r;voc[i]=(l+r)*0.5;}
+            function norm(a){var mx=0,j;for(j=0;j<a.length;j++){var v=a[j]<0?-a[j]:a[j];if(v>mx)mx=v;}if(mx>1e-4){var g=0.95/mx;for(j=0;j<a.length;j++)a[j]*=g;}}
+            norm(inst);norm(voc);
+            _stems={instL:inst,instR:inst,vocL:voc,vocR:voc};
+            siProg(100,'Selesai!');siRenderResult(_buf.sampleRate);btn.disabled=false;
+        }catch(e){siSt('⚠️ '+e.message);btn.disabled=false;gs('siProgress').style.display='none';}
+    },50);
 };
 
 var _STEMS_DEF=[
-    {key:'voc',  lk:'vocL',   rk:'vocR',   icon:'🎤',label:'Vokal',        color:'#38bdf8'},
-    {key:'drums',lk:'drumsL', rk:'drumsR', icon:'🥁',label:'Drum',         color:'#f87171'},
-    {key:'bass', lk:'bassL',  rk:'bassR',  icon:'🎸',label:'Bass',         color:'#f59e0b'},
-    {key:'other',lk:'otherL', rk:'otherR', icon:'🎵',label:'Other/Melodi', color:'#22c55e'}
+    {key:'instrumen',lk:'instL',rk:'instR',icon:'🎸',label:'Instrumen (Karaoke)',color:'#22c55e'},
+    {key:'vokal',    lk:'vocL', rk:'vocR', icon:'🎤',label:'Vokal (eksperimen)', color:'#38bdf8'}
 ];
 
 function siRenderResult(sr){
@@ -2443,12 +2399,10 @@ window.siDownloadAll=function(){
     siSt('Membuat ZIP…');
     var fv=gs('siFmt')?gs('siFmt').value:'mp3-128';
     var isWav=fv==='wav',kbps=isWav?0:parseInt(fv.split('-')[1])||128,ext=isWav?'wav':'mp3';
-    var zip=new JSZip(),sr=44100;
+    var zip=new JSZip(),sr=(_buf?_buf.sampleRate:44100);
     var pairs=[
-        {c0:_stems.vocL,  c1:_stems.vocR,   nm:'01_vokal'},
-        {c0:_stems.drumsL,c1:_stems.drumsR, nm:'02_drum'},
-        {c0:_stems.bassL, c1:_stems.bassR,  nm:'03_bass'},
-        {c0:_stems.otherL,c1:_stems.otherR, nm:'04_other'}
+        {c0:_stems.instL,c1:_stems.instR,nm:'01_instrumen'},
+        {c0:_stems.vocL, c1:_stems.vocR, nm:'02_vokal'}
     ];
     pairs.forEach(function(p){zip.file(_name+'_'+p.nm+'.'+ext,isWav?siEncWav(p.c0,p.c1,sr):siEncMp3(p.c0,p.c1,sr,kbps));});
     zip.generateAsync({type:'blob'}).then(function(z){var a=document.createElement('a');a.href=URL.createObjectURL(z);a.download=_name+'_split.zip';a.click();siSt('');});
