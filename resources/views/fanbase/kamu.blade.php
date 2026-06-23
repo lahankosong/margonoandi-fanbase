@@ -93,15 +93,19 @@
     .kamu-stats-compact { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 14px; margin-top: 12px; font-size: 12px; color: rgba(255,255,255,0.78); }
     .kamu-stats-compact b { color: #fff; }
 
-    /* TABS */
+    /* TABS — scrollable horizontal */
     .kamu-tabs {
         display: flex; gap: 4px; margin-bottom: 1.25rem;
         background: var(--card); border-radius: 14px;
         padding: 4px; border: 1px solid var(--border);
         box-shadow: var(--shadow-sm);
+        overflow-x: auto; scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
     }
+    .kamu-tabs::-webkit-scrollbar { display: none; }
     .kamu-tab {
-        flex: 1; padding: 8px 12px; border-radius: 10px;
+        flex: 0 0 auto; white-space: nowrap;
+        padding: 8px 14px; border-radius: 10px;
         font-size: 12px; font-weight: 500; color: var(--text-3);
         background: transparent; border: none; cursor: pointer;
         font-family: 'DM Sans', sans-serif; transition: 0.2s;
@@ -545,6 +549,9 @@
     <button class="kamu-tab" onclick="kamuTab('Chord', this)">
         &#127932; Chord
     </button>
+    <button class="kamu-tab" onclick="kamuTab('PotongLagu', this)">
+        ✂️ Potong Lagu
+    </button>
 </div>
 
 {{-- TAB: NOTES --}}
@@ -869,6 +876,76 @@
             </div>
         </div>
         <div class="chord-tip">&#128161; Di bass, kunci utamanya <b>root</b> tiap chord, lalu hias pakai kuint &amp; oktaf. Dengar polanya, lalu tiru.</div>
+    </div>
+</div>
+
+{{-- TAB: POTONG LAGU (flat, no popup) --}}
+<div class="kamu-tab-content" id="kamuTabPotongLagu">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;">
+        <div style="padding:.7rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+            <span style="font-size:13px;font-weight:600;color:var(--text);">✂️ Pemotong Lagu Online</span>
+            <span style="font-size:11px;color:var(--text-3);">Diproses di browser · tidak diunggah ke server</span>
+        </div>
+        <div style="padding:1rem;">
+            {{-- Drop zone --}}
+            <div id="kacDrop" onclick="document.getElementById('kacFile').click()" style="border:2px dashed var(--border);border-radius:12px;padding:1.5rem;text-align:center;cursor:pointer;transition:.2s;background:var(--bg-2);" onmouseover="this.style.borderColor='#38bdf8'" onmouseout="this.style.borderColor=''">
+                <div style="font-size:1.6rem;margin-bottom:.35rem;">🎵</div>
+                <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:.2rem;">Ketuk atau seret file audio</div>
+                <div style="font-size:11px;color:var(--text-3);">MP3 · WAV · OGG · FLAC · M4A · Maks 100 MB</div>
+            </div>
+            <input type="file" id="kacFile" accept="audio/*" style="display:none">
+
+            {{-- Editor --}}
+            <div id="kacEditor" style="display:none;margin-top:.75rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:.4rem;">
+                    <span id="kacName" style="font-weight:600;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65%;"></span>
+                    <span id="kacMeta" style="color:var(--text-3);flex-shrink:0;"></span>
+                </div>
+
+                {{-- Waveform canvas --}}
+                <div id="kacWaveWrap" style="position:relative;border-radius:10px;overflow:hidden;background:#070d18;touch-action:none;">
+                    <canvas id="kacWave" style="display:block;width:100%;height:130px;"></canvas>
+                </div>
+                <div style="font-size:10px;color:var(--text-3);text-align:center;margin:.2rem 0 .45rem;">Seret △ cyan(Mulai) / △ kuning(Akhir) · pinch/scroll untuk zoom</div>
+
+                {{-- Zoom bar --}}
+                <div style="display:flex;align-items:center;gap:5px;margin-bottom:.5rem;">
+                    <button onclick="kacZoomIn()"    style="padding:4px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-3);font-size:12px;cursor:pointer;line-height:1;">🔍+</button>
+                    <button onclick="kacZoomOut()"   style="padding:4px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-3);font-size:12px;cursor:pointer;line-height:1;">🔍−</button>
+                    <button onclick="kacZoomReset()" style="padding:4px 9px;border-radius:6px;border:1px solid var(--border);background:var(--bg-2);color:var(--text-3);font-size:12px;cursor:pointer;line-height:1;">↺</button>
+                    <div id="kacScrollWrap" style="flex:1;height:5px;background:var(--border);border-radius:3px;position:relative;cursor:grab;">
+                        <div id="kacScrollBar" style="position:absolute;top:0;height:100%;background:rgba(56,189,248,.35);border:1px solid #38bdf8;border-radius:3px;left:0;width:100%;"></div>
+                    </div>
+                    <span id="kacZoomLbl" style="font-size:10px;color:var(--text-3);white-space:nowrap;min-width:46px;text-align:right;">Semua</span>
+                </div>
+
+                {{-- Selection info --}}
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:.5rem;flex-wrap:wrap;">
+                    <span style="font-size:11px;color:#22d3ee;font-weight:700;font-variant-numeric:tabular-nums;">▶ <span id="kacSelS">0:00.0</span></span>
+                    <span style="color:var(--text-3);">→</span>
+                    <span style="font-size:11px;color:#f59e0b;font-weight:700;font-variant-numeric:tabular-nums;"><span id="kacSelE">0:00.0</span> ◀</span>
+                    <span style="color:var(--text-3);">|</span>
+                    <span style="font-size:11px;color:#22c55e;font-weight:700;font-variant-numeric:tabular-nums;"><span id="kacSelD">0:00.0</span></span>
+                </div>
+
+                {{-- Controls --}}
+                <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                    <button id="kacBtnPlay"  onclick="kacPlay()"    style="padding:9px 12px;background:var(--surface,#1e293b);border:1px solid var(--border);color:var(--text);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;min-height:40px;">▶ Play</button>
+                    <button id="kacBtnPause" onclick="kacPause()"   style="display:none;padding:9px 12px;background:rgba(250,204,21,.08);border:1px solid rgba(250,204,21,.3);color:#facc15;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;min-height:40px;">⏸ Pause</button>
+                    <button                  onclick="kacPreview()" style="padding:9px 12px;background:rgba(14,165,233,.1);border:1px solid rgba(14,165,233,.3);color:#38bdf8;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;min-height:40px;">▶ Preview</button>
+                    <button                  onclick="kacStop()"    style="padding:9px 10px;background:var(--surface,#1e293b);border:1px solid var(--border);color:var(--text-3);border-radius:8px;font-size:12px;cursor:pointer;min-height:40px;">⏹</button>
+                    <button id="kacBtnCut"   onclick="kacCut()"    style="flex:1;padding:9px;background:linear-gradient(135deg,#0ea5e9,#0369a1);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;min-height:40px;">✂️ Potong &amp; Unduh</button>
+                </div>
+                <div id="kacStatus" style="font-size:11px;color:var(--text-3);margin-top:5px;min-height:14px;"></div>
+
+                {{-- Result --}}
+                <div id="kacResult" style="display:none;margin-top:.65rem;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:.7rem;">
+                    <div style="font-size:12px;font-weight:700;color:#22c55e;margin-bottom:.4rem;">✅ Siap diunduh</div>
+                    <audio id="kacPlayer" controls style="width:100%;height:36px;margin-bottom:.4rem;"></audio>
+                    <a id="kacDl" download style="display:inline-flex;align-items:center;gap:5px;background:#22c55e;color:#fff;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;">⬇️ Unduh WAV</a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1609,5 +1686,188 @@ function tunerRenderUI(freq) {
         if (cursor) cursor.className = 'tuner-meter-needle too-high';
     }
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  KAC — Kamu Audio Cutter (tab Potong Lagu, flat, no limit)
+// ══════════════════════════════════════════════════════════════════════════════
+(function(){
+'use strict';
+var _ctx=null,_buf=null,_src=null,_dur=0;
+var _playing=false,_paused=false,_pausedAt=0,_playOffset=0,_playCtxTime=0;
+var _startT=0,_endT=0,_vS=0,_vE=1;
+var _drag=null,_pinchD=null,_pinchMid=0,_vS0=0,_vE0=0;
+var _sbDrag=false,_sbX0=0,_sbVS0=0,_sbVE0=0;
+var _raf=null,_prevStop=null,_resultUrl=null;
+
+function g(id){return document.getElementById(id);}
+function fmtP(s){s=Math.max(0,s||0);var m=Math.floor(s/60),x=s%60;return m+':'+(x<10?'0':'')+x.toFixed(1);}
+function fmtS(s){s=Math.max(0,s||0);var m=Math.floor(s/60),x=Math.floor(s%60);return m+':'+(x<10?'0':'')+x;}
+function setSt(t){var e=g('kacStatus');if(e)e.textContent=t||'';}
+
+// ── Draw ──────────────────────────────────────────────────────────────────────
+function tToX(t,W){return((t-_vS*_dur)/((_vE-_vS)*_dur))*W;}
+function xToT(x,W){return _vS*_dur+(x/W)*(_vE-_vS)*_dur;}
+function kacDraw(){
+    var c=g('kacWave'),wrap=g('kacWaveWrap');
+    if(!c||!wrap)return;
+    var rect=wrap.getBoundingClientRect();
+    var W=Math.round(rect.width||600),H=130;
+    if(W<10)W=600;
+    c.width=W;c.height=H;
+    var gc=c.getContext('2d');
+    gc.fillStyle='#070d18';gc.fillRect(0,0,W,H);
+    if(!_buf)return;
+    var data=_buf.getChannelData(0),sr=_buf.sampleRate;
+    var totS=_vS*_dur,totE=_vE*_dur;
+    for(var i=0;i<W;i++){
+        var t0=totS+(i/W)*(totE-totS),t1=totS+((i+1)/W)*(totE-totS);
+        var i0=Math.floor(t0*sr),i1=Math.ceil(t1*sr),max=0;
+        for(var j=i0;j<i1&&j<data.length;j++){var av=Math.abs(data[j]);if(av>max)max=av;}
+        var inS=(t0+t1)/2>=_startT&&(t0+t1)/2<=_endT;
+        var bH=Math.max(2,max*(H-14)*.9),y=(H-14-bH)/2;
+        gc.fillStyle=inS?'rgba(56,189,248,.88)':'rgba(56,189,248,.2)';
+        gc.fillRect(i,y,1,bH);
+    }
+    var sx=tToX(_startT,W),ex=tToX(_endT,W);
+    gc.fillStyle='rgba(56,189,248,.07)';gc.fillRect(sx,0,ex-sx,H-14);
+    var vD=totE-totS,tk=vD<=2?.2:vD<=5?.5:vD<=20?1:vD<=60?5:vD<=300?30:60;
+    gc.fillStyle='rgba(10,14,26,.9)';gc.fillRect(0,H-14,W,14);
+    gc.font='8px monospace';
+    for(var ts=Math.ceil(totS/tk)*tk;ts<=totE+.001;ts+=tk){
+        var tx=tToX(ts,W);if(tx<0||tx>W)continue;
+        gc.fillStyle='rgba(255,255,255,.2)';gc.fillRect(tx,H-14,1,14);
+        gc.fillStyle='rgba(255,255,255,.45)';gc.fillText(fmtP(ts),tx+2,H-3);
+    }
+    if(_playing||_paused){
+        var pp=_paused?_pausedAt:(_playOffset+(_ctx.currentTime-_playCtxTime));
+        if(pp>=0&&pp<=_dur){var px=tToX(pp,W);gc.fillStyle='rgba(255,255,255,.85)';gc.fillRect(px-.75,0,1.5,H-14);}
+    }
+    function dH(hx,col){
+        if(hx<-12||hx>W+12)return;
+        gc.beginPath();gc.moveTo(hx-9,0);gc.lineTo(hx+9,0);gc.lineTo(hx,16);gc.closePath();gc.fillStyle=col;gc.fill();
+        gc.globalAlpha=0.4;gc.fillRect(hx-.75,16,1.5,H-14-16);gc.globalAlpha=1;
+    }
+    dH(sx,'#22d3ee');dH(ex,'#f59e0b');
+    g('kacSelS')&&(g('kacSelS').textContent=fmtP(_startT));
+    g('kacSelE')&&(g('kacSelE').textContent=fmtP(_endT));
+    g('kacSelD')&&(g('kacSelD').textContent=fmtP(_endT-_startT));
+    var sw=g('kacScrollWrap'),sb=g('kacScrollBar'),zl=g('kacZoomLbl');
+    if(sw&&sb){var spW=sw.getBoundingClientRect().width||200;sb.style.left=(_vS*spW)+'px';sb.style.width=Math.max(8,(_vE-_vS)*spW)+'px';}
+    if(zl)zl.textContent=_vE-_vS>=.99?'Semua':Math.round(100*(_vE-_vS))+'%';
+}
+
+// ── Zoom ──────────────────────────────────────────────────────────────────────
+function zoomK(pivot,f){if(!_buf)return;var len=_vE-_vS,nL=Math.min(1,Math.max(0.005,len*f));var s=_vS+pivot*len-pivot*nL,e=s+nL;if(s<0){s=0;e=Math.min(1,nL);}if(e>1){e=1;s=Math.max(0,1-nL);}_vS=s;_vE=e;kacDraw();}
+window.kacZoomIn=function(){zoomK(.5,.6);};
+window.kacZoomOut=function(){zoomK(.5,1.7);};
+window.kacZoomReset=function(){if(!_buf)return;_vS=0;_vE=1;kacDraw();};
+
+// ── File load ─────────────────────────────────────────────────────────────────
+var kacDropEl=g('kacDrop');
+if(kacDropEl){
+    kacDropEl.addEventListener('dragover',function(e){e.preventDefault();kacDropEl.style.borderColor='#38bdf8';});
+    kacDropEl.addEventListener('dragleave',function(){kacDropEl.style.borderColor='';});
+    kacDropEl.addEventListener('drop',function(e){e.preventDefault();kacDropEl.style.borderColor='';if(e.dataTransfer.files[0])kacLoad(e.dataTransfer.files[0]);});
+}
+g('kacFile')&&g('kacFile').addEventListener('change',function(){if(this.files[0])kacLoad(this.files[0]);});
+
+function kacLoad(file){
+    if(file.size>100*1024*1024){alert('Maks 100 MB');return;}
+    setSt('Memuat…');g('kacName').textContent=file.name.replace(/\.[^.]+$/,'');
+    if(_ctx){try{_ctx.close();}catch(e){}_ctx=null;}
+    _ctx=new(window.AudioContext||window.webkitAudioContext)();
+    var r=new FileReader();
+    r.onload=function(ev){
+        _ctx.decodeAudioData(ev.target.result.slice(0),function(buf){
+            _buf=buf;_dur=buf.duration;_startT=0;_endT=_dur;_vS=0;_vE=1;
+            g('kacMeta').textContent=fmtS(_dur)+' · '+(file.size/1024/1024).toFixed(1)+' MB';
+            g('kacDrop').style.display='none';
+            g('kacEditor').style.display='block';
+            g('kacResult').style.display='none';
+            setSt('');requestAnimationFrame(kacDraw);
+        },function(){setSt('Gagal decode. Coba format lain.');});
+    };
+    r.readAsArrayBuffer(file);
+}
+
+// ── Canvas events ─────────────────────────────────────────────────────────────
+var kacC=g('kacWave');
+if(kacC){
+    function cXk(cx){var r=kacC.getBoundingClientRect();return(cx-r.left)*(kacC.width/Math.max(1,r.width));}
+    function nearHk(px,tol){if(!_buf)return null;var W=kacC.width||600,sx=tToX(_startT,W),ex=tToX(_endT,W);var ds=Math.abs(px-sx),de=Math.abs(px-ex);if(ds<tol&&ds<=de)return'start';if(de<tol)return'end';return null;}
+    kacC.addEventListener('mousedown',function(e){var h=nearHk(cXk(e.clientX),22);if(h){_drag=h;e.preventDefault();}});
+    kacC.addEventListener('mousemove',function(e){
+        if(_drag&&_drag!=='pinch'&&_buf){var t=xToT(cXk(e.clientX),kacC.width);if(_drag==='start')_startT=Math.max(0,Math.min(t,_endT-.05));else _endT=Math.min(_dur,Math.max(t,_startT+.05));kacDraw();}
+        else kacC.style.cursor=nearHk(cXk(e.clientX),22)?'ew-resize':'default';
+    });
+    document.addEventListener('mouseup',function(){_drag=null;});
+    kacC.addEventListener('wheel',function(e){if(!_buf)return;e.preventDefault();var r=kacC.getBoundingClientRect();zoomK((e.clientX-r.left)/r.width,e.deltaY>0?1.4:0.7);},{passive:false});
+    kacC.addEventListener('touchstart',function(e){
+        if(e.touches.length===2){var t0=e.touches[0],t1=e.touches[1];_drag='pinch';_pinchD=Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY);var r=kacC.getBoundingClientRect();_pinchMid=((t0.clientX+t1.clientX)/2-r.left)/r.width;_vS0=_vS;_vE0=_vE;e.preventDefault();return;}
+        if(e.touches.length===1){var h=nearHk(cXk(e.touches[0].clientX),36);if(h){_drag=h;e.preventDefault();}}
+    },{passive:false});
+    kacC.addEventListener('touchmove',function(e){
+        if(_drag==='pinch'&&e.touches.length===2){var t0=e.touches[0],t1=e.touches[1];var d=Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY),f=_pinchD/d,len=_vE0-_vS0,nL=Math.min(1,Math.max(0.01,len*f));var s=_vS0+_pinchMid*len-_pinchMid*nL,e2=s+nL;if(s<0){s=0;e2=Math.min(1,nL);}if(e2>1){e2=1;s=Math.max(0,1-nL);}_vS=s;_vE=e2;kacDraw();e.preventDefault();}
+        else if(_drag&&_drag!=='pinch'&&e.touches.length===1&&_buf){var t=xToT(cXk(e.touches[0].clientX),kacC.width);if(_drag==='start')_startT=Math.max(0,Math.min(t,_endT-.05));else _endT=Math.min(_dur,Math.max(t,_startT+.05));kacDraw();e.preventDefault();}
+    },{passive:false});
+    kacC.addEventListener('touchend',function(){_drag=null;_pinchD=null;});
+}
+
+// ── Scrollbar pan ─────────────────────────────────────────────────────────────
+var kacSWEl=g('kacScrollWrap');
+if(kacSWEl){
+    function sbSk(cx){var sb=g('kacScrollBar'),r=kacSWEl.getBoundingClientRect();var bL=parseFloat(sb.style.left)||0,bW=parseFloat(sb.style.width)||r.width;if(cx>=bL&&cx<=bL+bW){_sbDrag=true;_sbX0=cx-bL;_sbVS0=_vS;_sbVE0=_vE;return true;}return false;}
+    function sbMk(cx){if(!_sbDrag)return;var r=kacSWEl.getBoundingClientRect(),span=_sbVE0-_sbVS0,s=Math.max(0,Math.min((cx-_sbX0)/r.width,1-span));_vS=s;_vE=s+span;kacDraw();}
+    kacSWEl.addEventListener('mousedown',function(e){if(sbSk(e.clientX-kacSWEl.getBoundingClientRect().left))e.preventDefault();});
+    document.addEventListener('mousemove',function(e){sbMk(e.clientX-kacSWEl.getBoundingClientRect().left);});
+    document.addEventListener('mouseup',function(){_sbDrag=false;});
+    kacSWEl.addEventListener('touchstart',function(e){if(e.touches.length!==1)return;if(sbSk(e.touches[0].clientX-kacSWEl.getBoundingClientRect().left))e.preventDefault();},{passive:false});
+    document.addEventListener('touchmove',function(e){if(_sbDrag&&e.touches.length===1)sbMk(e.touches[0].clientX-kacSWEl.getBoundingClientRect().left);},{passive:true});
+    document.addEventListener('touchend',function(){_sbDrag=false;});
+}
+
+// ── Playback ──────────────────────────────────────────────────────────────────
+function ctxGoK(cb){if(!_ctx)return;(_ctx.state==='suspended'?_ctx.resume():Promise.resolve()).then(cb);}
+function stopSrcK(){if(_prevStop){clearTimeout(_prevStop);_prevStop=null;}if(_raf){cancelAnimationFrame(_raf);_raf=null;}if(_src){try{_src.stop();}catch(e){}_src=null;}}
+function rafK(){if(!_playing)return;kacDraw();_raf=requestAnimationFrame(rafK);}
+function showPK(v){var bp=g('kacBtnPlay'),pp=g('kacBtnPause');if(bp)bp.style.display=v?'none':'';if(pp)pp.style.display=v?'':'none';}
+function startK(from,dur){_src=_ctx.createBufferSource();_src.buffer=_buf;_src.connect(_ctx.destination);_playOffset=from;_playCtxTime=_ctx.currentTime;dur!=null?_src.start(0,from,dur):_src.start(0,from);_playing=true;_paused=false;_src.onended=function(){if(_playing&&!_paused)kacStop();};}
+window.kacPlay=function(){if(!_buf)return;if(_paused){ctxGoK(function(){_src=_ctx.createBufferSource();_src.buffer=_buf;_src.connect(_ctx.destination);_playOffset=_pausedAt;_playCtxTime=_ctx.currentTime;_src.start(0,_pausedAt);_playing=true;_paused=false;showPK(true);rafK();});return;}kacStop();ctxGoK(function(){startK(0,null);showPK(true);rafK();});};
+window.kacPreview=function(){if(!_buf)return;if(_endT-_startT<.05){setSt('Pilihan terlalu pendek.');return;}kacStop();ctxGoK(function(){startK(_startT,_endT-_startT);_prevStop=setTimeout(kacStop,(_endT-_startT)*1000+500);showPK(true);rafK();});};
+window.kacPause=function(){if(!_playing||_paused)return;_pausedAt=_playOffset+(_ctx.currentTime-_playCtxTime);stopSrcK();_paused=true;_playing=false;showPK(false);kacDraw();};
+function kacStop(){stopSrcK();_playing=false;_paused=false;showPK(false);kacDraw();}
+window.kacStop=kacStop;
+
+// ── Cut ───────────────────────────────────────────────────────────────────────
+window.kacCut=function(){
+    if(!_buf)return;
+    if(_endT-_startT<.1){setSt('Pilihan terlalu pendek (min 0.1 dtk).');return;}
+    g('kacBtnCut').disabled=true;setSt('Memotong…');
+    setTimeout(function(){
+        try{
+            var sr=_buf.sampleRate,nCh=_buf.numberOfChannels;
+            var ss=Math.floor(_startT*sr),es=Math.min(Math.ceil(_endT*sr),_buf.length),n=es-ss;
+            var ab=new ArrayBuffer(44+n*nCh*2),v=new DataView(ab);
+            function ws(o,s){for(var i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));}
+            ws(0,'RIFF');v.setUint32(4,36+n*nCh*2,true);ws(8,'WAVE');ws(12,'fmt ');
+            v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,nCh,true);
+            v.setUint32(24,sr,true);v.setUint32(28,sr*nCh*2,true);v.setUint16(32,nCh*2,true);v.setUint16(34,16,true);
+            ws(36,'data');v.setUint32(40,n*nCh*2,true);
+            var off=44;
+            for(var i=0;i<n;i++) for(var ch=0;ch<nCh;ch++){var x=Math.max(-1,Math.min(1,_buf.getChannelData(ch)[ss+i]));v.setInt16(off,x<0?x*0x8000:x*0x7FFF,true);off+=2;}
+            var blob=new Blob([ab],{type:'audio/wav'});
+            if(_resultUrl)URL.revokeObjectURL(_resultUrl);
+            _resultUrl=URL.createObjectURL(blob);
+            g('kacPlayer').src=_resultUrl;
+            var dl=g('kacDl');dl.href=_resultUrl;
+            dl.download=(g('kacName').textContent||'lagu')+'_'+fmtS(_startT).replace(':','m')+'s-'+fmtS(_endT).replace(':','m')+'s.wav';
+            g('kacResult').style.display='block';setSt('');
+        }catch(e){setSt('Gagal: '+(e.message||e));}
+        finally{g('kacBtnCut').disabled=false;}
+    },60);
+};
+
+window.addEventListener('resize',function(){if(_buf)requestAnimationFrame(kacDraw);});
+})(); // end KAC
 </script>
 @endpush

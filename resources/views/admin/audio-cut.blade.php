@@ -29,13 +29,15 @@
     .src-grid .or { font-size:11px; color:var(--text-3); }
     @media(max-width:600px){ .src-grid{ grid-template-columns:1fr; } .src-grid .or{ text-align:center; } }
 
-    /* Waveform + region */
-    .region-wave-wrap { position:relative; border-radius:8px; overflow:hidden; background:#0a0e1a; margin:12px 0 4px; cursor:crosshair; }
-    #adminWave { display:block; width:100%; height:80px; }
-    .region-play { position:absolute; top:0; bottom:0; width:2px; background:#fff; opacity:.7; left:0; pointer-events:none; }
-    .region-time { display:flex; justify-content:space-between; font-size:11px; color:var(--text-3); font-variant-numeric:tabular-nums; }
-    .range-pair { margin-top:8px; }
-    .range-pair input[type=range] { width:100%; accent-color:var(--accent); margin:2px 0; }
+    /* Waveform + region — drag handles on canvas */
+    .region-wave-wrap { position:relative; border-radius:8px; overflow:hidden; background:#070d18; margin:12px 0 4px; touch-action:none; }
+    #adminWave { display:block; width:100%; height:120px; }
+    .adm-zoom-bar { display:flex; align-items:center; gap:5px; margin:5px 0 8px; }
+    .adm-zoom-btn { padding:4px 9px; border-radius:6px; border:1px solid var(--border); background:var(--bg-3); color:var(--text-3); font-size:12px; cursor:pointer; line-height:1; }
+    .adm-zoom-btn:hover { border-color:var(--accent); color:var(--accent); }
+    .adm-scroll-wrap { flex:1; height:5px; background:var(--border); border-radius:3px; position:relative; cursor:grab; }
+    .adm-scroll-bar { position:absolute; top:0; height:100%; background:rgba(99,102,241,.35); border:1px solid #818cf8; border-radius:3px; left:0; width:100%; }
+    .adm-sel-info { display:flex; align-items:center; gap:6px; margin-bottom:8px; flex-wrap:wrap; font-variant-numeric:tabular-nums; }
 
     .clip-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border-2); flex-wrap:wrap; }
     .clip-item:last-child { border-bottom:none; }
@@ -87,31 +89,40 @@
 
         {{-- Area edit (muncul setelah lagu dimuat) --}}
         <div id="editArea" style="display:none;margin-top:14px;">
-            <audio id="player" controls preload="metadata"></audio>
+            <audio id="player" controls preload="metadata" style="width:100%;margin-bottom:10px;"></audio>
 
             <div class="region-wave-wrap" id="regionTrack">
                 <canvas id="adminWave"></canvas>
-                <div class="region-play" id="regionPlay" style="display:none;"></div>
             </div>
-            <div class="region-time"><span>0:00</span><span id="durLabel">0:00</span></div>
+            <div style="font-size:10px;color:var(--text-3);text-align:center;margin:3px 0 6px;">Seret △ indigo(Mulai) / △ kuning(Akhir) · scroll/pinch untuk zoom</div>
 
-            <div class="range-pair">
-                <input type="range" id="startRange" min="0" max="100" step="0.1" value="0">
-                <input type="range" id="endRange" min="0" max="100" step="0.1" value="100">
-            </div>
-
-            <div class="row" style="margin-top:10px;justify-content:space-between;">
-                <div class="row">
-                    <button class="btn btn-soft btn-sm" onclick="setEdge('start')">⏮️ Awal di sini</button>
-                    <button class="btn btn-soft btn-sm" onclick="setEdge('end')">Akhir di sini ⏭️</button>
-                    <button class="btn btn-soft btn-sm" id="previewBtn" onclick="previewRegion()">▶️ Preview</button>
+            {{-- Zoom bar --}}
+            <div class="adm-zoom-bar">
+                <button class="adm-zoom-btn" onclick="admZoomIn()">🔍+</button>
+                <button class="adm-zoom-btn" onclick="admZoomOut()">🔍−</button>
+                <button class="adm-zoom-btn" onclick="admZoomReset()">↺</button>
+                <div class="adm-scroll-wrap" id="admScrollWrap">
+                    <div class="adm-scroll-bar" id="admScrollBar"></div>
                 </div>
-                <span class="muted" id="segLabel"></span>
+                <span id="admZoomLbl" style="font-size:10px;color:var(--text-3);white-space:nowrap;min-width:46px;text-align:right;">Semua</span>
             </div>
 
-            <div class="row" style="margin-top:14px;">
-                <button class="btn btn-primary" id="cutBtn" onclick="doCut()">✂️ Potong bagian ini</button>
-                <span class="muted">geser slider lalu klik lagi untuk potong part lain — tanpa reload</span>
+            {{-- Sel info --}}
+            <div class="adm-sel-info">
+                <span style="font-size:11px;color:#818cf8;font-weight:700;">▶ <span id="admSelS">0:00.0</span></span>
+                <span style="color:var(--text-3);">→</span>
+                <span style="font-size:11px;color:#f59e0b;font-weight:700;"><span id="admSelE">0:00.0</span> ◀</span>
+                <span style="color:var(--text-3);">|</span>
+                <span style="font-size:11px;color:#22c55e;font-weight:700;"><span id="admSelD">0:00.0</span></span>
+                <span class="muted" id="segLabel" style="margin-left:auto;"></span>
+            </div>
+
+            <div class="row" style="margin-top:8px;">
+                <button class="btn btn-soft btn-sm" id="admBtnPlay"  onclick="admPlay()">▶ Play</button>
+                <button class="btn btn-soft btn-sm" id="admBtnPause" onclick="admPause()" style="display:none;border-color:rgba(250,204,21,.3);color:#facc15;">⏸ Pause</button>
+                <button class="btn btn-soft btn-sm" id="previewBtn"  onclick="previewRegion()">▶ Preview</button>
+                <button class="btn btn-soft btn-sm"                  onclick="admStop()">⏹</button>
+                <button class="btn btn-primary" id="cutBtn" style="margin-left:auto;" onclick="doCut()">✂️ Potong</button>
             </div>
             <div class="status" id="status"></div>
 
@@ -141,154 +152,148 @@
 </div>
 
 <script>
-// ── Admin Audio Cutter — Web Audio API (no ffmpeg needed) ──
-var player    = document.getElementById('player');
-var _ctx = null, _buf = null, _src = null;
-var srcUrl = null, srcName = 'lagu', duration = 0;
-var _startT = 0, _endT = 0, _playing = false, _prevStop = null, _raf = null;
-var lastClipBlob = null, lastClipUrl = null;
+// ── Admin Audio Cutter v2 — drag handles + zoom ─────────────────────────────
+var _ctx=null,_buf=null,_src=null,duration=0,srcName='lagu';
+var _startT=0,_endT=0,_playing=false,_paused=false,_pausedAt=0;
+var _playOffset=0,_playCtxTime=0,_prevStop=null,_raf=null;
+var _vS=0,_vE=1,_drag=null,_pinchD=null,_pinchMid=0,_vS0=0,_vE0=0;
+var _sbDrag=false,_sbX0=0,_sbVS0=0,_sbVE0=0;
+var lastClipBlob=null,lastClipUrl=null;
 
-function fmt(s){ s=Math.max(0,s||0); var m=Math.floor(s/60),x=Math.floor(s%60); return m+':'+(x<10?'0':'')+x; }
-function getExt(n){ var m=(n||'').match(/\.([a-z0-9]+)(?:\?|$)/i); return m?m[1].toLowerCase():'mp3'; }
-function setStatus(html){ document.getElementById('status').innerHTML = html||''; }
+function ga(id){return document.getElementById(id);}
+function fmtA(s){s=Math.max(0,s||0);var m=Math.floor(s/60),x=Math.floor(s%60);return m+':'+(x<10?'0':'')+x;}
+function fmtAP(s){s=Math.max(0,s||0);var m=Math.floor(s/60),x=s%60;return m+':'+(x<10?'0':'')+x.toFixed(1);}
+function setStatus(html){ga('status').innerHTML=html||'';}
 
-// ── Load from song library ──
-document.getElementById('songSelect').addEventListener('change', function(){
-    if (!this.value) return;
-    var opt = this.options[this.selectedIndex];
-    document.getElementById('fileInput').value = '';
-    fetchAndLoad(this.value, opt.getAttribute('data-title')||'lagu');
+// ── Load ──────────────────────────────────────────────────────────────────────
+ga('songSelect').addEventListener('change',function(){
+    if(!this.value)return;
+    ga('fileInput').value='';
+    fetchAndLoad(this.value,this.options[this.selectedIndex].getAttribute('data-title')||'lagu');
 });
-document.getElementById('fileInput').addEventListener('change', function(){
-    var f=this.files[0]; if(!f) return;
-    document.getElementById('songSelect').value='';
-    readFileAndLoad(f);
+ga('fileInput').addEventListener('change',function(){
+    var f=this.files[0];if(!f)return;
+    ga('songSelect').value='';readFileAndLoad(f);
 });
-
 function readFileAndLoad(file){
-    srcName = file.name.replace(/\.[^.]+$/,'');
+    srcName=file.name.replace(/\.[^.]+$/,'');
     setStatus('<span class="spinner"></span> Membaca file…');
-    var reader=new FileReader();
-    reader.onload=function(e){ decodeBuffer(e.target.result); };
-    reader.readAsArrayBuffer(file);
+    var r=new FileReader();r.onload=function(e){decodeBuffer(e.target.result);};r.readAsArrayBuffer(file);
 }
-async function fetchAndLoad(url, name){
-    srcUrl=url; srcName=name;
-    setStatus('<span class="spinner"></span> Mengambil file dari server…');
-    try {
-        var res = await fetch(url);
-        var ab  = await res.arrayBuffer();
-        decodeBuffer(ab);
-    } catch(e){ setStatus('⚠️ Gagal mengambil file: '+e.message); }
+async function fetchAndLoad(url,name){
+    srcName=name;setStatus('<span class="spinner"></span> Mengambil file…');
+    try{var res=await fetch(url);var ab=await res.arrayBuffer();decodeBuffer(ab);}
+    catch(e){setStatus('⚠️ Gagal: '+e.message);}
 }
-
 function decodeBuffer(ab){
-    if(_ctx){ try{_ctx.close();}catch(e){} }
-    _ctx = new (window.AudioContext||window.webkitAudioContext)();
-    setStatus('<span class="spinner"></span> Mendekode audio…');
-    _ctx.decodeAudioData(ab, function(buf){
-        _buf=buf; duration=buf.duration;
-        _startT=0; _endT=duration;
-        player.src=''; // clear native player
-        document.getElementById('srcInfo').textContent = '🎵 '+srcName+' · '+fmt(duration);
-        document.getElementById('durLabel').textContent = fmt(duration);
-        var sr=document.getElementById('startRange'), er=document.getElementById('endRange');
-        sr.max=er.max=duration.toFixed(1); sr.step=er.step=(duration/1000).toFixed(4);
-        sr.value=0; er.value=duration.toFixed(1);
-        updateRegion(); drawAdminWave();
-        document.getElementById('editArea').style.display='block';
-        document.getElementById('resultWrap').style.display='none';
-        setStatus('');
-    }, function(){ setStatus('⚠️ Gagal mendekode — coba format lain.'); });
+    if(_ctx){try{_ctx.close();}catch(e){}}
+    _ctx=new(window.AudioContext||window.webkitAudioContext)();
+    setStatus('<span class="spinner"></span> Mendekode…');
+    _ctx.decodeAudioData(ab,function(buf){
+        _buf=buf;duration=buf.duration;_startT=0;_endT=duration;_vS=0;_vE=1;
+        ga('srcInfo').textContent='🎵 '+srcName+' · '+fmtA(duration);
+        ga('editArea').style.display='block';
+        ga('resultWrap').style.display='none';
+        setStatus('');admDraw();
+    },function(){setStatus('⚠️ Gagal mendekode — coba format lain.');});
 }
 
-// ── Waveform ──
-function drawAdminWave(){
-    var canvas=document.getElementById('adminWave');
-    var wrap=document.getElementById('regionTrack');
-    var W=wrap.clientWidth||560, H=80;
-    canvas.width=W; canvas.height=H;
-    var ctx=canvas.getContext('2d');
-    ctx.fillStyle='#0a0e1a'; ctx.fillRect(0,0,W,H);
-    if(!_buf) return;
-    var data=_buf.getChannelData(0), step=Math.ceil(data.length/W);
-    var sx=(_startT/_endT||0)*0, ex2=(_endT/duration)*W, sx2=(_startT/duration)*W;
-    ctx.fillStyle='rgba(99,102,241,.1)'; ctx.fillRect(sx2,0,ex2-sx2,H);
+// ── Draw ──────────────────────────────────────────────────────────────────────
+function tToXA(t,W){return((t-_vS*duration)/((_vE-_vS)*duration))*W;}
+function xToTA(x,W){return _vS*duration+(x/W)*(_vE-_vS)*duration;}
+function admDraw(){
+    var c=ga('adminWave'),wrap=ga('regionTrack');
+    if(!c||!wrap)return;
+    var W=Math.round(wrap.getBoundingClientRect().width||560),H=120;
+    if(W<10)W=560;c.width=W;c.height=H;
+    var gc=c.getContext('2d');
+    gc.fillStyle='#070d18';gc.fillRect(0,0,W,H);
+    if(!_buf)return;
+    var data=_buf.getChannelData(0),sr=_buf.sampleRate;
+    var totS=_vS*duration,totE=_vE*duration;
     for(var i=0;i<W;i++){
-        var max=0;
-        for(var j=0;j<step;j++){ var v=Math.abs(data[i*step+j]||0); if(v>max)max=v; }
-        var bH=Math.max(1,max*H*.9), y=(H-bH)/2;
-        ctx.fillStyle=(i>=sx2&&i<=ex2)?'#6366f1':'#1e293b';
-        ctx.fillRect(i,y,1,bH);
+        var t0=totS+(i/W)*(totE-totS),t1=totS+((i+1)/W)*(totE-totS);
+        var i0=Math.floor(t0*sr),i1=Math.ceil(t1*sr),max=0;
+        for(var j=i0;j<i1&&j<data.length;j++){var av=Math.abs(data[j]);if(av>max)max=av;}
+        var inS=(t0+t1)/2>=_startT&&(t0+t1)/2<=_endT;
+        var bH=Math.max(2,max*(H-14)*.9),y=(H-14-bH)/2;
+        gc.fillStyle=inS?'rgba(99,102,241,.88)':'rgba(99,102,241,.2)';
+        gc.fillRect(i,y,1,bH);
     }
-    ctx.fillStyle='#818cf8'; ctx.fillRect(sx2,0,2,H);
-    ctx.fillStyle='#f59e0b'; ctx.fillRect(ex2-2,0,2,H);
+    var sx=tToXA(_startT,W),ex=tToXA(_endT,W);
+    gc.fillStyle='rgba(99,102,241,.07)';gc.fillRect(sx,0,ex-sx,H-14);
+    var vD=totE-totS,tk=vD<=2?.2:vD<=5?.5:vD<=20?1:vD<=60?5:vD<=300?30:60;
+    gc.fillStyle='rgba(10,14,26,.9)';gc.fillRect(0,H-14,W,14);
+    gc.font='8px monospace';
+    for(var ts=Math.ceil(totS/tk)*tk;ts<=totE+.001;ts+=tk){
+        var tx=tToXA(ts,W);if(tx<0||tx>W)continue;
+        gc.fillStyle='rgba(255,255,255,.2)';gc.fillRect(tx,H-14,1,14);
+        gc.fillStyle='rgba(255,255,255,.45)';gc.fillText(fmtAP(ts),tx+2,H-3);
+    }
+    if(_playing||_paused){
+        var pp=_paused?_pausedAt:(_playOffset+(_ctx.currentTime-_playCtxTime));
+        if(pp>=0&&pp<=duration){var px=tToXA(pp,W);gc.fillStyle='rgba(255,255,255,.85)';gc.fillRect(px-.75,0,1.5,H-14);}
+    }
+    function dHA(hx,col){if(hx<-12||hx>W+12)return;gc.beginPath();gc.moveTo(hx-9,0);gc.lineTo(hx+9,0);gc.lineTo(hx,16);gc.closePath();gc.fillStyle=col;gc.fill();gc.globalAlpha=0.4;gc.fillRect(hx-.75,16,1.5,H-14-16);gc.globalAlpha=1;}
+    dHA(sx,'#818cf8');dHA(ex,'#f59e0b');
+    ga('admSelS')&&(ga('admSelS').textContent=fmtAP(_startT));
+    ga('admSelE')&&(ga('admSelE').textContent=fmtAP(_endT));
+    ga('admSelD')&&(ga('admSelD').textContent=fmtAP(_endT-_startT));
+    ga('segLabel')&&(ga('segLabel').textContent='durasi: '+fmtAP(_endT-_startT));
+    var sw=ga('admScrollWrap'),sb=ga('admScrollBar'),zl=ga('admZoomLbl');
+    if(sw&&sb){var spW=sw.getBoundingClientRect().width||200;sb.style.left=(_vS*spW)+'px';sb.style.width=Math.max(8,(_vE-_vS)*spW)+'px';}
+    if(zl)zl.textContent=_vE-_vS>=.99?'Semua':Math.round(100*(_vE-_vS))+'%';
 }
 
-// ── Sliders ──
-var startRange=document.getElementById('startRange'), endRange=document.getElementById('endRange');
-startRange.addEventListener('input', function(){
-    _startT=parseFloat(this.value);
-    if(_startT>=_endT-0.1){_startT=_endT-0.1;this.value=_startT.toFixed(4);}
-    updateRegion(); drawAdminWave();
-});
-endRange.addEventListener('input', function(){
-    _endT=parseFloat(this.value);
-    if(_endT<=_startT+0.1){_endT=_startT+0.1;this.value=_endT.toFixed(4);}
-    updateRegion(); drawAdminWave();
-});
-function getStart(){ return _startT; }
-function getEnd(){ return _endT; }
-function updateRegion(){
-    document.getElementById('segLabel').textContent='🟦 '+fmt(_startT)+' – '+fmt(_endT)+' · durasi '+fmt(_endT-_startT);
-}
-function setEdge(which){
-    if(!duration) return;
-    var t = _ctx ? (_ctx.currentTime - (_playCtxTime||0) + (_startT||0)) : 0;
-    if(which==='start'){ _startT=Math.max(0,Math.min(t,_endT-0.1)); startRange.value=_startT.toFixed(4); }
-    else { _endT=Math.max(_startT+0.1,Math.min(t,duration)); endRange.value=_endT.toFixed(4); }
-    updateRegion(); drawAdminWave();
-}
+// ── Zoom ──────────────────────────────────────────────────────────────────────
+function zoomA(p,f){if(!_buf)return;var len=_vE-_vS,nL=Math.min(1,Math.max(0.005,len*f));var s=_vS+p*len-p*nL,e=s+nL;if(s<0){s=0;e=Math.min(1,nL);}if(e>1){e=1;s=Math.max(0,1-nL);}_vS=s;_vE=e;admDraw();}
+window.admZoomIn=function(){zoomA(.5,.6);};
+window.admZoomOut=function(){zoomA(.5,1.7);};
+window.admZoomReset=function(){if(!_buf)return;_vS=0;_vE=1;admDraw();};
 
-document.getElementById('regionTrack').addEventListener('click', function(ev){
-    if(!duration) return;
-    var rect=this.getBoundingClientRect();
-    var t=(ev.clientX-rect.left)/rect.width*duration;
-    var ds=Math.abs(t-_startT), de=Math.abs(t-_endT);
-    if(ds<de){ _startT=Math.max(0,Math.min(t,_endT-0.1)); startRange.value=_startT.toFixed(4); }
-    else { _endT=Math.max(_startT+0.1,Math.min(t,duration)); endRange.value=_endT.toFixed(4); }
-    updateRegion(); drawAdminWave();
-});
+// ── Canvas events ─────────────────────────────────────────────────────────────
+var admC=ga('adminWave');
+(function(){
+    function cXA(cx){var r=admC.getBoundingClientRect();return(cx-r.left)*(admC.width/Math.max(1,r.width));}
+    function nearHA(px,tol){if(!_buf)return null;var W=admC.width||560,sx=tToXA(_startT,W),ex=tToXA(_endT,W);var ds=Math.abs(px-sx),de=Math.abs(px-ex);if(ds<tol&&ds<=de)return'start';if(de<tol)return'end';return null;}
+    admC.addEventListener('mousedown',function(e){var h=nearHA(cXA(e.clientX),22);if(h){_drag=h;e.preventDefault();}});
+    admC.addEventListener('mousemove',function(e){
+        if(_drag&&_drag!=='pinch'&&_buf){var t=xToTA(cXA(e.clientX),admC.width);if(_drag==='start')_startT=Math.max(0,Math.min(t,_endT-.05));else _endT=Math.min(duration,Math.max(t,_startT+.05));admDraw();}
+        else admC.style.cursor=nearHA(cXA(e.clientX),22)?'ew-resize':'default';
+    });
+    document.addEventListener('mouseup',function(){_drag=null;});
+    admC.addEventListener('wheel',function(e){if(!_buf)return;e.preventDefault();var r=admC.getBoundingClientRect();zoomA((e.clientX-r.left)/r.width,e.deltaY>0?1.4:0.7);},{passive:false});
+    admC.addEventListener('touchstart',function(e){
+        if(e.touches.length===2){var t0=e.touches[0],t1=e.touches[1];_drag='pinch';_pinchD=Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY);var r=admC.getBoundingClientRect();_pinchMid=((t0.clientX+t1.clientX)/2-r.left)/r.width;_vS0=_vS;_vE0=_vE;e.preventDefault();return;}
+        if(e.touches.length===1){var h=nearHA(cXA(e.touches[0].clientX),36);if(h){_drag=h;e.preventDefault();}}
+    },{passive:false});
+    admC.addEventListener('touchmove',function(e){
+        if(_drag==='pinch'&&e.touches.length===2){var t0=e.touches[0],t1=e.touches[1];var d=Math.hypot(t1.clientX-t0.clientX,t1.clientY-t0.clientY),f=_pinchD/d,len=_vE0-_vS0,nL=Math.min(1,Math.max(0.01,len*f));var s=_vS0+_pinchMid*len-_pinchMid*nL,e2=s+nL;if(s<0){s=0;e2=Math.min(1,nL);}if(e2>1){e2=1;s=Math.max(0,1-nL);}_vS=s;_vE=e2;admDraw();e.preventDefault();}
+        else if(_drag&&_drag!=='pinch'&&e.touches.length===1&&_buf){var t=xToTA(cXA(e.touches[0].clientX),admC.width);if(_drag==='start')_startT=Math.max(0,Math.min(t,_endT-.05));else _endT=Math.min(duration,Math.max(t,_startT+.05));admDraw();e.preventDefault();}
+    },{passive:false});
+    admC.addEventListener('touchend',function(){_drag=null;_pinchD=null;});
+    // Scrollbar
+    var sw=ga('admScrollWrap');
+    if(sw){
+        function sbSA(cx){var sb=ga('admScrollBar'),r=sw.getBoundingClientRect();var bL=parseFloat(sb.style.left)||0,bW=parseFloat(sb.style.width)||r.width;if(cx>=bL&&cx<=bL+bW){_sbDrag=true;_sbX0=cx-bL;_sbVS0=_vS;_sbVE0=_vE;return true;}return false;}
+        function sbMA(cx){if(!_sbDrag)return;var r=sw.getBoundingClientRect(),span=_sbVE0-_sbVS0,s=Math.max(0,Math.min((cx-_sbX0)/r.width,1-span));_vS=s;_vE=s+span;admDraw();}
+        sw.addEventListener('mousedown',function(e){if(sbSA(e.clientX-sw.getBoundingClientRect().left))e.preventDefault();});
+        document.addEventListener('mousemove',function(e){sbMA(e.clientX-sw.getBoundingClientRect().left);});
+        document.addEventListener('mouseup',function(){_sbDrag=false;});
+    }
+})();
 
-// ── Playback ──
-var _playCtxTime=0, _playOffset=0;
-function previewRegion(){
-    if(!_buf) return;
-    _stopSrc();
-    _ctx.resume();
-    _src=_ctx.createBufferSource(); _src.buffer=_buf; _src.connect(_ctx.destination);
-    _playOffset=_startT; _playCtxTime=_ctx.currentTime;
-    _src.start(0,_startT,_endT-_startT);
-    _playing=true; _rafTick();
-    _prevStop=setTimeout(_stopSrc, (_endT-_startT)*1000+300);
-}
-function _stopSrc(){
-    if(_prevStop){clearTimeout(_prevStop);_prevStop=null;}
-    if(_raf){cancelAnimationFrame(_raf);_raf=null;}
-    if(_src){try{_src.stop();}catch(e){}_src=null;}
-    _playing=false;
-    document.getElementById('regionPlay').style.display='none';
-}
-function _rafTick(){
-    if(!_playing) return;
-    var elapsed=_ctx.currentTime-_playCtxTime;
-    var pos=(_playOffset+elapsed)/duration;
-    if(pos>1){_stopSrc();return;}
-    var canvas=document.getElementById('adminWave');
-    var ph=document.getElementById('regionPlay');
-    ph.style.display='block'; ph.style.left=(pos*canvas.width)+'px';
-    _raf=requestAnimationFrame(_rafTick);
-}
+// ── Playback ──────────────────────────────────────────────────────────────────
+function ctxGoA(cb){if(!_ctx)return;(_ctx.state==='suspended'?_ctx.resume():Promise.resolve()).then(cb);}
+function _stopSrc(){if(_prevStop){clearTimeout(_prevStop);_prevStop=null;}if(_raf){cancelAnimationFrame(_raf);_raf=null;}if(_src){try{_src.stop();}catch(e){}_src=null;}}
+function _rafTick(){if(!_playing)return;admDraw();_raf=requestAnimationFrame(_rafTick);}
+function showPauseA(v){var bp=ga('admBtnPlay'),pp=ga('admBtnPause');if(bp)bp.style.display=v?'none':'';if(pp)pp.style.display=v?'':'none';}
+function admStop(){_stopSrc();_playing=false;_paused=false;showPauseA(false);admDraw();}
+window.admStop=admStop;
+window.admPlay=function(){if(!_buf)return;if(_paused){ctxGoA(function(){_src=_ctx.createBufferSource();_src.buffer=_buf;_src.connect(_ctx.destination);_playOffset=_pausedAt;_playCtxTime=_ctx.currentTime;_src.start(0,_pausedAt);_playing=true;_paused=false;showPauseA(true);_rafTick();});return;}admStop();ctxGoA(function(){_src=_ctx.createBufferSource();_src.buffer=_buf;_src.connect(_ctx.destination);_playOffset=0;_playCtxTime=_ctx.currentTime;_src.start(0,0);_playing=true;_paused=false;showPauseA(true);_rafTick();});};
+window.admPause=function(){if(!_playing||_paused)return;_pausedAt=_playOffset+(_ctx.currentTime-_playCtxTime);_stopSrc();_paused=true;_playing=false;showPauseA(false);admDraw();};
+function previewRegion(){if(!_buf)return;admStop();ctxGoA(function(){_src=_ctx.createBufferSource();_src.buffer=_buf;_src.connect(_ctx.destination);_playOffset=_startT;_playCtxTime=_ctx.currentTime;_src.start(0,_startT,_endT-_startT);_playing=true;_paused=false;_prevStop=setTimeout(admStop,(_endT-_startT)*1000+400);showPauseA(true);_rafTick();});}
+window.previewRegion=previewRegion;
 
 // ── Cut ──
 function doCut(){
