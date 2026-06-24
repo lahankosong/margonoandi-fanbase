@@ -6,6 +6,7 @@ use App\Models\Post;
 use App\Models\AkuPost;
 use App\Models\MusicianProfile;
 use App\Models\Follow;
+use App\Models\Article;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -38,9 +39,12 @@ class KamuController extends Controller
             $following = Follow::where('follower_id', $user->id)->count();
         } catch (\Throwable $e) {}
 
+        $articles = collect();
+        try { $articles = Article::orderBy('batch')->orderBy('id')->get(['id','slug','title','category','batch','excerpt','reading_time']); } catch (\Throwable $e) {}
+
         return view('fanbase.kamu', compact(
             'user', 'posts', 'notes', 'totalLikes', 'totalComments', 'totalPosts',
-            'musician', 'followers', 'following'
+            'musician', 'followers', 'following', 'articles'
         ));
     }
     public function update(Request $request, $id) {

@@ -487,6 +487,57 @@
         .notes-grid { grid-template-columns: 1fr 1fr; }
         .kamu-stats { gap: 0; }
     }
+
+    /* ===== MATERI TAB ===== */
+    .mat-tab-header { margin-bottom: 1rem; }
+    .mat-tab-header h2 { font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;color:var(--text-1); }
+    .mat-tab-header p { font-size:12px;color:var(--text-3);margin-top:3px;line-height:1.5; }
+    .mat-tab-stats { display:flex;gap:1rem;flex-wrap:wrap;font-size:11px;color:var(--text-3);margin-top:.5rem; }
+    .mat-tab-stats b { color:var(--sky-dk); }
+    .mat-filter-row { display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem; }
+    .mat-fchip { padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text-3);font-size:11px;font-weight:500;cursor:pointer;transition:.15s;font-family:inherit; }
+    .mat-fchip:hover { border-color:var(--sky);color:var(--sky-dk); }
+    .mat-fchip.active { background:var(--sky);color:#fff;border-color:var(--sky); }
+    .mat-article-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px; }
+    .mat-article-card { background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem;transition:.2s;text-decoration:none;display:flex;flex-direction:column;gap:7px; }
+    .mat-article-card:hover { transform:translateY(-2px);box-shadow:var(--shadow);border-color:var(--sky-mid); }
+    .mat-ac-top { display:flex;justify-content:space-between;align-items:center; }
+    .mat-ac-pill { font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;color:#fff; }
+    .mat-ac-time { font-size:10px;color:var(--text-4); }
+    .mat-ac-title { font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:var(--text-1);line-height:1.35; }
+    .mat-ac-excerpt { font-size:11.5px;color:var(--text-3);line-height:1.55;flex:1; }
+    .mat-ac-footer { display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:3px; }
+    .mat-ac-read { font-size:11px;color:var(--sky-dk);font-weight:600;text-decoration:none; }
+    .mat-ac-dl { font-size:11px;padding:3px 10px;border-radius:10px;background:rgba(56,168,204,.1);border:1px solid rgba(56,168,204,.25);color:var(--sky-dk);font-weight:600;text-decoration:none;transition:.15s; }
+    .mat-ac-dl:hover { background:var(--sky);color:#fff; }
+    .mat-sec-label { font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-3);font-weight:700;margin:1.1rem 0 .6rem;padding-bottom:.3rem;border-bottom:1px solid var(--border-lt); }
+
+    /* Spotlight animation untuk tab Materi */
+    @keyframes materiBlink {
+        0%,100% { box-shadow: 0 0 0 0 rgba(56,168,204,0); }
+        50%      { box-shadow: 0 0 0 6px rgba(56,168,204,0.35); }
+    }
+    .materi-highlight {
+        animation: materiBlink 1.2s ease-in-out 4;
+        background: linear-gradient(135deg, rgba(56,168,204,.25), rgba(56,168,204,.1)) !important;
+        color: var(--sky-dk) !important;
+        border: 1px solid var(--sky-mid) !important;
+        position: relative;
+    }
+    .materi-highlight::after {
+        content: 'Baru!';
+        position: absolute;
+        top: -7px;
+        right: -3px;
+        background: #f59e0b;
+        color: #fff;
+        font-size: 8px;
+        font-weight: 700;
+        padding: 1px 5px;
+        border-radius: 8px;
+        letter-spacing: .04em;
+        pointer-events: none;
+    }
 </style>
 @endpush
 
@@ -557,6 +608,9 @@
     </button>
     <button class="kamu-tab" onclick="kamuTab('SplitInstrumen', this)">
         🎤 Karaoke
+    </button>
+    <button class="kamu-tab" id="kamuTabMateriBtn" onclick="kamuTab('Materi', this)">
+        📚 Materi
     </button>
 </div>
 
@@ -1049,6 +1103,69 @@
     </div>
 </div>
 
+{{-- TAB: MATERI --}}
+<div class="kamu-tab-content" id="kamuTabMateri" style="display:none;">
+    @php
+    $catColors = ['teori' => '#38A8CC', 'produksi' => '#a855f7', 'kolaborasi' => '#f59e0b', 'rilis' => '#22c55e'];
+    $catIcons  = ['teori' => '🎵', 'produksi' => '🎛️', 'kolaborasi' => '🤝', 'rilis' => '🚀'];
+    $catNames  = ['teori' => 'Teori Musik', 'produksi' => 'Produksi', 'kolaborasi' => 'Kolaborasi', 'rilis' => 'Rilis & Branding'];
+    @endphp
+
+    <div class="mat-tab-header">
+        <h2>📚 Materi Musik</h2>
+        <p>Panduan lengkap dari teori sampai rilis — semua bisa diunduh sebagai file.</p>
+        @if($articles->count() > 0)
+        <div class="mat-tab-stats">
+            <span><b>{{ $articles->count() }}</b> artikel</span>
+            <span><b>4</b> kategori</span>
+            <span>100% gratis · bisa diunduh</span>
+        </div>
+        @endif
+    </div>
+
+    @if($articles->count() > 0)
+    <div class="mat-filter-row">
+        <button class="mat-fchip active" onclick="matTabFilter('all', this)">Semua</button>
+        @foreach($catNames as $cat => $label)
+        @if($articles->where('category', $cat)->count() > 0)
+        <button class="mat-fchip" onclick="matTabFilter('{{ $cat }}', this)">{{ $catIcons[$cat] }} {{ $label }}</button>
+        @endif
+        @endforeach
+    </div>
+
+    @foreach($catNames as $cat => $label)
+    @php $catArticles = $articles->where('category', $cat); @endphp
+    @if($catArticles->count() > 0)
+    <div class="mat-sec-block" data-cat="{{ $cat }}">
+        <div class="mat-sec-label">{{ $catIcons[$cat] ?? '' }} {{ $label }}</div>
+        <div class="mat-article-grid">
+            @foreach($catArticles as $a)
+            <a href="{{ route('library.materi.show', $a->slug) }}" class="mat-article-card" target="_blank">
+                <div class="mat-ac-top">
+                    <span class="mat-ac-pill" style="background:{{ $catColors[$cat] ?? '#38A8CC' }}">{{ $label }}</span>
+                    <span class="mat-ac-time">🕐 {{ $a->reading_time }} mnt</span>
+                </div>
+                <div class="mat-ac-title">{{ $a->title }}</div>
+                <div class="mat-ac-excerpt">{{ $a->excerpt }}</div>
+                <div class="mat-ac-footer" onclick="event.stopPropagation()">
+                    <span class="mat-ac-read">Baca →</span>
+                    <a href="{{ route('library.materi.download', $a->slug) }}" class="mat-ac-dl" onclick="event.stopPropagation()" target="_blank">⬇ Unduh</a>
+                </div>
+            </a>
+            @endforeach
+        </div>
+    </div>
+    @endif
+    @endforeach
+    @else
+    <div style="text-align:center;padding:3rem 1rem;color:var(--text-4);background:var(--card);border-radius:16px;border:1px dashed var(--border);">
+        <div style="font-size:2.5rem;margin-bottom:.5rem;">📚</div>
+        <p style="font-size:13px;">Materi belum tersedia. Cek lagi nanti!</p>
+        <a href="{{ route('library.materi') }}" style="font-size:12px;color:var(--sky-dk);text-decoration:none;margin-top:.5rem;display:inline-block;">Lihat di halaman materi →</a>
+    </div>
+    @endif
+</div>
+
 {{-- EDIT NOTE MODAL --}}
 <div class="note-modal-overlay" id="noteModal" onclick="closeNoteModal()">
     <div class="note-modal" onclick="event.stopPropagation()">
@@ -1080,7 +1197,40 @@ function kamuTab(name, btn) {
     btn.classList.add('active');
     // Stop tuner ketika pindah tab
     if (name !== 'Tuner' && tunerRunning) tunerStop();
+    // Kalau user klik Materi tab — hapus highlight dan catat sudah dilihat
+    if (name === 'Materi') {
+        var mb = document.getElementById('kamuTabMateriBtn');
+        if (mb) mb.classList.remove('materi-highlight');
+        try { localStorage.setItem('materiTabSeen', '1'); } catch(e) {}
+    }
 }
+
+/* ===== MATERI FILTER ===== */
+function matTabFilter(cat, btn) {
+    document.querySelectorAll('.mat-fchip').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.querySelectorAll('.mat-sec-block').forEach(function(s){
+        s.style.display = (cat === 'all' || s.dataset.cat === cat) ? '' : 'none';
+    });
+}
+
+/* ===== MATERI TAB HIGHLIGHT (new feature guide) ===== */
+(function() {
+    try {
+        var seen = localStorage.getItem('materiTabSeen');
+        if (!seen) {
+            var btn = document.getElementById('kamuTabMateriBtn');
+            if (btn) {
+                // Tunda sebentar supaya halaman sudah render penuh
+                setTimeout(function() {
+                    btn.classList.add('materi-highlight');
+                    // Scroll ke tab bar kalau perlu
+                    btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                }, 800);
+            }
+        }
+    } catch(e) {}
+})();
 
 /* ===== CHORD (kamus pemula) ===== */
 var CHORDS = [

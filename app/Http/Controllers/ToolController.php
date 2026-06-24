@@ -131,6 +131,42 @@ class ToolController extends Controller
         return view('tools.edit-metadata', compact('seo'));
     }
 
+    public function chordBuilder()
+    {
+        $url = url('/tools/chord-builder');
+        $seo = $this->toolSeo(
+            'Chord Builder & Progression Generator — Buat Progresi Chord Gratis',
+            'Pilih kunci dan suasana, dapatkan 5 progresi chord siap pakai untuk lagu kamu. Cocok untuk musisi yang mau eksplor harmoni baru. Gratis, tanpa daftar.',
+            'chord-builder', 'Chord Builder',
+            $this->appNode('Chord Progression Generator', $url, 'Generate 5 progresi chord berdasarkan key dan mood, gratis tanpa daftar.', 'EducationalApplication')
+        );
+        return view('tools.chord-builder', compact('seo'));
+    }
+
+    public function bpmCalculator()
+    {
+        $url = url('/tools/bpm-kalkulator');
+        $seo = $this->toolSeo(
+            'Kalkulator BPM & Tap Tempo Online Gratis — Cari BPM Lagu',
+            'Ketuk tombol mengikuti ritme untuk tahu BPM lagu. Dilengkapi metronome visual dan saran genre berdasarkan BPM. Gratis, tanpa install.',
+            'bpm-kalkulator', 'BPM Calculator',
+            $this->appNode('Kalkulator BPM & Tap Tempo', $url, 'Hitung BPM lagu dengan tap tempo, metronome visual, dan saran genre gratis.', 'MultimediaApplication')
+        );
+        return view('tools.bpm-kalkulator', compact('seo'));
+    }
+
+    public function royaltyCalculator()
+    {
+        $url = url('/tools/kalkulator-royalti');
+        $seo = $this->toolSeo(
+            'Kalkulator Royalti Streaming Musik Gratis — Estimasi Pendapatan Spotify dll',
+            'Estimasi pendapatan bulanan dari Spotify, Apple Music, YouTube Music, dan TikTok. Hitung royalti bersih setelah potongan distributor. Gratis.',
+            'kalkulator-royalti', 'Kalkulator Royalti',
+            $this->appNode('Kalkulator Royalti Streaming Musik', $url, 'Estimasi pendapatan streaming dari berbagai platform musik, gratis tanpa daftar.', 'FinanceApplication')
+        );
+        return view('tools.kalkulator-royalti', compact('seo'));
+    }
+
     public function hub()
     {
         $tools = [
@@ -140,6 +176,9 @@ class ToolController extends Controller
             ['icon' => '🚀', 'name' => 'Kartu Promo Rilis',           'desc' => '3 fase (pra/rilis/pasca) + QR/platform, feed 1:1 & story 9:16.', 'route' => 'tools.kartu-rilis'],
             ['icon' => '⏳', 'name' => 'Countdown Rilis',             'desc' => 'Link hitung mundur real-time untuk bio Instagram / story.',      'route' => 'tools.countdown'],
             ['icon' => '🏷️', 'name' => 'Edit Metadata & WAV',        'desc' => 'Tag MP3 (judul/artis/cover) atau konversi WAV untuk agregator.', 'route' => 'tools.edit-metadata'],
+            ['icon' => '🎸', 'name' => 'Chord Progression Generator', 'desc' => 'Pilih key & mood, generate 5 progresi chord siap pakai.',        'route' => 'tools.chord-builder'],
+            ['icon' => '🥁', 'name' => 'Kalkulator BPM & Tap Tempo', 'desc' => 'Ketuk ikuti ritme untuk tahu BPM + metronome visual.',           'route' => 'tools.bpm-kalkulator'],
+            ['icon' => '💰', 'name' => 'Kalkulator Royalti Streaming','desc' => 'Estimasi pendapatan Spotify, Apple Music, YouTube, TikTok.',     'route' => 'tools.kalkulator-royalti'],
         ];
         $items = [];
         foreach ($tools as $i => $t) {

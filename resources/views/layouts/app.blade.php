@@ -399,6 +399,8 @@
                target="_blank" rel="noopener" class="footer-link apple">&#9835; Apple Music</a>
         </div>
         <div class="footer-links" style="margin-top:8px;">
+            <a href="{{ route('library') }}" class="footer-link">&#127925; Library Lagu</a>
+            <a href="{{ route('library.materi') }}" class="footer-link">&#128218; Materi Musik</a>
             <a href="{{ route('tools.index') }}" class="footer-link">&#127899; Semua Alat</a>
             <a href="{{ route('tools.potong-lagu') }}" class="footer-link">&#9986; Potong Lagu</a>
             <a href="{{ route('tools.hapus-vokal') }}" class="footer-link">&#127908; Hapus Vokal / Karaoke</a>
@@ -406,6 +408,9 @@
             <a href="{{ route('tools.kartu-rilis') }}" class="footer-link">&#128640; Kartu Promo Rilis</a>
             <a href="{{ route('tools.countdown') }}" class="footer-link">&#9203; Countdown Rilis</a>
             <a href="{{ route('tools.edit-metadata') }}" class="footer-link">&#127991; Edit Metadata &amp; WAV</a>
+            <a href="{{ route('tools.chord-builder') }}" class="footer-link">&#127928; Chord Builder</a>
+            <a href="{{ route('tools.bpm-kalkulator') }}" class="footer-link">&#129345; BPM Calculator</a>
+            <a href="{{ route('tools.kalkulator-royalti') }}" class="footer-link">&#128176; Kalkulator Royalti</a>
         </div>
         <div class="footer-copy">© 2026 Margonoandi · Semua lagu dilindungi hak cipta</div>
     </div>

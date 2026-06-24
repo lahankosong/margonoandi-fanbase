@@ -25,6 +25,8 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\GeocodeController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\ToolController;
+use App\Http\Controllers\LibraryController;
+use App\Http\Controllers\ArticleController;
 
 
 
@@ -42,6 +44,18 @@ Route::get('/tools/cover-art', [ToolController::class, 'coverMaker'])->name('too
 Route::get('/tools/kartu-rilis', [ToolController::class, 'releaseCard'])->name('tools.kartu-rilis');
 Route::get('/tools/countdown', [ToolController::class, 'countdown'])->name('tools.countdown');
 Route::get('/tools/edit-metadata', [ToolController::class, 'editMetadata'])->name('tools.edit-metadata');
+Route::get('/tools/chord-builder', [ToolController::class, 'chordBuilder'])->name('tools.chord-builder');
+Route::get('/tools/bpm-kalkulator', [ToolController::class, 'bpmCalculator'])->name('tools.bpm-kalkulator');
+Route::get('/tools/kalkulator-royalti', [ToolController::class, 'royaltyCalculator'])->name('tools.kalkulator-royalti');
+
+// Library (diskografi)
+Route::get('/library', [LibraryController::class, 'index'])->name('library');
+
+// Library Materi — publik baca, auth untuk unduh
+Route::get('/library/materi', [ArticleController::class, 'index'])->name('library.materi');
+Route::get('/library/materi/{slug}', [ArticleController::class, 'show'])->name('library.materi.show');
+Route::get('/library/materi/{slug}/unduh', [ArticleController::class, 'download'])
+     ->middleware('auth')->name('library.materi.download');
 
 // Google Auth
 Route::get('/auth/google', [GoogleController::class, 'redirect'])->name('google.login');
