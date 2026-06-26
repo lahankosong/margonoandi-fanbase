@@ -107,9 +107,9 @@ $catIcons  = ['teori' => '🎵', 'produksi' => '🎛️', 'kolaborasi' => '🤝'
         <div class="lrail-block">
             <div class="lrail-h">Jelajah</div>
             <div class="crail-links">
-                <a href="{{ route('library') }}" class="crail-link">🎵 Diskografi</a>
-                <a href="{{ route('tools.index') }}" class="crail-link">🎛️ Alat Musisi</a>
-                <a href="{{ route('gig.board') }}" class="crail-link">🎪 Papan Gig</a>
+                @if(Route::has('library'))<a href="{{ route('library') }}" class="crail-link">🎵 Diskografi</a>@endif
+                @if(Route::has('tools.index'))<a href="{{ route('tools.index') }}" class="crail-link">🎛️ Alat Musisi</a>@endif
+                @if(Route::has('gig.board'))<a href="{{ route('gig.board') }}" class="crail-link">🎪 Papan Gig</a>@endif
             </div>
         </div>
     </aside>

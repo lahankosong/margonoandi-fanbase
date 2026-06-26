@@ -1,6 +1,20 @@
 {{-- Right rail discovery/konversi — flat & reusable. Drop-in: @include('partials.content-rail').
-     Data di-fetch mandiri dengan fallback aman. Opsi: $skipArticlesRail (bool) untuk sembunyikan blok Materi. --}}
+     Anti-gagal: setiap route() dijaga ($rurl mengembalikan null jika route tak ada / parameter tak valid),
+     sehingga satu link bermasalah tidak pernah men-500-kan seluruh halaman.
+     Opsi: $skipArticlesRail (bool) untuk sembunyikan blok Materi. --}}
 @php
+    // Helper: URL aman. Return null jika route tidak terdaftar atau gagal di-generate.
+    $rurl = function (string $name, $param = null) {
+        try {
+            if (! \Illuminate\Support\Facades\Route::has($name)) return null;
+            if ($param === null) return route($name);
+            if ($param === '' || $param === false) return null;
+            return route($name, $param);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    };
+
     $railGigs = collect();
     try { $railGigs = \App\Models\GigPost::with('user')->where('status', 'open')->latest()->take(3)->get(); } catch (\Throwable $e) {}
 
@@ -18,6 +32,7 @@
         ['💰', 'Kalkulator Royalti',     'tools.kalkulator-royalti'],
         ['📄', 'EPK Generator',          'tools.epk'],
     ];
+    $gigBoardUrl = $rurl('gig.board');
 @endphp
 
 <aside class="crail">
@@ -27,30 +42,30 @@
         @guest
         <div class="crail-h">Komunitas Musisi</div>
         <p class="crail-cta-txt">Gabung gratis: diskusi, pasang gig, dan akses semua alat & materi.</p>
-        <a href="{{ route('google.login') }}" class="crail-cta-btn">Masuk dengan Google →</a>
+        @if($u = $rurl('google.login'))<a href="{{ $u }}" class="crail-cta-btn">Masuk dengan Google →</a>@endif
         @else
         <div class="crail-h">Komunitas</div>
         <div class="crail-links">
-            <a href="{{ route('aku') }}" class="crail-link">👤 Aku — profil & kartu musisi</a>
-            <a href="{{ route('kita') }}" class="crail-link">🌍 Kita — linimasa komunitas</a>
-            <a href="{{ route('dia') }}" class="crail-link">💬 Dia — pesan & grup</a>
+            @if($u = $rurl('aku'))<a href="{{ $u }}" class="crail-link">👤 Aku — profil & kartu musisi</a>@endif
+            @if($u = $rurl('kita'))<a href="{{ $u }}" class="crail-link">🌍 Kita — linimasa komunitas</a>@endif
+            @if($u = $rurl('dia'))<a href="{{ $u }}" class="crail-link">💬 Dia — pesan & grup</a>@endif
         </div>
         @endguest
     </div>
 
     {{-- Gig terbaru --}}
-    @if($railGigs->isNotEmpty())
+    @if($railGigs->isNotEmpty() && $gigBoardUrl)
     <div class="crail-block">
         <div class="crail-h">🎪 Gig Terbaru</div>
         <div class="crail-links">
             @foreach($railGigs as $g)
-            <a href="{{ route('gig.board') }}" class="crail-link crail-link-2">
+            <a href="{{ $gigBoardUrl }}" class="crail-link crail-link-2">
                 <span class="crail-link-t">{{ \Illuminate\Support\Str::limit($g->title, 42) }}</span>
                 <span class="crail-link-sub">{{ \App\Models\GigPost::typeLabel($g->type) }}{{ $g->location ? ' · ' . $g->location : '' }}</span>
             </a>
             @endforeach
         </div>
-        <a href="{{ route('gig.board') }}" class="crail-more">Lihat semua gig →</a>
+        <a href="{{ $gigBoardUrl }}" class="crail-more">Lihat semua gig →</a>
     </div>
     @endif
 
@@ -59,10 +74,10 @@
         <div class="crail-h">🎛️ Alat Populer</div>
         <div class="crail-links">
             @foreach($railTools as [$ic, $name, $route])
-            <a href="{{ route($route) }}" class="crail-link">{{ $ic }} {{ $name }}</a>
+            @if($u = $rurl($route))<a href="{{ $u }}" class="crail-link">{{ $ic }} {{ $name }}</a>@endif
             @endforeach
         </div>
-        <a href="{{ route('tools.index') }}" class="crail-more">Semua alat →</a>
+        @if($u = $rurl('tools.index'))<a href="{{ $u }}" class="crail-more">Semua alat →</a>@endif
     </div>
 
     {{-- Materi (opsional) --}}
@@ -71,10 +86,10 @@
         <div class="crail-h">📚 Baca Juga</div>
         <div class="crail-links">
             @foreach($railArticles as $a)
-            <a href="{{ route('library.materi.show', $a->slug) }}" class="crail-link">{{ \Illuminate\Support\Str::limit($a->title, 48) }}</a>
+            @if($u = $rurl('library.materi.show', $a->slug))<a href="{{ $u }}" class="crail-link">{{ \Illuminate\Support\Str::limit($a->title, 48) }}</a>@endif
             @endforeach
         </div>
-        <a href="{{ route('library.materi') }}" class="crail-more">Semua materi →</a>
+        @if($u = $rurl('library.materi'))<a href="{{ $u }}" class="crail-more">Semua materi →</a>@endif
     </div>
     @endif
 
@@ -84,10 +99,10 @@
         <div class="crail-h">🎵 Rilis Terbaru</div>
         <div class="crail-links">
             @foreach($railSongs as $s)
-            <a href="{{ route('song.show', $s->slug) }}" class="crail-link">{{ \Illuminate\Support\Str::limit($s->title, 44) }}</a>
+            @if($u = $rurl('song.show', $s->slug))<a href="{{ $u }}" class="crail-link">{{ \Illuminate\Support\Str::limit($s->title, 44) }}</a>@endif
             @endforeach
         </div>
-        <a href="{{ route('library') }}" class="crail-more">Diskografi →</a>
+        @if($u = $rurl('library'))<a href="{{ $u }}" class="crail-more">Diskografi →</a>@endif
     </div>
     @endif
 
