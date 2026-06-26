@@ -228,6 +228,19 @@ class ToolController extends Controller
         return view('tools.setlist-builder', compact('seo', 'origin'));
     }
 
+    public function releasePlanner()
+    {
+        $url = url('/tools/release-planner');
+        $seo = $this->toolSeo(
+            'Music Release Planner — Jadwal Promo Rilis Lagu Otomatis T-42 sampai T+28',
+            'Masukkan tanggal rilis, jadwal promo 9 fase dari T-42 hari sampai T+28 hari langsung siap. Checklist interaktif tersimpan otomatis. Gratis, client-side, tanpa daftar.',
+            'release-planner', 'Release Planner',
+            $this->appNode('Music Release Planner', $url, 'Jadwal promo rilis lagu otomatis dari T-42 hari sampai T+28 hari — checklist tersimpan lokal, gratis.', 'UtilitiesApplication')
+        );
+        $origin = 'Rilis lagu pertama saya berantakan — tidak ada pre-save, tidak pitch ke playlist, tidak ada konten BTS. Semua reaktif, bukan proaktif. Tool ini adalah yang saya butuhkan waktu itu: jadwal promo terstruktur supaya rilis berikutnya tidak terasa seperti memadamkan kebakaran.';
+        return view('tools.release-planner', compact('seo', 'origin'));
+    }
+
     public function hub()
     {
         $tools = [
@@ -244,6 +257,7 @@ class ToolController extends Controller
             ['icon' => '🔀', 'name' => 'Transpose Kunci Gitar',       'desc' => 'Pindah kunci chord otomatis — paste, pilih kunci, selesai.',        'route' => 'tools.transpose-kunci'],
             ['icon' => '📄', 'name' => 'EPK Generator',               'desc' => 'Buat press kit musisi profesional siap kirim ke booker & media.',    'route' => 'tools.epk'],
             ['icon' => '🎵', 'name' => 'Setlist Builder',             'desc' => 'Susun setlist manggung: urutan lagu, BPM, kunci, catatan — print/PDF.', 'route' => 'tools.setlist'],
+            ['icon' => '📅', 'name' => 'Music Release Planner',       'desc' => 'Jadwal promo rilis 9 fase dari T-42 sampai T+28 — checklist otomatis.',   'route' => 'tools.release-planner'],
         ];
         $items = [];
         foreach ($tools as $i => $t) {
@@ -255,6 +269,16 @@ class ToolController extends Controller
             '', '',
             ['@type' => 'ItemList', 'name' => 'Alat Gratis Musisi — Margonoandi', 'itemListElement' => $items]
         );
-        return view('tools.index', compact('seo', 'tools'));
+        $featuredArticles = collect();
+        try {
+            $featuredArticles = \App\Models\Article::orderBy('batch')->orderBy('id')->take(4)->get(['slug','title','category','reading_time']);
+        } catch (\Throwable $e) {}
+
+        $latestGig = null;
+        try {
+            $latestGig = \App\Models\GigPost::with('user')->where('status','open')->latest()->first();
+        } catch (\Throwable $e) {}
+
+        return view('tools.index', compact('seo', 'tools', 'featuredArticles', 'latestGig'));
     }
 }

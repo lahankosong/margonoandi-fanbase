@@ -3,95 +3,205 @@
 
 @push('styles')
 <style>
-    .art-page { max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
+    /* ===== LAYOUT ===== */
+    .art-outer { max-width: 1000px; margin: 0 auto; padding: 1.5rem 1rem 5rem; }
+
+    .art-layout {
+        display: grid;
+        grid-template-columns: 1fr 220px;
+        gap: 32px;
+        align-items: start;
+    }
+    @media(max-width: 768px) { .art-layout { grid-template-columns: 1fr; } .art-sidebar { display: none; } }
+
     .art-back { display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text-3);text-decoration:none;margin-bottom:1.25rem; }
     .art-back:hover { color:var(--text); }
 
+    /* ===== ARTICLE CONTENT ===== */
     .art-meta { display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap; }
     .art-cat-pill { font-size:10px;font-weight:700;padding:3px 9px;border-radius:12px;color:#fff; }
-    .art-time { font-size:11px;color:var(--text-4); }
+    .art-time { font-size:11px;color:var(--text-3); }
 
-    .art-title { font-family:'Sora',sans-serif;font-size:clamp(1.3rem,5vw,1.8rem);font-weight:700;color:var(--text-1);line-height:1.3;margin-bottom:.5rem; }
+    .art-title { font-size:clamp(1.3rem,5vw,1.8rem);font-weight:700;color:var(--text);line-height:1.3;margin-bottom:.5rem; }
     .art-excerpt { font-size:13.5px;color:var(--text-3);line-height:1.7;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border); }
 
     .art-body { font-size:14px;color:var(--text-2);line-height:1.85; }
-    .art-body h1,.art-body h2 { font-family:'Sora',sans-serif;color:var(--text-1);margin:1.75rem 0 .75rem; }
+    .art-body h1,.art-body h2 { color:var(--text);margin:1.75rem 0 .75rem; }
     .art-body h1 { font-size:1.35rem; }
-    .art-body h2 { font-size:1.1rem;border-bottom:1px solid var(--border-lt);padding-bottom:.35rem; }
-    .art-body h3 { font-size:.95rem;font-weight:700;color:var(--text-1);margin:1.25rem 0 .4rem; }
+    .art-body h2 { font-size:1.1rem;border-bottom:1px solid var(--border);padding-bottom:.35rem; }
+    .art-body h3 { font-size:.95rem;font-weight:700;color:var(--text);margin:1.25rem 0 .4rem; }
     .art-body p { margin-bottom:1rem; }
     .art-body ul,.art-body ol { padding-left:1.4rem;margin-bottom:1rem; }
     .art-body li { margin-bottom:.4rem; }
-    .art-body strong { color:var(--text-1); }
-    .art-body em { color:var(--text-2); }
-    .art-body code { background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-size:12.5px;font-family:'Courier New',monospace;color:#38A8CC; }
-    .art-body pre { background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;overflow-x:auto; }
+    .art-body strong { color:var(--text); }
+    .art-body code { background:var(--card-bg);border:1px solid var(--border);border-radius:5px;padding:1px 6px;font-size:12.5px;font-family:'Courier New',monospace;color:var(--accent); }
+    .art-body pre { background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;overflow-x:auto; }
     .art-body pre code { background:none;border:none;padding:0;color:var(--text-2); }
-    .art-body blockquote { border-left:3px solid #38A8CC;padding:.5rem 1rem;margin:1rem 0;background:rgba(56,168,204,.06);border-radius:0 8px 8px 0;color:var(--text-2); }
+    .art-body blockquote { border-left:3px solid var(--accent);padding:.5rem 1rem;margin:1rem 0;background:var(--accent-dim);border-radius:0 8px 8px 0;color:var(--text-2); }
     .art-body table { width:100%;border-collapse:collapse;margin-bottom:1rem;font-size:13px; }
     .art-body th,.art-body td { padding:.5rem .75rem;border:1px solid var(--border);text-align:left; }
-    .art-body th { background:var(--surface);font-weight:700;color:var(--text-1); }
+    .art-body th { background:var(--card-bg);font-weight:700;color:var(--text); }
     .art-body hr { border:none;border-top:1px solid var(--border);margin:1.5rem 0; }
+    .art-body a { color:var(--accent); }
 
     .art-actions { display:flex;align-items:center;gap:10px;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border); }
-    .art-btn-dl { display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:20px;background:linear-gradient(135deg,#38A8CC,#2186A8);color:#fff;font-size:13px;font-weight:600;text-decoration:none; }
-    .art-btn-dl-lock { display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--text-3);font-size:13px;font-weight:600;text-decoration:none; }
+    .art-btn-dl { display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:20px;background:linear-gradient(135deg,var(--accent),#2186A8);color:#fff;font-size:13px;font-weight:600;text-decoration:none; }
+    .art-btn-dl-lock { display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:20px;background:var(--card-bg);border:1px solid var(--border);color:var(--text-3);font-size:13px;font-weight:600;text-decoration:none; }
     .art-btn-back { display:inline-flex;align-items:center;gap:5px;padding:9px 18px;border-radius:20px;border:1px solid var(--border);color:var(--text-3);font-size:13px;text-decoration:none; }
+    .art-btn-back:hover { border-color:var(--accent);color:var(--accent); }
 
     .art-nav { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:1.5rem; }
-    .art-nav-card { background:var(--card);border:1px solid var(--border);border-radius:12px;padding:.9rem;text-decoration:none;transition:.2s; }
-    .art-nav-card:hover { border-color:var(--sky-mid);box-shadow:var(--shadow-sm); }
-    .art-nav-label { font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-4);margin-bottom:.3rem; }
-    .art-nav-title { font-size:12px;font-weight:600;color:var(--text-1);line-height:1.4; }
+    .art-nav-card { background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:.9rem;text-decoration:none;transition:.2s; }
+    .art-nav-card:hover { border-color:var(--accent); }
+    .art-nav-label { font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3);margin-bottom:.3rem; }
+    .art-nav-title { font-size:12px;font-weight:600;color:var(--text);line-height:1.4; }
     .art-nav-card.right { text-align:right; }
+
+    /* ===== RIGHT SIDEBAR ===== */
+    .art-sidebar { position: sticky; top: 70px; display: flex; flex-direction: column; gap: 14px; }
+
+    .art-widget { background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:1rem; }
+    .art-widget-title { font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--text-3);margin-bottom:.75rem; }
+
+    .art-related-link { display:flex;flex-direction:column;gap:2px;padding:8px 0;border-bottom:1px solid var(--border);text-decoration:none;transition:.15s; }
+    .art-related-link:last-child { border-bottom:none;padding-bottom:0; }
+    .art-related-link:hover .art-related-title { color:var(--accent); }
+    .art-related-title { font-size:12.5px;font-weight:500;color:var(--text);line-height:1.35; }
+    .art-related-meta { font-size:10px;color:var(--text-3); }
+
+    .art-tool-link { display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);text-decoration:none;font-size:12.5px;color:var(--text-3);transition:.15s; }
+    .art-tool-link:last-child { border-bottom:none;padding-bottom:0; }
+    .art-tool-link:hover { color:var(--accent); }
+    .art-tool-link span:first-child { font-size:15px;flex-shrink:0; }
+
+    .art-gig-card { background:linear-gradient(135deg,var(--accent-dim),rgba(56,168,204,.02));border:1px solid rgba(56,168,204,.25);border-radius:16px;padding:1rem; }
+    .art-gig-type { display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--accent-dim);color:var(--accent);margin-bottom:6px; }
+    .art-gig-title { font-size:13px;font-weight:600;color:var(--text);line-height:1.35;margin-bottom:5px; }
+    .art-gig-meta { font-size:11px;color:var(--text-3);margin-bottom:.75rem; }
+    .art-gig-cta { display:block;text-align:center;padding:7px 0;border-radius:20px;background:var(--accent);color:#fff;font-size:12px;font-weight:600;text-decoration:none; }
+
+    .art-cta-widget { background:linear-gradient(135deg,var(--accent-dim),rgba(56,168,204,.02));border:1px solid rgba(56,168,204,.25);border-radius:16px;padding:1rem;text-align:center; }
+    .art-cta-widget h4 { font-size:13px;font-weight:700;color:var(--text);margin-bottom:.35rem; }
+    .art-cta-widget p { font-size:11.5px;color:var(--text-3);margin-bottom:.85rem;line-height:1.55; }
+    .art-cta-btn { display:inline-block;padding:8px 18px;border-radius:20px;background:var(--accent);color:#fff;font-size:12px;font-weight:600;text-decoration:none; }
 </style>
 @endpush
 
 @section('content')
-<div class="art-page">
+<div class="art-outer">
     <a href="{{ route('library.materi') }}" class="art-back">← Semua Materi</a>
 
     @php
-    $catColors = ['teori' => '#38A8CC', 'produksi' => '#a855f7', 'kolaborasi' => '#f59e0b', 'rilis' => '#22c55e', 'karir' => '#f97316'];
+    $catColors = ['teori'=>'#38A8CC','produksi'=>'#a855f7','kolaborasi'=>'#f59e0b','rilis'=>'#22c55e','karir'=>'#f97316'];
+    $catTools  = [
+        'teori'      => [['icon'=>'🎸','name'=>'Chord Builder','route'=>'tools.chord-builder'],['icon'=>'🔀','name'=>'Transpose Kunci','route'=>'tools.transpose-kunci'],['icon'=>'🥁','name'=>'BPM Calculator','route'=>'tools.bpm-kalkulator']],
+        'produksi'   => [['icon'=>'✂️','name'=>'Potong Lagu','route'=>'tools.potong-lagu'],['icon'=>'🎤','name'=>'Hapus Vokal','route'=>'tools.hapus-vokal'],['icon'=>'🏷️','name'=>'Edit Metadata','route'=>'tools.edit-metadata']],
+        'kolaborasi' => [['icon'=>'📄','name'=>'EPK Generator','route'=>'tools.epk'],['icon'=>'💼','name'=>'Rate Card','route'=>'tools.rate-card'],['icon'=>'🎵','name'=>'Setlist Builder','route'=>'tools.setlist']],
+        'rilis'      => [['icon'=>'🎨','name'=>'Buat Cover Art','route'=>'tools.cover-art'],['icon'=>'🚀','name'=>'Kartu Promo Rilis','route'=>'tools.kartu-rilis'],['icon'=>'⏳','name'=>'Countdown Rilis','route'=>'tools.countdown']],
+        'karir'      => [['icon'=>'💰','name'=>'Kalkulator Royalti','route'=>'tools.kalkulator-royalti'],['icon'=>'💼','name'=>'Rate Card','route'=>'tools.rate-card'],['icon'=>'📄','name'=>'EPK Generator','route'=>'tools.epk']],
+    ];
+    $relevantTools = $catTools[$article->category] ?? $catTools['teori'];
     @endphp
 
-    <div class="art-meta">
-        <span class="art-cat-pill" style="background:{{ $catColors[$article->category] ?? '#38A8CC' }}">{{ $article->category_label }}</span>
-        <span class="art-time">🕐 {{ $article->reading_time }} menit baca</span>
+    <div class="art-layout">
+
+        {{-- ===== ARTICLE CONTENT ===== --}}
+        <div>
+            <div class="art-meta">
+                <span class="art-cat-pill" style="background:{{ $catColors[$article->category] ?? '#38A8CC' }}">{{ $article->category_label }}</span>
+                <span class="art-time">🕐 {{ $article->reading_time }} menit baca</span>
+            </div>
+
+            <h1 class="art-title">{{ $article->title }}</h1>
+            <p class="art-excerpt">{{ $article->excerpt }}</p>
+
+            <div class="art-body" id="artBody"></div>
+
+            <div class="art-actions">
+                @auth
+                <a href="{{ route('library.materi.download', $article->slug) }}" class="art-btn-dl">⬇ Download Artikel</a>
+                @else
+                <a href="{{ route('google.login') }}" class="art-btn-dl-lock">🔒 Login untuk Download</a>
+                @endauth
+                <a href="{{ route('library.materi') }}" class="art-btn-back">← Semua Artikel</a>
+            </div>
+
+            @if($prev || $next)
+            <div class="art-nav">
+                @if($prev)
+                <a href="{{ route('library.materi.show', $prev->slug) }}" class="art-nav-card">
+                    <div class="art-nav-label">← Sebelumnya</div>
+                    <div class="art-nav-title">{{ $prev->title }}</div>
+                </a>
+                @else<div></div>@endif
+                @if($next)
+                <a href="{{ route('library.materi.show', $next->slug) }}" class="art-nav-card right">
+                    <div class="art-nav-label">Berikutnya →</div>
+                    <div class="art-nav-title">{{ $next->title }}</div>
+                </a>
+                @endif
+            </div>
+            @endif
+        </div>
+
+        {{-- ===== RIGHT SIDEBAR ===== --}}
+        <aside class="art-sidebar">
+
+            {{-- Artikel terkait --}}
+            @if($related->count())
+            <div class="art-widget">
+                <div class="art-widget-title">📖 Artikel Terkait</div>
+                @foreach($related as $r)
+                <a href="{{ route('library.materi.show', $r->slug) }}" class="art-related-link">
+                    <div class="art-related-title">{{ $r->title }}</div>
+                    <div class="art-related-meta">🕐 {{ $r->reading_time }} mnt</div>
+                </a>
+                @endforeach
+                <a href="{{ route('library.materi') }}" style="display:block;text-align:center;font-size:11px;color:var(--accent);text-decoration:none;margin-top:.6rem;font-weight:600;">Semua artikel →</a>
+            </div>
+            @endif
+
+            {{-- Alat relevan per kategori --}}
+            <div class="art-widget">
+                <div class="art-widget-title">🎛 Alat Terkait</div>
+                @foreach($relevantTools as $t)
+                <a href="{{ route($t['route']) }}" class="art-tool-link">
+                    <span>{{ $t['icon'] }}</span><span>{{ $t['name'] }}</span>
+                </a>
+                @endforeach
+                <a href="{{ route('tools.index') }}" style="display:block;text-align:center;font-size:11px;color:var(--accent);text-decoration:none;margin-top:.5rem;font-weight:600;">Semua alat →</a>
+            </div>
+
+            {{-- Gig terbaru --}}
+            @if($latestGig)
+            <div class="art-gig-card">
+                <div class="art-widget-title">🎪 Gig Terbaru</div>
+                <div class="art-gig-type">{{ \App\Models\GigPost::typeLabel($latestGig->type) }}</div>
+                <div class="art-gig-title">{{ $latestGig->title }}</div>
+                <div class="art-gig-meta">
+                    @if($latestGig->location)📍 {{ $latestGig->location }}@endif
+                    @if($latestGig->date_event) · 🗓 {{ $latestGig->date_event->format('d M Y') }}@endif
+                </div>
+                @auth
+                <a href="{{ route('gig.board') }}" class="art-gig-cta">Lihat gig →</a>
+                @else
+                <a href="{{ route('google.login') }}" class="art-gig-cta">🔒 Login untuk lamar</a>
+                @endauth
+            </div>
+            @endif
+
+            {{-- CTA --}}
+            @guest
+            <div class="art-cta-widget">
+                <h4>🎵 Gabung Komunitas</h4>
+                <p>Download artikel, diskusi dengan musisi lain, dan temukan personil.</p>
+                <a href="{{ route('google.login') }}" class="art-cta-btn">Masuk Gratis</a>
+            </div>
+            @endguest
+
+        </aside>
+
     </div>
-
-    <h1 class="art-title">{{ $article->title }}</h1>
-    <p class="art-excerpt">{{ $article->excerpt }}</p>
-
-    <div class="art-body" id="artBody"></div>
-
-    <div class="art-actions">
-        @auth
-        <a href="{{ route('library.materi.download', $article->slug) }}" class="art-btn-dl">⬇ Download Artikel</a>
-        @else
-        <a href="{{ route('google.login') }}" class="art-btn-dl-lock">🔒 Login untuk Download</a>
-        @endauth
-        <a href="{{ route('library.materi') }}" class="art-btn-back">← Semua Artikel</a>
-    </div>
-
-    @if($prev || $next)
-    <div class="art-nav">
-        @if($prev)
-        <a href="{{ route('library.materi.show', $prev->slug) }}" class="art-nav-card">
-            <div class="art-nav-label">← Sebelumnya</div>
-            <div class="art-nav-title">{{ $prev->title }}</div>
-        </a>
-        @else
-        <div></div>
-        @endif
-        @if($next)
-        <a href="{{ route('library.materi.show', $next->slug) }}" class="art-nav-card right">
-            <div class="art-nav-label">Berikutnya →</div>
-            <div class="art-nav-title">{{ $next->title }}</div>
-        </a>
-        @endif
-    </div>
-    @endif
 </div>
 @endsection
 
@@ -99,28 +209,19 @@
 <script>
 (function() {
     var raw = @json($article->content_markdown);
-    // Simple markdown-to-HTML renderer (no external lib needed)
     function mdToHtml(md) {
         return md
-            // Code blocks first (multi-line)
             .replace(/```[\w]*\n?([\s\S]*?)```/g, function(_, code) {
                 return '<pre><code>' + esc(code.trim()) + '</code></pre>';
             })
-            // Headings
             .replace(/^### (.+)$/gm, '<h3>$1</h3>')
             .replace(/^## (.+)$/gm, '<h2>$1</h2>')
             .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-            // HR
             .replace(/^---$/gm, '<hr>')
-            // Bold
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-            // Italic
             .replace(/\*(.+?)\*/g, '<em>$1</em>')
-            // Inline code
             .replace(/`([^`]+)`/g, '<code>$1</code>')
-            // Blockquote
             .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
-            // Tables
             .replace(/\|(.+)\|\n\|[-| :]+\|\n((?:\|.+\|\n?)+)/g, function(_, header, rows) {
                 var ths = header.split('|').filter(function(c){return c.trim();}).map(function(c){ return '<th>' + c.trim() + '</th>'; }).join('');
                 var trs = rows.trim().split('\n').map(function(row) {
@@ -129,19 +230,15 @@
                 }).join('');
                 return '<table><thead><tr>' + ths + '</tr></thead><tbody>' + trs + '</tbody></table>';
             })
-            // Lists (unordered)
             .replace(/((?:^- .+\n?)+)/gm, function(block) {
                 var items = block.trim().split('\n').map(function(l){ return '<li>' + l.replace(/^- /, '') + '</li>'; }).join('');
                 return '<ul>' + items + '</ul>';
             })
-            // Lists (ordered)
             .replace(/((?:^\d+\. .+\n?)+)/gm, function(block) {
                 var items = block.trim().split('\n').map(function(l){ return '<li>' + l.replace(/^\d+\. /, '') + '</li>'; }).join('');
                 return '<ol>' + items + '</ol>';
             })
-            // Paragraphs
             .replace(/\n\n([^<\n].+?)(?=\n\n|$)/gs, function(_, p) { return '\n\n<p>' + p + '</p>'; })
-            // Line breaks inside paragraphs
             .replace(/([^>])\n([^<])/g, '$1 $2');
     }
     function esc(s) {
