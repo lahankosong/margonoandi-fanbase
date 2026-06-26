@@ -40,11 +40,82 @@
     .mat-cta h3 { font-family:'Sora',sans-serif;font-size:1rem;font-weight:700;color:var(--text-1);margin-bottom:.4rem; }
     .mat-cta p { font-size:13px;color:var(--text-3);margin-bottom:1rem; }
     .mat-cta-btn { display:inline-block;padding:10px 24px;border-radius:30px;background:linear-gradient(135deg,#38A8CC,#2186A8);color:#fff;text-decoration:none;font-size:13px;font-weight:600;box-shadow:0 4px 12px rgba(56,168,204,.3); }
+
+    /* ===== LAYOUT 3 KOLOM (desktop) ===== */
+    main:has(.has-rails) { max-width: 1240px; }
+    .has-rails { display:grid; grid-template-columns: 208px minmax(0,1fr) 250px; gap: 2.25rem; align-items:start; }
+    .has-rails .mat-page { max-width:none; margin:0; padding:0; }
+    .has-rails .mat-filter { display:none; } /* desktop pakai left rail */
+    .lrail, .crail { position:sticky; top:90px; }
+
+    /* Rail flat — judul kecil + daftar link rapi, tanpa box */
+    .crail-block, .lrail-block { margin-bottom:1.6rem; }
+    .crail-h, .lrail-h { font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-3,#7A9DB0); font-weight:700; margin-bottom:.7rem; }
+    .crail-links { display:flex; flex-direction:column; gap:1px; }
+    .crail-link { display:block; font-size:12.5px; color:var(--text-2,#7A9DB0); text-decoration:none; padding:6px 0; line-height:1.45; border-bottom:1px solid var(--border-2,rgba(56,168,204,.07)); transition:color .15s; }
+    .crail-link:last-child { border-bottom:none; }
+    .crail-link:hover { color:var(--accent,#38A8CC); }
+    .crail-link-2 { display:flex; flex-direction:column; gap:2px; }
+    .crail-link-t { font-weight:500; color:var(--text-2,#cbd5e1); }
+    .crail-link-sub { font-size:10.5px; color:var(--text-3,#7A9DB0); }
+    .crail-more { display:inline-block; margin-top:.6rem; font-size:11px; font-weight:600; color:var(--accent,#38A8CC); text-decoration:none; }
+    .crail-more:hover { opacity:.8; }
+    .crail-cta-txt { font-size:12px; color:var(--text-3,#94a3b8); line-height:1.6; margin:0 0 .7rem; }
+    .crail-cta-btn { display:inline-block; font-size:12px; font-weight:600; color:#fff; background:var(--accent,#38A8CC); padding:7px 14px; border-radius:18px; text-decoration:none; }
+    .crail-cta-btn:hover { opacity:.9; }
+
+    /* Left rail — navigasi kategori vertikal */
+    .lrail-stats { display:flex; flex-direction:column; gap:5px; font-size:11.5px; color:var(--text-3,#7A9DB0); margin-bottom:1.6rem; }
+    .lrail-stats b { color:var(--text-2,#cbd5e1); }
+    .lr-nav { display:flex; flex-direction:column; gap:2px; }
+    .lr-item { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; text-align:left; font-family:inherit; font-size:12.5px; color:var(--text-2,#94a3b8); background:none; border:none; border-left:2px solid transparent; padding:7px 10px; border-radius:0 8px 8px 0; cursor:pointer; transition:.15s; }
+    .lr-item:hover { color:var(--accent,#38A8CC); background:var(--card-bg,rgba(56,168,204,.05)); }
+    .lr-item.active { color:var(--accent,#38A8CC); border-left-color:var(--accent,#38A8CC); background:var(--card-bg,rgba(56,168,204,.05)); font-weight:600; }
+    .lr-count { font-size:10.5px; color:var(--text-3,#7A9DB0); background:var(--card-bg,rgba(56,168,204,.07)); padding:1px 7px; border-radius:10px; }
+
+    /* Sembunyikan rail di tablet/mobile — kembali 1 kolom */
+    @media (max-width: 1024px) {
+        main:has(.has-rails) { max-width: 900px; }
+        .has-rails { display:block; }
+        .lrail, .crail { display:none; }
+        .has-rails .mat-filter { display:flex; } /* mobile: tampilkan chips */
+    }
 </style>
 @endpush
 
 @section('content')
-<div class="mat-page">
+@php
+$catLabels = ['teori' => 'Teori Musik', 'produksi' => 'Produksi & Recording', 'kolaborasi' => 'Kolaborasi', 'rilis' => 'Rilis & Branding', 'karir' => 'Karir & Bisnis Musik'];
+$catColors = ['teori' => '#38A8CC', 'produksi' => '#a855f7', 'kolaborasi' => '#f59e0b', 'rilis' => '#22c55e', 'karir' => '#f97316'];
+$catIcons  = ['teori' => '🎵', 'produksi' => '🎛️', 'kolaborasi' => '🤝', 'rilis' => '🚀', 'karir' => '💼'];
+@endphp
+<div class="has-rails">
+
+    {{-- LEFT RAIL — navigasi kategori (desktop) --}}
+    <aside class="lrail">
+        <div class="lrail-block">
+            <div class="lrail-h">Kategori</div>
+            <nav class="lr-nav">
+                <button class="lr-item active" data-cat="all" onclick="matFilter('all')"><span>Semua</span><span class="lr-count">{{ $articles->count() }}</span></button>
+                @foreach($catLabels as $cat => $label)
+                @if($grouped->has($cat))
+                <button class="lr-item" data-cat="{{ $cat }}" onclick="matFilter('{{ $cat }}')"><span>{{ $catIcons[$cat] }} {{ $label }}</span><span class="lr-count">{{ $grouped[$cat]->count() }}</span></button>
+                @endif
+                @endforeach
+            </nav>
+        </div>
+        <div class="lrail-block">
+            <div class="lrail-h">Jelajah</div>
+            <div class="crail-links">
+                <a href="{{ route('library') }}" class="crail-link">🎵 Diskografi</a>
+                <a href="{{ route('tools.index') }}" class="crail-link">🎛️ Alat Musisi</a>
+                <a href="{{ route('gig.board') }}" class="crail-link">🎪 Papan Gig</a>
+            </div>
+        </div>
+    </aside>
+
+    {{-- MAIN COLUMN --}}
+    <div class="mat-page">
     <a href="{{ route('library') }}" class="mat-back">← Library</a>
 
     <div class="mat-hero">
@@ -59,21 +130,15 @@
         </div>
     </div>
 
-    {{-- Filter --}}
+    {{-- Filter (mobile — desktop pakai left rail) --}}
     <div class="mat-filter">
-        <button class="mat-chip active" onclick="matFilter('all', this)">Semua</button>
-        <button class="mat-chip" onclick="matFilter('teori', this)">🎵 Teori Musik</button>
-        <button class="mat-chip" onclick="matFilter('produksi', this)">🎛️ Produksi</button>
-        <button class="mat-chip" onclick="matFilter('kolaborasi', this)">🤝 Kolaborasi</button>
-        <button class="mat-chip" onclick="matFilter('rilis', this)">🚀 Rilis & Branding</button>
-        <button class="mat-chip" onclick="matFilter('karir', this)">💼 Karir & Bisnis</button>
+        <button class="mat-chip active" data-cat="all" onclick="matFilter('all')">Semua</button>
+        @foreach($catLabels as $cat => $label)
+        @if($grouped->has($cat))
+        <button class="mat-chip" data-cat="{{ $cat }}" onclick="matFilter('{{ $cat }}')">{{ $catIcons[$cat] }} {{ $label }}</button>
+        @endif
+        @endforeach
     </div>
-
-    @php
-    $catLabels = ['teori' => 'Teori Musik', 'produksi' => 'Produksi & Recording', 'kolaborasi' => 'Kolaborasi', 'rilis' => 'Rilis & Branding', 'karir' => 'Karir & Bisnis Musik'];
-    $catColors = ['teori' => '#38A8CC', 'produksi' => '#a855f7', 'kolaborasi' => '#f59e0b', 'rilis' => '#22c55e', 'karir' => '#f97316'];
-    $catIcons  = ['teori' => '🎵', 'produksi' => '🎛️', 'kolaborasi' => '🤝', 'rilis' => '🚀', 'karir' => '💼'];
-    @endphp
 
     @foreach($catLabels as $cat => $label)
     @if($grouped->has($cat))
@@ -110,14 +175,21 @@
         <a href="{{ route('google.login') }}" class="mat-cta-btn">Login dengan Google</a>
     </div>
     @endguest
-</div>
+    </div>{{-- /.mat-page --}}
+
+    {{-- RIGHT RAIL --}}
+    @include('partials.content-rail', ['skipArticlesRail' => true])
+
+</div>{{-- /.has-rails --}}
 @endsection
 
 @push('scripts')
 <script>
-function matFilter(cat, btn) {
-    document.querySelectorAll('.mat-chip').forEach(function(b){ b.classList.remove('active'); });
-    btn.classList.add('active');
+function matFilter(cat) {
+    // Sinkronkan status aktif di left rail (.lr-item) dan filter mobile (.mat-chip)
+    document.querySelectorAll('.lr-item, .mat-chip').forEach(function(b){
+        b.classList.toggle('active', b.dataset.cat === cat);
+    });
     document.querySelectorAll('.mat-section').forEach(function(s){
         s.style.display = (cat === 'all' || s.dataset.cat === cat) ? '' : 'none';
     });
