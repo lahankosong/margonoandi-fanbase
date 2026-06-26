@@ -215,6 +215,19 @@ class ToolController extends Controller
         return view('tools.epk-generator', compact('seo', 'origin'));
     }
 
+    public function setlistBuilder()
+    {
+        $url = url('/tools/setlist');
+        $seo = $this->toolSeo(
+            'Setlist Builder Musisi — Susun & Print Setlist Manggung Gratis',
+            'Buat setlist manggung: urutkan lagu, catat BPM & kunci, beri catatan per lagu, cetak atau simpan PDF. Gratis, tanpa daftar, langsung di browser.',
+            'setlist', 'Setlist Builder',
+            $this->appNode('Setlist Builder Musisi', $url, 'Susun setlist manggung: urutan lagu, BPM, kunci, catatan. Print / PDF langsung di browser, gratis.', 'UtilitiesApplication')
+        );
+        $origin = 'Sebelum gig pertama saya di event kampus, saya nulis setlist di kertas HVS — terus ketumpahan air minum di backstage. Dari situ saya tahu: setlist harus digital, bisa print, bisa diakses dari HP kapanpun.';
+        return view('tools.setlist-builder', compact('seo', 'origin'));
+    }
+
     public function hub()
     {
         $tools = [
@@ -230,6 +243,7 @@ class ToolController extends Controller
             ['icon' => '💼', 'name' => 'Rate Card Generator',         'desc' => 'Buat daftar harga jasa musik profesional siap share ke klien.',  'route' => 'tools.rate-card'],
             ['icon' => '🔀', 'name' => 'Transpose Kunci Gitar',       'desc' => 'Pindah kunci chord otomatis — paste, pilih kunci, selesai.',        'route' => 'tools.transpose-kunci'],
             ['icon' => '📄', 'name' => 'EPK Generator',               'desc' => 'Buat press kit musisi profesional siap kirim ke booker & media.',    'route' => 'tools.epk'],
+            ['icon' => '🎵', 'name' => 'Setlist Builder',             'desc' => 'Susun setlist manggung: urutan lagu, BPM, kunci, catatan — print/PDF.', 'route' => 'tools.setlist'],
         ];
         $items = [];
         foreach ($tools as $i => $t) {

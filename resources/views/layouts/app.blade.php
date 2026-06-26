@@ -360,6 +360,12 @@
 
     <a href="{{ route('home') }}" class="nav-brand">MARGONOANDI</a>
 
+    <div class="nav-center">
+        <a href="{{ route('tools.index') }}" class="nav-link {{ request()->routeIs('tools.*') ? 'active' : '' }}">🎛 Alat</a>
+        <a href="{{ route('gig.board') }}" class="nav-link {{ request()->routeIs('gig.*') ? 'active' : '' }}">🎪 Gig</a>
+        <a href="{{ route('library.materi') }}" class="nav-link {{ request()->routeIs('library.*') ? 'active' : '' }}">📚 Materi</a>
+    </div>
+
     <div class="nav-right">
         <button class="theme-toggle" id="themeToggle" aria-label="Toggle tema">🌙</button>
 
@@ -411,6 +417,10 @@
             <a href="{{ route('tools.chord-builder') }}" class="footer-link">&#127928; Chord Builder</a>
             <a href="{{ route('tools.bpm-kalkulator') }}" class="footer-link">&#129345; BPM Calculator</a>
             <a href="{{ route('tools.kalkulator-royalti') }}" class="footer-link">&#128176; Kalkulator Royalti</a>
+            <a href="{{ route('tools.rate-card') }}" class="footer-link">&#128205; Rate Card Generator</a>
+            <a href="{{ route('tools.transpose-kunci') }}" class="footer-link">&#128260; Transpose Kunci</a>
+            <a href="{{ route('tools.epk') }}" class="footer-link">&#127908; EPK Generator</a>
+            <a href="{{ route('gig.board') }}" class="footer-link">&#127914; Papan Gig</a>
         </div>
         <div class="footer-copy">© 2026 Margonoandi · Semua lagu dilindungi hak cipta</div>
     </div>
@@ -450,6 +460,16 @@
             <span class="bnav-label">Profil</span>
         </a>
         @else
+        <a href="{{ route('gig.board') }}"
+           class="bottom-nav-item {{ request()->routeIs('gig.*') ? 'active' : '' }}">
+            <span class="bnav-icon">🎪</span>
+            <span class="bnav-label">Gig</span>
+        </a>
+        <a href="{{ route('tools.index') }}"
+           class="bottom-nav-item {{ request()->routeIs('tools.*') ? 'active' : '' }}">
+            <span class="bnav-icon">🎛</span>
+            <span class="bnav-label">Alat</span>
+        </a>
         <a href="{{ route('google.login') }}" class="bottom-nav-item">
             <span class="bnav-icon">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>

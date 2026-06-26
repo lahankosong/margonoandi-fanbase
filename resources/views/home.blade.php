@@ -1092,6 +1092,11 @@ try { if(localStorage.getItem('heroCollapsed')==='1') setHeroCollapsed(true, fal
                 <div class="fb-studio-t">EPK Generator</div>
                 <div class="fb-studio-d">Buat press kit musisi profesional</div>
             </a>
+            <a href="{{ route('tools.setlist') }}" class="fb-studio-card">
+                <div class="fb-studio-ic">🎵</div>
+                <div class="fb-studio-t">Setlist Builder</div>
+                <div class="fb-studio-d">Susun setlist manggung, cetak PDF</div>
+            </a>
         </div>
     </div>
 
