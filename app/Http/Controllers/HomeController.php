@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Post;
 use App\Models\Song;
 use App\Models\SiteSetting;
 
@@ -99,7 +100,15 @@ class HomeController extends Controller
                 ])->values();
         } catch (\Throwable $e) {}
 
-        return view('home', compact('songs', 'featuredSong', 'ctaSongs', 'settings', 'seo', 'musicians'));
+        $previewPosts = collect();
+        try {
+            $previewPosts = Post::with('user')
+                ->latest()
+                ->take(3)
+                ->get();
+        } catch (\Throwable $e) {}
+
+        return view('home', compact('songs', 'featuredSong', 'ctaSongs', 'settings', 'seo', 'musicians', 'previewPosts'));
     }
 
     /** sitemap.xml dinamis: homepage + semua lagu aktif, termasuk image:image untuk Google Image. */
@@ -118,7 +127,7 @@ class HomeController extends Controller
         $xml .= '  </url>' . "\n";
 
         // Tools publik (SEO): pemotong lagu + penghapus vokal — gratis, client-side
-        foreach (['tools.index', 'tools.potong-lagu', 'tools.hapus-vokal', 'tools.cover-art', 'tools.kartu-rilis', 'tools.countdown', 'tools.edit-metadata'] as $toolRoute) {
+        foreach (['tools.index', 'tools.potong-lagu', 'tools.hapus-vokal', 'tools.cover-art', 'tools.kartu-rilis', 'tools.countdown', 'tools.edit-metadata', 'tools.chord-builder', 'tools.bpm-kalkulator', 'tools.kalkulator-royalti', 'tools.rate-card', 'tools.transpose-kunci', 'tools.epk', 'tools.setlist', 'gig.board'] as $toolRoute) {
             try {
                 $xml .= '  <url>' . "\n";
                 $xml .= '    <loc>' . htmlspecialchars(route($toolRoute)) . '</loc>' . "\n";
