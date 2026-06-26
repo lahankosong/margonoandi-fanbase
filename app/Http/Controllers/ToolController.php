@@ -255,6 +255,16 @@ class ToolController extends Controller
             '', '',
             ['@type' => 'ItemList', 'name' => 'Alat Gratis Musisi — Margonoandi', 'itemListElement' => $items]
         );
-        return view('tools.index', compact('seo', 'tools'));
+        $featuredArticles = collect();
+        try {
+            $featuredArticles = \App\Models\Article::orderBy('batch')->orderBy('id')->take(4)->get(['slug','title','category','reading_time']);
+        } catch (\Throwable $e) {}
+
+        $latestGig = null;
+        try {
+            $latestGig = \App\Models\GigPost::with('user')->where('status','open')->latest()->first();
+        } catch (\Throwable $e) {}
+
+        return view('tools.index', compact('seo', 'tools', 'featuredArticles', 'latestGig'));
     }
 }
