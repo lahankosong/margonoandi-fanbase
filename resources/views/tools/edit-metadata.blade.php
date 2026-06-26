@@ -1,9 +1,9 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @push('styles')
 <style>
     :root { --ac:#38bdf8; --ac-dk:#0ea5e9; --ac-lt:rgba(56,189,248,.12); --green:#22c55e; }
-    .md-page { max-width:760px; margin:0 auto; padding:1.5rem 1rem 4rem; }
+    .md-page { padding:1.5rem 1rem 4rem; }
     .md-back { display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text-3,#94a3b8);text-decoration:none;margin-bottom:1.25rem; }
     .md-back:hover { color:var(--text,#f0f0f0); }
     .md-hero { text-align:center;margin-bottom:1.5rem; }
@@ -46,6 +46,7 @@
 @endpush
 
 @section('content')
+<div class="page-rail-wrap">
 <div class="md-page">
     <a href="{{ route('home') }}" class="md-back">← Beranda</a>
     @include('partials.tool-share')
@@ -119,7 +120,14 @@
         <a href="{{ route('tools.cover-art') }}" style="color:var(--ac);">Buat Cover</a> ·
         <a href="{{ route('tools.potong-lagu') }}" style="color:var(--ac);">Potong Lagu</a>
     </p>
-</div>
+
+</div>{{-- .md-page --}}
+
+<aside class="page-rail-aside">
+    @include('partials.content-rail')
+</aside>
+
+</div>{{-- .page-rail-wrap --}}
 @endsection
 
 @push('scripts')
@@ -313,3 +321,4 @@ window.mdExport=function(){
 })();
 </script>
 @endpush
+

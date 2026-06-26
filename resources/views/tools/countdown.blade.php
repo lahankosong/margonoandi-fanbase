@@ -1,9 +1,9 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @push('styles')
 <style>
     :root { --ac:#38bdf8; --ac-dk:#0ea5e9; --ac-lt:rgba(56,189,248,.12); }
-    .cd-page { max-width:680px; margin:0 auto; padding:1.5rem 1rem 4rem; }
+    .cd-page { padding:1.5rem 1rem 4rem; }
     .cd-back { display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text-3,#94a3b8);text-decoration:none;margin-bottom:1.25rem; }
     .cd-hero { text-align:center;margin-bottom:1.5rem; }
     .cd-badge2 { display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ac-dk);background:var(--ac-lt);border:1px solid rgba(56,189,248,.3);border-radius:20px;padding:4px 12px;margin-bottom:.75rem; }
@@ -182,3 +182,4 @@ var P=new URLSearchParams(location.search);
 })();
 </script>
 @endpush
+

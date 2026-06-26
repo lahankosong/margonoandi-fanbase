@@ -1,8 +1,8 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @push('styles')
 <style>
-    .sl-wrap { max-width: 840px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    .sl-wrap { padding: 2rem 1rem 4rem; }
     .sl-header { margin-bottom: 1.5rem; }
     .sl-title { font-size: clamp(1.4rem,4vw,2rem); font-weight: 300; color: var(--text); margin-bottom: .35rem; }
     .sl-sub { font-size: 14px; color: var(--text-3); }
@@ -113,6 +113,7 @@
 @endpush
 
 @section('content')
+<div class="page-rail-wrap">
 <div class="sl-wrap">
     <div class="sl-header">
         <h1 class="sl-title">🎵 Setlist Builder Musisi</h1>
@@ -191,7 +192,14 @@
         • Beri catatan singkat: "intro panjang", "capo 2", "tanpa drum intro", dll — kamu akan berterima kasih saat di atas panggung.<br>
         • Cetak 3 salinan: satu kamu, satu ke sound engineer, satu ditempel di lantai panggung (setlist tape).
     </div>
-</div>
+
+</div>{{-- .sl-wrap --}}
+
+<aside class="page-rail-aside">
+    @include('partials.content-rail')
+</aside>
+
+</div>{{-- .page-rail-wrap --}}
 @endsection
 
 @push('scripts')
@@ -414,3 +422,4 @@ function printSetlist() {
 for (var i = 0; i < 5; i++) addSong();
 </script>
 @endpush
+

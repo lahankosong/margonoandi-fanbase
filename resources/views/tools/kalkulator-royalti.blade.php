@@ -1,10 +1,10 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @push('styles')
 <style>
     :root { --ac:#38A8CC; --ac-dk:#0ea5e9; --ac-lt:rgba(56,168,204,.12); }
 
-    .roy-page { max-width:720px; margin:0 auto; padding:1.75rem 1rem 5rem; }
+    .roy-page { padding:1.75rem 1rem 5rem; }
     .roy-back { display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text-3);text-decoration:none;margin-bottom:1.25rem; }
     .roy-back:hover { color:var(--text); }
 
@@ -76,6 +76,7 @@
 @endpush
 
 @section('content')
+<div class="page-rail-wrap">
 <div class="roy-page">
     <a href="{{ route('tools.index') }}" class="roy-back">← Studio Gratis</a>
     @include('partials.tool-share')
@@ -163,7 +164,14 @@
             </ul>
         </div>
     </div>
-</div>
+
+</div>{{-- .roy-page --}}
+
+<aside class="page-rail-aside">
+    @include('partials.content-rail')
+</aside>
+
+</div>{{-- .page-rail-wrap --}}
 @endsection
 
 @push('scripts')
@@ -276,3 +284,4 @@
 })();
 </script>
 @endpush
+

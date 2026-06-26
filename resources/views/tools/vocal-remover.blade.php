@@ -1,9 +1,9 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @push('styles')
 <style>
     :root { --ac:#38bdf8; --ac-dk:#0ea5e9; --ac-lt:rgba(56,189,248,.12); --green:#22c55e; }
-    .vr-page { max-width:760px; margin:0 auto; padding:1.5rem 1rem 4rem; }
+    .vr-page { padding:1.5rem 1rem 4rem; }
     .vr-back { display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text-3,#94a3b8);text-decoration:none;margin-bottom:1.25rem; }
     .vr-back:hover { color:var(--text,#f0f0f0); }
     .vr-hero { text-align:center;margin-bottom:1.75rem; }
@@ -53,6 +53,7 @@
 @endpush
 
 @section('content')
+<div class="page-rail-wrap">
 <div class="vr-page">
     <a href="{{ route('home') }}" class="vr-back">← Beranda</a>
     @include('partials.tool-share')
@@ -121,7 +122,14 @@
         Bagian dari <a href="{{ route('home') }}" style="color:var(--ac);">Margonoandi Fanbase</a> — komunitas musisi Indonesia 🎸 ·
         <a href="{{ route('tools.potong-lagu') }}" style="color:var(--ac);">Pemotong Lagu</a>
     </p>
-</div>
+
+</div>{{-- .vr-page --}}
+
+<aside class="page-rail-aside">
+    @include('partials.content-rail')
+</aside>
+
+</div>{{-- .page-rail-wrap --}}
 @endsection
 
 @push('scripts')
@@ -223,3 +231,4 @@ function encMp3(c0,c1,sr,kbps){
 })();
 </script>
 @endpush
+

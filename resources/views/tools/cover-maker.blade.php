@@ -1,9 +1,9 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @push('styles')
 <style>
     :root { --ac:#38bdf8; --ac-dk:#0ea5e9; --ac-lt:rgba(56,189,248,.12); --green:#22c55e; }
-    .cm-page { max-width:880px; margin:0 auto; padding:1.5rem 1rem 4rem; }
+    .cm-page { padding:1.5rem 1rem 4rem; }
     .cm-back { display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text-3,#94a3b8);text-decoration:none;margin-bottom:1.25rem; }
     .cm-back:hover { color:var(--text,#f0f0f0); }
     .cm-hero { text-align:center;margin-bottom:1.5rem; }
@@ -53,6 +53,7 @@
 @endpush
 
 @section('content')
+<div class="page-rail-wrap">
 <div class="cm-page">
     <a href="{{ route('home') }}" class="cm-back">← Beranda</a>
     @include('partials.tool-share')
@@ -156,7 +157,14 @@
         <a href="{{ route('tools.hapus-vokal') }}" style="color:var(--ac);">Hapus Vokal</a> ·
         <a href="{{ route('tools.potong-lagu') }}" style="color:var(--ac);">Potong Lagu</a>
     </p>
-</div>
+
+</div>{{-- .cm-page --}}
+
+<aside class="page-rail-aside">
+    @include('partials.content-rail')
+</aside>
+
+</div>{{-- .page-rail-wrap --}}
 @endsection
 
 @push('scripts')
@@ -294,3 +302,4 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(redraw).catch(
 })();
 </script>
 @endpush
+

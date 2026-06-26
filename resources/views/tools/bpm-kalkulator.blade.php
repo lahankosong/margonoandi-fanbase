@@ -1,10 +1,10 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @push('styles')
 <style>
     :root { --ac:#38A8CC; --ac-dk:#0ea5e9; --ac-lt:rgba(56,168,204,.12); }
 
-    .bpm-page { max-width:680px; margin:0 auto; padding:1.75rem 1rem 5rem; }
+    .bpm-page { padding:1.75rem 1rem 5rem; }
     .bpm-back { display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text-3);text-decoration:none;margin-bottom:1.25rem; }
     .bpm-back:hover { color:var(--text); }
 
@@ -66,6 +66,7 @@
 @endpush
 
 @section('content')
+<div class="page-rail-wrap">
 <div class="bpm-page">
     <a href="{{ route('tools.index') }}" class="bpm-back">← Studio Gratis</a>
     @include('partials.tool-share')
@@ -123,7 +124,14 @@
         <div class="bpm-ref-row" data-min="136" data-max="160" id="ref5"><span class="bpm-ref-range">136–160</span><span class="bpm-ref-name">Fast / Electronic</span><span class="bpm-ref-ex">EDM, punk, metal ringan</span></div>
         <div class="bpm-ref-row" data-min="161" data-max="300" id="ref6"><span class="bpm-ref-range">161+</span><span class="bpm-ref-name">Sangat Cepat</span><span class="bpm-ref-ex">Drum & bass, speedcore, metal</span></div>
     </div>
-</div>
+
+</div>{{-- .bpm-page --}}
+
+<aside class="page-rail-aside">
+    @include('partials.content-rail')
+</aside>
+
+</div>{{-- .page-rail-wrap --}}
 @endsection
 
 @push('scripts')
@@ -277,3 +285,4 @@
 })();
 </script>
 @endpush
+

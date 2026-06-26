@@ -1,8 +1,8 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @push('styles')
 <style>
-    .epk-wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    .epk-wrap { padding: 2rem 1rem 4rem; }
     .epk-title { font-size: clamp(1.4rem,4vw,2rem); font-weight: 300; color: var(--text); margin-bottom: .35rem; }
     .epk-sub { font-size: 14px; color: var(--text-3); margin-bottom: 2rem; }
 
@@ -57,6 +57,7 @@
 @endpush
 
 @section('content')
+<div class="page-rail-wrap">
 <div class="epk-wrap">
     <h1 class="epk-title">📄 EPK Generator — Electronic Press Kit Musisi</h1>
     <p class="epk-sub">Buat press kit profesional yang bisa langsung dikirim ke booker, promotor, atau media. Download sebagai gambar siap cetak atau share link.</p>
@@ -154,7 +155,14 @@
         </div>
 
     </div>
-</div>
+
+</div>{{-- .epk-wrap --}}
+
+<aside class="page-rail-aside">
+    @include('partials.content-rail')
+</aside>
+
+</div>{{-- .page-rail-wrap --}}
 @endsection
 
 @push('scripts')
@@ -392,3 +400,4 @@ function copyEPKLink() {
 document.addEventListener('DOMContentLoaded', renderEPK);
 </script>
 @endpush
+

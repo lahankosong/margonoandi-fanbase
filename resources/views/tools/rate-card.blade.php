@@ -1,8 +1,8 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @push('styles')
 <style>
-    .rc-wrap { max-width: 860px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    .rc-wrap { padding: 2rem 1rem 4rem; }
     .rc-title { font-size: clamp(1.4rem,4vw,2rem); font-weight: 300; color: var(--text); margin-bottom: .35rem; }
     .rc-sub { font-size: 14px; color: var(--text-3); margin-bottom: 2rem; }
 
@@ -48,6 +48,7 @@
 @endpush
 
 @section('content')
+<div class="page-rail-wrap">
 <div class="rc-wrap">
 
     <h1 class="rc-title">💼 Rate Card Generator Musisi</h1>
@@ -136,7 +137,14 @@
         </div>
 
     </div>
-</div>
+
+</div>{{-- .rc-wrap --}}
+
+<aside class="page-rail-aside">
+    @include('partials.content-rail')
+</aside>
+
+</div>{{-- .page-rail-wrap --}}
 @endsection
 
 @push('scripts')
@@ -392,3 +400,4 @@ setTheme('#38A8CC');
 document.addEventListener('DOMContentLoaded', updatePreview);
 </script>
 @endpush
+

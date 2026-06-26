@@ -1,8 +1,8 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @push('styles')
 <style>
-    .rp-wrap { max-width: 820px; margin: 0 auto; padding: 2rem 1rem 5rem; }
+    .rp-wrap { padding: 2rem 1rem 5rem; }
     .rp-title { font-size: clamp(1.4rem,4vw,2rem); font-weight: 300; color: var(--text); margin-bottom: .3rem; }
     .rp-sub { font-size: 14px; color: var(--text-3); margin-bottom: 1.75rem; }
 
@@ -66,6 +66,7 @@
 @endpush
 
 @section('content')
+<div class="page-rail-wrap">
 <div class="rp-wrap">
     <h1 class="rp-title">📅 Music Release Planner</h1>
     <p class="rp-sub">Masukkan tanggal rilis — jadwal promo minggu per minggu langsung siap. Tandai checklist, cetak, selesai.</p>
@@ -106,7 +107,14 @@
             <p>Masukkan tanggal rilis di atas untuk membuat jadwal promo otomatis.</p>
         </div>
     </div>
-</div>
+
+</div>{{-- .rp-wrap --}}
+
+<aside class="page-rail-aside">
+    @include('partials.content-rail')
+</aside>
+
+</div>{{-- .page-rail-wrap --}}
 @endsection
 
 @push('scripts')
@@ -359,3 +367,4 @@ function resetChecks() {
 })();
 </script>
 @endpush
+

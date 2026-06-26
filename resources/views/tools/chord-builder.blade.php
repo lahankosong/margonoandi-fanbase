@@ -1,10 +1,10 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @push('styles')
 <style>
     :root { --ac:#38A8CC; --ac-dk:#0ea5e9; --ac-lt:rgba(56,168,204,.12); }
 
-    .cb-page { max-width:760px; margin:0 auto; padding:1.75rem 1rem 5rem; }
+    .cb-page { padding:1.75rem 1rem 5rem; }
     .cb-back { display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text-3,#94a3b8);text-decoration:none;margin-bottom:1.25rem; }
     .cb-back:hover { color:var(--text); }
 
@@ -59,6 +59,7 @@
 @endpush
 
 @section('content')
+<div class="page-rail-wrap">
 <div class="cb-page">
     <a href="{{ route('tools.index') }}" class="cb-back">← Studio Gratis</a>
     @include('partials.tool-share')
@@ -128,7 +129,14 @@
             <ul id="cbTipsList"></ul>
         </div>
     </div>
-</div>
+
+</div>{{-- .cb-page --}}
+
+<aside class="page-rail-aside">
+    @include('partials.content-rail')
+</aside>
+
+</div>{{-- .page-rail-wrap --}}
 @endsection
 
 @push('scripts')
@@ -281,3 +289,4 @@
 })();
 </script>
 @endpush
+

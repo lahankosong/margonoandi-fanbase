@@ -230,6 +230,34 @@
             position: relative; z-index: 1;
         }
 
+        /* ===== PAGE + RAIL LAYOUT (reusable 2-col) ===== */
+        .page-rail-wrap {
+            display: grid;
+            grid-template-columns: minmax(0,1fr) 210px;
+            gap: 28px;
+            align-items: start;
+        }
+        @media(max-width: 860px) { .page-rail-wrap { grid-template-columns: 1fr; } .page-rail-aside { display: none; } }
+
+        .page-rail-aside { position: sticky; top: 80px; display: flex; flex-direction: column; gap: 14px; }
+
+        /* ===== CRAIL (right rail content) ===== */
+        .crail-block { margin-bottom: 0; }
+        .crail-widget { background: var(--card-bg,rgba(15,23,42,.55)); border: 1px solid var(--border); border-radius: 14px; padding: .9rem 1rem; }
+        .crail-h { font-size: 10px; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; color: var(--text-3); margin-bottom: .65rem; }
+        .crail-links { display: flex; flex-direction: column; }
+        .crail-link { display: block; font-size: 12.5px; color: var(--text-3); text-decoration: none; padding: 6px 0; line-height: 1.45; border-bottom: 1px solid var(--border-2,rgba(56,168,204,.07)); transition: color .15s; }
+        .crail-link:last-child { border-bottom: none; padding-bottom: 0; }
+        .crail-link:hover { color: var(--accent,#38A8CC); }
+        .crail-link-2 { display: flex; flex-direction: column; gap: 1px; }
+        .crail-link-t { font-weight: 500; color: var(--text-2,#cbd5e1); font-size: 12.5px; }
+        .crail-link-sub { font-size: 10.5px; color: var(--text-3); }
+        .crail-more { display: inline-block; margin-top: .55rem; font-size: 11px; font-weight: 600; color: var(--accent,#38A8CC); text-decoration: none; }
+        .crail-more:hover { opacity: .8; }
+        .crail-cta-txt { font-size: 12px; color: var(--text-3); line-height: 1.6; margin: 0 0 .65rem; }
+        .crail-cta-btn { display: inline-block; font-size: 12px; font-weight: 600; color: #fff; background: var(--accent,#38A8CC); padding: 7px 14px; border-radius: 18px; text-decoration: none; }
+        .crail-cta-btn:hover { opacity: .9; }
+
         /* Alert */
         .alert-session {
             background: rgba(239,68,68,0.07);

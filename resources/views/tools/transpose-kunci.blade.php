@@ -1,8 +1,8 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @push('styles')
 <style>
-    .tk-wrap { max-width: 720px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    .tk-wrap { padding: 2rem 1rem 4rem; }
     .tk-title { font-size: clamp(1.4rem,4vw,2rem); font-weight: 300; color: var(--text); margin-bottom: .35rem; }
     .tk-sub { font-size: 14px; color: var(--text-3); margin-bottom: 2rem; }
 
@@ -40,6 +40,7 @@
 @endpush
 
 @section('content')
+<div class="page-rail-wrap">
 <div class="tk-wrap">
     <h1 class="tk-title">🔀 Transpose Kunci Gitar Online</h1>
     <p class="tk-sub">Tempel chord, pilih kunci asal dan tujuan — chord langsung berpindah kunci. Gratis, tanpa daftar.</p>
@@ -99,7 +100,14 @@
         3. Chord otomatis berpindah — teks lain (lirik, section mark) tetap utuh<br><br>
         <b>Tip:</b> Kalau kamu tidak yakin kunci aslinya, coba cek di Spotify/YouTube Music → tiga titik → "About this song" (di beberapa versi tersedia key info). Atau pakai telinga — chord pertama biasanya adalah kunci lagunya.
     </div>
-</div>
+
+</div>{{-- .tk-wrap --}}
+
+<aside class="page-rail-aside">
+    @include('partials.content-rail')
+</aside>
+
+</div>{{-- .page-rail-wrap --}}
 @endsection
 
 @push('scripts')
@@ -184,3 +192,4 @@ function loadExample(key) {
 }
 </script>
 @endpush
+

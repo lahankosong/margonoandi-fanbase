@@ -2,7 +2,7 @@
 
 @push('styles')
 <style>
-    .gb-wrap { max-width: 820px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+    .gb-wrap { max-width: 100%; padding: 2rem 0 4rem; }
     .gb-hero { text-align: center; margin-bottom: 2rem; }
     .gb-eyebrow { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); background: var(--accent-dim); border: 1px solid rgba(56,168,204,.3); border-radius: 20px; padding: 4px 12px; margin-bottom: .75rem; }
     .gb-title { font-size: clamp(1.5rem,4vw,2.2rem); font-weight: 300; color: var(--text); margin-bottom: .4rem; }
@@ -53,6 +53,7 @@
 @endpush
 
 @section('content')
+<div class="page-rail-wrap">
 <div class="gb-wrap">
 
     <div class="gb-hero">
@@ -146,5 +147,12 @@
 
     @endif
 
-</div>
+</div>{{-- .gb-wrap --}}
+
+<aside class="page-rail-aside">
+    @php $skipArticlesRail = false; @endphp
+    @include('partials.content-rail')
+</aside>
+
+</div>{{-- .page-rail-wrap --}}
 @endsection

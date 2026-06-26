@@ -1,9 +1,9 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @push('styles')
 <style>
     :root { --ac:#38bdf8; --ac-dk:#0ea5e9; --ac-lt:rgba(56,189,248,.12); }
-    .rc-page { max-width:900px; margin:0 auto; padding:1.5rem 1rem 4rem; }
+    .rc-page { padding:1.5rem 1rem 4rem; }
     .rc-back { display:inline-flex;align-items:center;gap:5px;font-size:13px;color:var(--text-3,#94a3b8);text-decoration:none;margin-bottom:1.25rem; }
     .rc-back:hover { color:var(--text,#f0f0f0); }
     .rc-hero { text-align:center;margin-bottom:1.5rem; }
@@ -52,6 +52,7 @@
 @endpush
 
 @section('content')
+<div class="page-rail-wrap">
 <div class="rc-page">
     <a href="{{ route('home') }}" class="rc-back">← Beranda</a>
     @include('partials.tool-share')
@@ -147,7 +148,14 @@
         <a href="{{ route('tools.cover-art') }}" style="color:var(--ac);">Buat Cover</a> ·
         <a href="{{ route('tools.hapus-vokal') }}" style="color:var(--ac);">Hapus Vokal</a>
     </p>
-</div>
+
+</div>{{-- .rc-page --}}
+
+<aside class="page-rail-aside">
+    @include('partials.content-rail')
+</aside>
+
+</div>{{-- .page-rail-wrap --}}
 @endsection
 
 @push('scripts')
@@ -290,3 +298,4 @@ if(document.fonts&&document.fonts.ready)document.fonts.ready.then(redraw).catch(
 })();
 </script>
 @endpush
+
