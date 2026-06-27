@@ -56,6 +56,9 @@ Route::get('/tools/release-planner', [ToolController::class, 'releasePlanner'])-
 // Gig Board publik — blur gate, apply wajib login
 Route::get('/gig', [GigPostController::class, 'publicBoard'])->name('gig.board');
 
+// Broadcast EMAIL selamat datang ke user lama — terproteksi DEPLOY_KEY (.env), per-batch, idempoten
+Route::get('/dev/blast-welcome-email', \App\Http\Controllers\WelcomeBlastController::class)->name('dev.blast-welcome-email');
+
 // Library (diskografi)
 Route::get('/library', [LibraryController::class, 'index'])->name('library');
 

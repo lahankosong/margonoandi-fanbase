@@ -152,6 +152,14 @@ if (!columnExists($conn, $dbname, 'users', 'is_online')) {
 }
 markMigration($conn, '2026_06_11_093400_add_online_presence_to_users_table');
 
+// Kolom welcome_email_sent_at (penanda email selamat datang sudah dikirim)
+if (!columnExists($conn, $dbname, 'users', 'welcome_email_sent_at')) {
+    runSQL($conn, 'ADD COLUMN welcome_email_sent_at', "ALTER TABLE `users` ADD COLUMN `welcome_email_sent_at` timestamp NULL DEFAULT NULL");
+} else {
+    echo '<pre class="info">&#8212; Kolom welcome_email_sent_at sudah ada</pre>';
+}
+markMigration($conn, '2026_06_27_000001_add_welcome_email_sent_at_to_users');
+
 // ── 4. Tabel conversation_invites ────────────────────────────────────────────
 echo '<h2>4. Tabel conversation_invites</h2>';
 if (!tableExists($conn, $dbname, 'conversation_invites')) {

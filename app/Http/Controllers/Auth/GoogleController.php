@@ -46,16 +46,8 @@ class GoogleController extends Controller
                 try {
                     \App\Helpers\WelcomeBot::sendWelcome($user);
                 } catch (\Throwable $e) {}
-                // Email selamat datang — dikirim SETELAH respons (afterResponse) agar tak menambah jeda login.
-                // Dorman sampai MAIL_* dikonfigurasi; gagal kirim tak memutus apa pun.
-                if (!empty($user->email)) {
-                    $welcomeUser = $user;
-                    dispatch(function () use ($welcomeUser) {
-                        try {
-                            \Illuminate\Support\Facades\Mail::to($welcomeUser->email)->send(new \App\Mail\WelcomeEmail($welcomeUser));
-                        } catch (\Throwable $e) { report($e); }
-                    })->afterResponse();
-                }
+                // Email selamat datang — afterResponse (tak menambah jeda); dorman sampai MAIL_* diisi.
+                try { \App\Helpers\WelcomeMailer::sendAfterResponse($user); } catch (\Throwable $e) {}
             }
 
             Auth::login($user, true);
@@ -130,14 +122,7 @@ class GoogleController extends Controller
                 try { MemberLog::create(['user_id' => $user->id]); } catch (\Throwable $e) {}
                 try { \App\Helpers\WelcomeBot::sendWelcome($user); } catch (\Throwable $e) {}
                 // Email selamat datang — afterResponse agar tak menambah jeda; dorman sampai MAIL_* diisi.
-                if (!empty($user->email)) {
-                    $welcomeUser = $user;
-                    dispatch(function () use ($welcomeUser) {
-                        try {
-                            \Illuminate\Support\Facades\Mail::to($welcomeUser->email)->send(new \App\Mail\WelcomeEmail($welcomeUser));
-                        } catch (\Throwable $e) { report($e); }
-                    })->afterResponse();
-                }
+                try { \App\Helpers\WelcomeMailer::sendAfterResponse($user); } catch (\Throwable $e) {}
             }
 
             Auth::login($user, true);

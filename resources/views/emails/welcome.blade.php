@@ -81,7 +81,11 @@
         <tr><td style="padding:18px 20px;">
           <div style="font-size:14px; font-weight:700; color:#c2571f; margin-bottom:8px;">📱 Pasang sebagai Aplikasi (Android / PWA)</div>
           <p style="font-size:13px; line-height:1.7; margin:0 0 8px; color:#5b5048;">
-            Web ini sudah jadi aplikasi yang bisa kamu <strong>instal langsung dari browser</strong> — tanpa Play Store:
+            Web ini sebenarnya <strong>sudah berbentuk aplikasi Android</strong>. Kenapa belum kami taruh di Play Store?
+            Dua alasan jujur: <strong>(1)</strong> proyek ini masih <strong>tahap beta</strong> — kami sedang menguji
+            respon publik dulu sebelum serius; <strong>(2)</strong> untuk jadi developer di Play Store butuh
+            <strong>biaya pendaftaran $25</strong>. Jadi untuk sekarang, kamu bisa <strong>instal langsung dari browser</strong>
+            (fungsinya sama persis dengan aplikasi dari Play Store):
           </p>
           <ol style="font-size:13px; line-height:1.8; margin:0 0 8px; padding-left:18px; color:#5b5048;">
             <li>Buka situs ini di browser HP.</li>

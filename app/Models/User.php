@@ -18,6 +18,7 @@ class User extends Authenticatable
         'roles',
         'last_seen',
         'is_online',
+        'welcome_email_sent_at',
     ];
 
     /** Pilihan peran untuk onboarding & profil (key => label berikon). */
@@ -67,6 +68,7 @@ class User extends Authenticatable
     protected $casts = [
         'last_seen' => 'datetime',
         'is_online' => 'boolean',
+        'welcome_email_sent_at' => 'datetime',
     ];
 
     public function isOnline(): bool
