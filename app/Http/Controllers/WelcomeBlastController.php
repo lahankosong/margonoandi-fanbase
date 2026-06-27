@@ -25,13 +25,24 @@ class WelcomeBlastController extends Controller
             abort(403, 'DEPLOY_KEY salah atau belum diset di .env');
         }
 
+        $key = urlencode($request->query('key'));
+
         $base = User::whereNull('welcome_email_sent_at')
             ->whereNotNull('email')
             ->where('email', '!=', '')
             ->where('google_id', '!=', 'bot-margonoandi');
 
-        $pending = (clone $base)->count();
-        $key     = urlencode($request->query('key'));
+        try {
+            $pending = (clone $base)->count();
+        } catch (\Throwable $e) {
+            // Paling sering: kolom welcome_email_sent_at belum dibuat di server.
+            return $this->page(
+                "<h2>Belum siap</h2>
+                 <p class='err'>Query gagal — kemungkinan kolom <b>welcome_email_sent_at</b> belum ada di tabel <b>users</b>.</p>
+                 <p class='info'>Jalankan <b>/fixdb.php?key=…</b> dulu untuk membuat kolomnya, lalu buka halaman ini lagi.</p>
+                 <pre class='err'>" . htmlspecialchars($e->getMessage()) . "</pre>"
+            );
+        }
 
         // Halaman konfirmasi (belum kirim)
         if (! $request->boolean('go')) {
