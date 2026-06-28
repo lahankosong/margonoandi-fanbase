@@ -108,7 +108,18 @@ class HomeController extends Controller
                 ->get();
         } catch (\Throwable $e) {}
 
-        return view('home', compact('songs', 'featuredSong', 'ctaSongs', 'settings', 'seo', 'musicians', 'previewPosts'));
+        $liveActivity = collect();
+        try {
+            $icons = ['💬', '🎸', '🎤', '🥁', '❤️', '🎵'];
+            $liveActivity = Post::with('user')->latest()->take(5)->get()->map(fn($p, $i) => [
+                'icon' => $icons[$i % count($icons)],
+                'user' => $p->user->name ?? 'Musisi',
+                'text' => \Illuminate\Support\Str::limit(strip_tags((string) $p->body), 65),
+                'time' => $p->created_at->diffForHumans(),
+            ]);
+        } catch (\Throwable $e) {}
+
+        return view('home', compact('songs', 'featuredSong', 'ctaSongs', 'settings', 'seo', 'musicians', 'previewPosts', 'liveActivity'));
     }
 
     /** sitemap.xml dinamis: homepage + semua lagu aktif, termasuk image:image untuk Google Image. */
